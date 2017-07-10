@@ -32,7 +32,7 @@ public class ValidatorTest {
         
     }
     
-    @Test(expected = ValidationException.class)
+    @Test
     public void testValidatingInvalidJsonString(){
         String datapackageJsonString = "{\"invalid\" : \"json\"}";
         
