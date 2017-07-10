@@ -39,5 +39,4 @@ public class ValidatorTest {
         exception.expect(ValidationException.class);
         validator.validate(datapackageJsonString);   
     }
-
 }
