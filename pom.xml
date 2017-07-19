@@ -12,6 +12,7 @@
     </properties>
     <build>
         <plugins>
+            <!-- Test Coverage: https://github.com/trautonen/coveralls-maven-plugin -->
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
@@ -28,7 +29,7 @@
                     <aggregate>true</aggregate>
                 </configuration>
             </plugin>
-            <plugin>
+            <!--plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.7.6.201602180812</version>
@@ -40,7 +41,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin-->
         </plugins>
         <resources>
             <resource>
