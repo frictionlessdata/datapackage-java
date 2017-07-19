@@ -143,6 +143,7 @@ public class DataPackageTest {
         Assert.assertEquals(3, dp.getResources().length());
     }
     
+    @Test
     public void testGetResource() throws IOException{
         // Create simple multi DataPackage from Json String
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
@@ -150,6 +151,7 @@ public class DataPackageTest {
         Assert.assertNotNull(resourceJsonObject);
     }
     
+    @Test
     public void testRemoveResource() throws IOException{
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
         
@@ -164,6 +166,7 @@ public class DataPackageTest {
         Assert.assertEquals(1, dp.getResources().length());
     }
     
+    @Test
     public void testAddValidResource() throws DataPackageException, IOException{
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
         
@@ -175,6 +178,7 @@ public class DataPackageTest {
         Assert.assertNotNull(resourceJsonObject);
     }
     
+    @Test
     public void testAddInvalidResource() throws DataPackageException, IOException{
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
         exception.expect(DataPackageException.class);
