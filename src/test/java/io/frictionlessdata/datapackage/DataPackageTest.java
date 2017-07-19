@@ -116,7 +116,7 @@ public class DataPackageTest {
     public void testValidUrl() throws MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-php/master/tests/fixtures/multi_data_datapackage.json");
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
         DataPackage dp = new DataPackage(url);
         Assert.assertNotNull(dp.getJSONObject());
     }
@@ -125,7 +125,7 @@ public class DataPackageTest {
     public void testValidUrlWithInvalidJson() throws MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-php/master/tests/fixtures/simple_invalid_datapackage.json");
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
         exception.expect(ValidationException.class);
         DataPackage dp = new DataPackage(url);
         
@@ -136,7 +136,7 @@ public class DataPackageTest {
     public void testUrlDoesNotExist() throws MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-php/master/tests/fixtures/FOLDER-NON-EXISTANT/multi_data_datapackage.json");
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/NON-EXISTANT-FOLDER/multi_data_datapackage.json");
         exception.expect(FileNotFoundException.class);
         DataPackage dp = new DataPackage(url);
     }
