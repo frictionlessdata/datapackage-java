@@ -1,17 +1,13 @@
 
-import io.frictionlessdata.datapackage.Validator;
+import io.frictionlessdata.datapackage.DataPackage;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.everit.json.schema.ValidationException;
-import org.json.JSONObject;
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /**
  *
- * @author pechorin
  */
 public class TempMain {
 
@@ -21,12 +17,33 @@ public class TempMain {
     public static void main(String[] args) {
         // TODO code application logic here
         System.out.println("Initial setup of library.");
+       
         
-        /**
-        JSONObject datapackageJsonObject = new JSONObject("{\"invalid\" : \"json\"}");
+        try{
+            //String sourceFileAbsPath = TempMain.class.getResource("/tests/fixtures/not_a_json_datapackage.json").getPath();
+            //DataPackage dp = new DataPackage(sourceFileAbsPath, null);
+            
+            //DataPackage dp = new DataPackage(new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-php/master/tests/fixtures/fake/simple_invalid_datapackage.json"));
         
-        Validator validator = new Validator();
-        validator.validate(datapackageJsonObject);**/
+           
+
+            //DataPackage dp = new DataPackage(url);
+            //System.out.println(dp.getJSONObject());
+        
+            
+        } catch (ValidationException ve) {
+            // prints validation errors
+            System.out.println(ve.getMessage());
+            ve.getCausingExceptions().stream()
+                .map(ValidationException::getMessage)
+                .forEach(System.out::println);
+            
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        
+        System.out.println("Done.");
+        
     }
     
 }

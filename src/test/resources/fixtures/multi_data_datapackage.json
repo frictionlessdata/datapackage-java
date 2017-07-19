@@ -1,0 +1,8 @@
+{
+  "name": "multi-data",
+  "resources": [
+    {"name": "first-resource", "path": ["foo.txt", "bar.txt", "baz.txt"]},
+    {"name": "second-resource", "path": ["bar.txt", "baz.txt"]},
+    {"name": "third-resource", "path": ["baz.txt"]}
+  ]
+}
