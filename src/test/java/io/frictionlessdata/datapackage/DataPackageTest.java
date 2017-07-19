@@ -94,7 +94,24 @@ public class DataPackageTest {
 
         // We're not asserting the String value since the order of the JSONObject elements is not guaranteed.
         // Just compare the length of the String, should be enough.
-        Assert.assertEquals(dp.getJSONObject().toString().length(), jsonString.length()); 
+        Assert.assertEquals(dp.getJSONObject().toString().length(), jsonString.length());
+        
+    }
+    
+    @Test
+    public void testLoadFromFileBasePath() throws FileNotFoundException, IOException {
+        // Get path of source file:
+        String sourceFileAbsPath = DataPackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
+        
+        String relativePath = "multi_data_datapackage.json";
+        String basePath = sourceFileAbsPath.replace("/" + relativePath, "");
+        
+        // Build DataPackage instance based on source file path.
+        DataPackage dp = new DataPackage(relativePath, basePath);
+        Assert.assertNotNull(dp.getJSONObject());
+        
+        // Check if base path was set properly;
+        Assert.assertEquals(basePath, dp.getBasePath());
     }
     
     
@@ -144,11 +161,19 @@ public class DataPackageTest {
     }
     
     @Test
-    public void testGetResource() throws IOException{
+    public void testGetExistingResource() throws IOException{
         // Create simple multi DataPackage from Json String
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
         JSONObject resourceJsonObject = dp.getResource("third-resource");
         Assert.assertNotNull(resourceJsonObject);
+    }
+    
+    @Test
+    public void testGetNonExistingResource() throws IOException{
+        // Create simple multi DataPackage from Json String
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        JSONObject resourceJsonObject = dp.getResource("non-existing-resource");
+        Assert.assertNull(resourceJsonObject);
     }
     
     @Test

@@ -91,7 +91,7 @@ public class DataPackage {
                   
         }else{
             // There is a basePath. Construct the absolute path and load it.
-            String absoluteFilePath = basePath + filePath;
+            String absoluteFilePath = basePath + "/" + filePath;
             sourceFile = new File(absoluteFilePath);  
         }
         
@@ -100,7 +100,7 @@ public class DataPackage {
             this.basePath = sourceFile.getParent();
 
             // Read file, it should be a JSON.
-            JSONObject jsonObject = parseJsonString(filePath);
+            JSONObject jsonObject = parseJsonString(sourceFile.getAbsolutePath());
             
             // Validate obtained data package JSON object before setting it.
             this.validator.validate(jsonObject);
