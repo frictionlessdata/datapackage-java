@@ -171,7 +171,7 @@ public class DataPackageTest {
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
         
         Assert.assertEquals(3, dp.getResources().length());
-        dp.addResource("new-resource", new JSONObject("{\"name\": \"second-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+        dp.addResource(new JSONObject("{\"name\": \"new-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
         Assert.assertEquals(4, dp.getResources().length());
         
         JSONObject resourceJsonObject = dp.getResource("new-resource");
@@ -182,8 +182,17 @@ public class DataPackageTest {
     public void testAddInvalidResource() throws DataPackageException, IOException{
         DataPackage dp = this.getSimpleMultiDataPackageFromString();
         exception.expect(DataPackageException.class);
-        dp.addResource("new-resource", new JSONObject("{}"));
+        dp.addResource(new JSONObject("{}"));
     }
+    
+    @Test
+    public void testAddDuplicateNameResource() throws DataPackageException, IOException{
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        
+        exception.expect(DataPackageException.class);
+        dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+    }
+    
     
     private DataPackage getSimpleMultiDataPackageFromString() throws IOException{
         // Get path of source file:

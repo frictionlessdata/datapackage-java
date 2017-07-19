@@ -127,11 +127,17 @@ public class DataPackage {
         return this.getJSONObject().getJSONArray("resources");
     }
     
-    public void addResource(String name, JSONObject resource) throws ValidationException, DataPackageException{
+    public void addResource(JSONObject resource) throws ValidationException, DataPackageException{
+        if(!resource.has("name")){
+            throw new DataPackageException("The resource does not have a name property.");
+        }
+        
+        String resourceName = resource.getString("name");
+        
         JSONArray jsonArray = this.getJSONObject().getJSONArray("resources");
         
         for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString("name").equalsIgnoreCase(name)){
+            if(jsonArray.getJSONObject(i).getString("name").equalsIgnoreCase(resourceName)){
                 throw new DataPackageException("A resource with the same name already exists.");
             }
         }
