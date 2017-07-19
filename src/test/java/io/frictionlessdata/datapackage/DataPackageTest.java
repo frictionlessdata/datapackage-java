@@ -1,5 +1,6 @@
 package io.frictionlessdata.datapackage;
 
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -29,14 +30,9 @@ public class DataPackageTest {
     
     @Test
     public void testLoadFromJsonString() throws IOException{
-        // Get path of source file:
-        String sourceFileAbsPath = DataPackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
 
-        // Get string content version of source file.
-        String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
-        
-        // Create DataPackage instance from jsonString
-        DataPackage dp = new DataPackage(jsonString);
+        // Create simple multi DataPackage from Json String
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
         
         // Assert
         Assert.assertNotNull(dp);
@@ -131,7 +127,6 @@ public class DataPackageTest {
         
     }
     
-    
     @Test
     public void testUrlDoesNotExist() throws MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
@@ -141,6 +136,63 @@ public class DataPackageTest {
         DataPackage dp = new DataPackage(url);
     }
     
+    @Test
+    public void testGetResources() throws IOException{
+        // Create simple multi DataPackage from Json String
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        Assert.assertEquals(3, dp.getResources().length());
+    }
+    
+    public void testGetResource() throws IOException{
+        // Create simple multi DataPackage from Json String
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        JSONObject resourceJsonObject = dp.getResource("third-resource");
+        Assert.assertNotNull(resourceJsonObject);
+    }
+    
+    public void testRemoveResource() throws IOException{
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        
+        Assert.assertEquals(3, dp.getResources().length());
+        dp.removeResource("second-resource");
+        
+        Assert.assertEquals(2, dp.getResources().length());
+        dp.removeResource("third-resource");
+        Assert.assertEquals(1, dp.getResources().length());
+        
+        dp.removeResource("third-resource");
+        Assert.assertEquals(1, dp.getResources().length());
+    }
+    
+    public void testAddValidResource() throws DataPackageException, IOException{
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        
+        Assert.assertEquals(3, dp.getResources().length());
+        dp.addResource("new-resource", new JSONObject("{\"name\": \"second-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+        Assert.assertEquals(4, dp.getResources().length());
+        
+        JSONObject resourceJsonObject = dp.getResource("new-resource");
+        Assert.assertNotNull(resourceJsonObject);
+    }
+    
+    public void testAddInvalidResource() throws DataPackageException, IOException{
+        DataPackage dp = this.getSimpleMultiDataPackageFromString();
+        exception.expect(DataPackageException.class);
+        dp.addResource("new-resource", new JSONObject("{}"));
+    }
+    
+    private DataPackage getSimpleMultiDataPackageFromString() throws IOException{
+        // Get path of source file:
+        String sourceFileAbsPath = DataPackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
+
+        // Get string content version of source file.
+        String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
+        
+        // Create DataPackage instance from jsonString
+        DataPackage dp = new DataPackage(jsonString);
+        
+        return dp;
+    }    
 
     
     //TODO: come up with attribute edit tests:
