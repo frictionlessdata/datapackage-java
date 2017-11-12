@@ -1,6 +1,6 @@
 package io.frictionlessdata.datapackage;
 
-import io.frictionlessdata.datapackage.exceptions.PackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.BufferedReader;
 import java.net.URL;
 import org.json.*;
@@ -181,9 +181,9 @@ public class Package {
         return this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
     }
     
-    public void addResource(JSONObject resource) throws ValidationException, PackageException{
+    public void addResource(JSONObject resource) throws ValidationException, DataPackageException{
         if(!resource.has(JSON_KEY_NAME)){
-            throw new PackageException("The resource does not have a name property.");
+            throw new DataPackageException("The resource does not have a name property.");
         }
         
         String resourceName = resource.getString(JSON_KEY_NAME);
@@ -192,7 +192,7 @@ public class Package {
         
         for (int i = 0; i < jsonArray.length(); i++) {
             if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
-                throw new PackageException("A resource with the same name already exists.");
+                throw new DataPackageException("A resource with the same name already exists.");
             }
         }
         this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES).put(resource);

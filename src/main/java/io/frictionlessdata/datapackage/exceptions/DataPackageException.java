@@ -4,13 +4,13 @@ package io.frictionlessdata.datapackage.exceptions;
  *
  *
  */
-public class PackageException extends Exception {
+public class DataPackageException extends Exception {
 
     /**
      * Creates a new instance of <code>DataPackageException</code> without
      * detail message.
      */
-    public PackageException() {
+    public DataPackageException() {
     }
 
     /**
@@ -19,7 +19,7 @@ public class PackageException extends Exception {
      *
      * @param msg the detail message.
      */
-    public PackageException(String msg) {
+    public DataPackageException(String msg) {
         super(msg);
     }
 }

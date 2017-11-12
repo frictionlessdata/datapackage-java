@@ -1,6 +1,6 @@
 package io.frictionlessdata.datapackage;
 
-import io.frictionlessdata.datapackage.exceptions.PackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -212,7 +212,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testAddValidResource() throws PackageException, IOException{
+    public void testAddValidResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString();
         
         Assert.assertEquals(3, dp.getResources().length());
@@ -224,17 +224,17 @@ public class PackageTest {
     }
     
     @Test
-    public void testAddInvalidResource() throws PackageException, IOException{
+    public void testAddInvalidResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString();
-        exception.expect(PackageException.class);
+        exception.expect(DataPackageException.class);
         dp.addResource(new JSONObject("{}"));
     }
     
     @Test
-    public void testAddDuplicateNameResource() throws PackageException, IOException{
+    public void testAddDuplicateNameResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString();
         
-        exception.expect(PackageException.class);
+        exception.expect(DataPackageException.class);
         dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
     }
     
