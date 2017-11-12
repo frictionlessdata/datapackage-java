@@ -1,6 +1,6 @@
 package io.frictionlessdata.datapackage;
 
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.PackageException;
 import java.io.BufferedReader;
 import java.net.URL;
 import org.json.*;
@@ -18,7 +18,7 @@ import org.everit.json.schema.ValidationException;
  * Load, validate and create a datapackage object.
  * 
  */
-public class DataPackage {
+public class Package {
     
     private String basePath = null;
     private JSONObject jsonObject = null;
@@ -28,7 +28,7 @@ public class DataPackage {
      * Load from native Java JSONObject
      * @param jsonObjectSource 
      */
-    public DataPackage(JSONObject jsonObjectSource) throws ValidationException{
+    public Package(JSONObject jsonObjectSource) throws ValidationException{
         // Validate data package JSON object before setting it.
         this.validator.validate(jsonObjectSource); // Will throw a ValidationException if JSON is not valid.
         this.jsonObject = jsonObjectSource;
@@ -38,7 +38,7 @@ public class DataPackage {
      * Load from JSON string.
      * @param jsonStringSource 
      */
-    public DataPackage(String jsonStringSource) throws ValidationException{
+    public Package(String jsonStringSource) throws ValidationException{
         // Validate data package JSON object before setting it.
         this.validator.validate(jsonStringSource); // Will throw a ValidationException if JSON is not valid.
         this.jsonObject = new JSONObject(jsonStringSource);
@@ -50,7 +50,7 @@ public class DataPackage {
      * @throws java.io.IOException 
      * @throws java.io.FileNotFoundException 
      */
-    public DataPackage(URL urlSource) throws IOException, FileNotFoundException{
+    public Package(URL urlSource) throws IOException, FileNotFoundException{
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new InputStreamReader(urlSource.openStream()));
@@ -80,7 +80,7 @@ public class DataPackage {
      * @throws org.everit.json.schema.ValidationException
      * @throws java.io.FileNotFoundException
      */
-    public DataPackage(String filePath, String basePath) throws ValidationException, FileNotFoundException {
+    public Package(String filePath, String basePath) throws ValidationException, FileNotFoundException {
         File sourceFile = null;
         
         if(StringUtils.isEmpty(basePath)){
@@ -127,9 +127,9 @@ public class DataPackage {
         return this.getJSONObject().getJSONArray("resources");
     }
     
-    public void addResource(JSONObject resource) throws ValidationException, DataPackageException{
+    public void addResource(JSONObject resource) throws ValidationException, PackageException{
         if(!resource.has("name")){
-            throw new DataPackageException("The resource does not have a name property.");
+            throw new PackageException("The resource does not have a name property.");
         }
         
         String resourceName = resource.getString("name");
@@ -138,7 +138,7 @@ public class DataPackage {
         
         for (int i = 0; i < jsonArray.length(); i++) {
             if(jsonArray.getJSONObject(i).getString("name").equalsIgnoreCase(resourceName)){
-                throw new DataPackageException("A resource with the same name already exists.");
+                throw new PackageException("A resource with the same name already exists.");
             }
         }
         this.getJSONObject().getJSONArray("resources").put(resource);
