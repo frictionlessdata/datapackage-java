@@ -93,11 +93,11 @@ public class Package {
             this.basePath = sourceFile.getParent();
 
             // Read file, it should be a JSON.
-            JSONObject jsonObject = parseJsonString(sourceFile.getAbsolutePath());
+            JSONObject sourceJsonObject = parseJsonString(sourceFile.getAbsolutePath());
             
             // Validate obtained data package JSON object before setting it.
-            this.validator.validate(jsonObject);
-            this.jsonObject = jsonObject;
+            this.validator.validate(sourceJsonObject);
+            this.jsonObject = sourceJsonObject;
 
         }else{
             throw new FileNotFoundException();
