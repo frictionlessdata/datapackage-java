@@ -156,6 +156,22 @@ public class DataPackage {
         }
     }
     
+    public void addData(String resourceName){
+        throw new UnsupportedOperationException();
+    }
+    
+    public void saveDescriptor(){
+        throw new UnsupportedOperationException();
+    }
+    
+    public void setTabularDataSchema(String resourceName){
+        throw new UnsupportedOperationException();
+    }
+    
+    public void revalidate() throws ValidationException{
+        validator.validate(this.getJSONObject());
+    }
+    
     public String getBasePath(){
         return this.basePath;
     }
