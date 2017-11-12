@@ -50,10 +50,8 @@ public class Package {
      * @throws java.io.IOException 
      * @throws java.io.FileNotFoundException 
      */
-    public Package(URL urlSource) throws IOException, FileNotFoundException{
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(urlSource.openStream()));
+    public Package(URL urlSource) throws ValidationException, IOException, FileNotFoundException{
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlSource.openStream()))) {
             StringBuilder builder = new StringBuilder();
             int read;
             char[] chars = new char[1024];
@@ -65,11 +63,6 @@ public class Package {
             
             this.validator.validate(jsonString); // Will throw a ValidationException if JSON is not valid.
             this.jsonObject = new JSONObject(jsonString);
-        
-        } finally {
-            if (reader != null){
-                reader.close();
-            }
         }
     }
     
