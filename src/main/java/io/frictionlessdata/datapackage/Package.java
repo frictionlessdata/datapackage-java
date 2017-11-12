@@ -231,7 +231,7 @@ public class Package {
         throw new UnsupportedOperationException();
     }
     
-    public void revalidate() throws ValidationException{
+    public void validate() throws ValidationException{
         this.validator.validate(this.getJSONObject());
     }
     
