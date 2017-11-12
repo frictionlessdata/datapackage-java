@@ -16,7 +16,6 @@ import org.everit.json.schema.ValidationException;
 
 /**
  * Load, validate and create a datapackage object.
- * 
  */
 public class Package {
     
@@ -28,32 +27,61 @@ public class Package {
     private Validator validator = new Validator();
 
     /**
-     * Load from native Java JSONObject
-     * @param jsonObjectSource 
+     * Load from native Java JSONObject.
+     * @param jsonObjectSource
+     * @param strict
+     * @throws ValidationException 
      */
-    public Package(JSONObject jsonObjectSource) throws ValidationException{
-        // Validate data package JSON object before setting it.
-        this.validator.validate(jsonObjectSource); // Will throw a ValidationException if JSON is not valid.
+    public Package(JSONObject jsonObjectSource, boolean strict) throws ValidationException{
+        if(strict){
+            // Validate data package JSON object before setting it.
+            this.validator.validate(jsonObjectSource); // Will throw a ValidationException if JSON is not valid.
+        }
         this.jsonObject = jsonObjectSource;
     }
     
     /**
-     * Load from JSON string.
-     * @param jsonStringSource 
+     * Load from native Java JSONObject.
+     * No validation by default.
+     * @param jsonObjectSource 
      */
-    public Package(String jsonStringSource) throws ValidationException{
-        // Validate data package JSON object before setting it.
-        this.validator.validate(jsonStringSource); // Will throw a ValidationException if JSON is not valid.
+    public Package(JSONObject jsonObjectSource){
+        this(jsonObjectSource, false);
+    }
+    
+    /**
+     * Load from JSON string.
+     * @param jsonStringSource
+     * @param strict
+     * @throws ValidationException 
+     */
+    public Package(String jsonStringSource, boolean strict) throws ValidationException{
+        if(strict){
+           // Validate data package JSON object before setting it.
+            this.validator.validate(jsonStringSource); // Will throw a ValidationException if JSON is not valid. 
+        }
+        
         this.jsonObject = new JSONObject(jsonStringSource);
     }
     
     /**
-     * Load from URL (must be in either 'http' or 'https' schemes).
-     * @param urlSource 
-     * @throws java.io.IOException 
-     * @throws java.io.FileNotFoundException 
+     * Load from JSON string.
+     * No validation by default.
+     * @param jsonStringSource 
      */
-    public Package(URL urlSource) throws ValidationException, IOException, FileNotFoundException{
+    public Package(String jsonStringSource){
+        this(jsonStringSource, false);
+    }
+    
+    /**
+     * Load from URL (must be in either 'http' or 'https' schemes).
+     * @param urlSource
+     * @param strict
+     * @throws ValidationException
+     * @throws IOException
+     * @throws FileNotFoundException 
+     */
+    public Package(URL urlSource, boolean strict) throws ValidationException, IOException, FileNotFoundException{
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlSource.openStream()))) {
             StringBuilder builder = new StringBuilder();
             int read;
@@ -64,19 +92,34 @@ public class Package {
 
             String jsonString = builder.toString();
             
-            this.validator.validate(jsonString); // Will throw a ValidationException if JSON is not valid.
+            if(strict){
+                this.validator.validate(jsonString); // Will throw a ValidationException if JSON is not valid.
+            }
+
             this.jsonObject = new JSONObject(jsonString);
         }
     }
     
     /**
+     * Load from URL (must be in either 'http' or 'https' schemes).
+     * No validation by default.
+     * @param urlSource
+     * @throws IOException
+     * @throws FileNotFoundException 
+     */
+    public Package(URL urlSource) throws IOException, FileNotFoundException{
+        this(urlSource, false);
+    }
+    
+    /**
      * Load from local file system path.
      * @param filePath
-     * @param basePath 
-     * @throws org.everit.json.schema.ValidationException
-     * @throws java.io.FileNotFoundException
+     * @param basePath
+     * @param strict
+     * @throws ValidationException
+     * @throws FileNotFoundException 
      */
-    public Package(String filePath, String basePath) throws ValidationException, FileNotFoundException {
+    public Package(String filePath, String basePath, boolean strict) throws ValidationException, FileNotFoundException {
         File sourceFile = null;
         
         if(StringUtils.isEmpty(basePath)){
@@ -98,13 +141,28 @@ public class Package {
             // Read file, it should be a JSON.
             JSONObject sourceJsonObject = parseJsonString(sourceFile.getAbsolutePath());
             
-            // Validate obtained data package JSON object before setting it.
-            this.validator.validate(sourceJsonObject);
+            if(strict){
+                // Validate obtained data package JSON object before setting it.
+                this.validator.validate(sourceJsonObject);
+            }
+            
             this.jsonObject = sourceJsonObject;
-
+            
         }else{
             throw new FileNotFoundException();
         }
+    }
+    
+    /**
+     * Load from local file system path.
+     * No validation by default.
+     * @param filePath
+     * @param basePath
+     * @throws ValidationException
+     * @throws FileNotFoundException 
+     */
+    public Package(String filePath, String basePath) throws FileNotFoundException {
+        this(filePath, basePath, false); 
     }
     
     public JSONObject getResource(String resourceName){

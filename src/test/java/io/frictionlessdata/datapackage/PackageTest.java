@@ -57,7 +57,7 @@ public class PackageTest {
         jsonObject.put("resources", resources);
         
         // Build the datapackage
-        Package dp = new Package(jsonObject);
+        Package dp = new Package(jsonObject, true);
         
         // Assert
         Assert.assertNotNull(dp);
@@ -70,14 +70,26 @@ public class PackageTest {
         
         // Build the datapackage, it will throw ValidationException because there are no resources.
         exception.expect(ValidationException.class);
+        Package dp = new Package(jsonObject, true);
+    }
+    
+    @Test
+    public void testLoadInvalidJsonObjectNoStrictValidation(){
+        // Create JSON Object for testing
+        JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
+        
+        // Build the datapackage, no strict validation by default
         Package dp = new Package(jsonObject);
+        
+        // Assert
+        Assert.assertNotNull(dp);
     }
     
 
     @Test
     public void testLoadFromFileWhenPathDoesNotExist() throws FileNotFoundException {
         exception.expect(FileNotFoundException.class);
-        Package dp = new Package("/this/path/does/not/exist", null);
+        Package dp = new Package("/this/path/does/not/exist", null, true);
     }
     
     @Test
@@ -90,7 +102,7 @@ public class PackageTest {
         jsonString = jsonString.replace("\n", "").replace("\r", "").replace(" ", "");
 
         // Build DataPackage instance based on source file path.
-        Package dp = new Package(sourceFileAbsPath, null);
+        Package dp = new Package(sourceFileAbsPath, null, true);
 
         // We're not asserting the String value since the order of the JSONObject elements is not guaranteed.
         // Just compare the length of the String, should be enough.
@@ -107,7 +119,7 @@ public class PackageTest {
         String basePath = sourceFileAbsPath.replace("/" + relativePath, "");
         
         // Build DataPackage instance based on source file path.
-        Package dp = new Package(relativePath, basePath);
+        Package dp = new Package(relativePath, basePath, true);
         Assert.assertNotNull(dp.getJSONObject());
         
         // Check if base path was set properly;
@@ -121,7 +133,7 @@ public class PackageTest {
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/not_a_json_datapackage.json").getPath();
         
         exception.expect(JSONException.class);
-        Package dp = new Package(sourceFileAbsPath, null);
+        Package dp = new Package(sourceFileAbsPath, null, true);
     }
    
     
@@ -130,7 +142,7 @@ public class PackageTest {
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
-        Package dp = new Package(url);
+        Package dp = new Package(url, true);
         Assert.assertNotNull(dp.getJSONObject());
     }
     
@@ -140,8 +152,16 @@ public class PackageTest {
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
         exception.expect(ValidationException.class);
-        Package dp = new Package(url);
+        Package dp = new Package(url, true);
         
+    }
+    
+    @Test
+    public void testValidUrlWithInvalidJsonNoStrictValidation() throws MalformedURLException, IOException{
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
+        
+        Package dp = new Package(url);
+        Assert.assertNotNull(dp.getJSONObject());
     }
     
     @Test
@@ -150,7 +170,7 @@ public class PackageTest {
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/NON-EXISTANT-FOLDER/multi_data_datapackage.json");
         exception.expect(FileNotFoundException.class);
-        Package dp = new Package(url);
+        Package dp = new Package(url, true);
     }
     
     @Test
@@ -227,7 +247,7 @@ public class PackageTest {
         String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
         
         // Create DataPackage instance from jsonString
-        Package dp = new Package(jsonString);
+        Package dp = new Package(jsonString, true);
         
         return dp;
     }    
