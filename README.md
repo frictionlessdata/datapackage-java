@@ -11,7 +11,8 @@ A Java library for working with Data Package.
 
 #### From JSONObject Object
 
- // Create JSON Object for testing
+```java
+// Create JSON Object for testing
 JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
 
 // Build resources
@@ -29,6 +30,7 @@ jsonObject.put("resources", resources);
 
 // Build the datapackage
 Package dp = new Package(jsonObject, true); // Set strict validation to true.
+```
 
 #### From JSON String
 
@@ -54,7 +56,7 @@ Package dp = new Package(url, true); // Set strict validation to true.
 
 ```java
 String relativePath = "datapackage.json";
-String basePath = sourceFileAbsPath.replace("/data");
+String basePath = "/data";
         
 // Build DataPackage instance based on source file path.
 Package dp = new Package(relativePath, basePath, true); // Set strict validation to true.
