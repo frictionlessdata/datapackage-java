@@ -20,6 +20,9 @@ import org.everit.json.schema.ValidationException;
  */
 public class Package {
     
+    private static final String JSON_KEY_RESOURCES = "resources";
+    private static final String JSON_KEY_NAME = "name";
+    
     private String basePath = null;
     private JSONObject jsonObject = null;
     private Validator validator = new Validator();
@@ -105,10 +108,10 @@ public class Package {
     }
     
     public JSONObject getResource(String resourceName){
-        JSONArray jsonArray = this.getJSONObject().getJSONArray("resources");
+        JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
         
         for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString("name").equalsIgnoreCase(resourceName)){
+            if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
                 return jsonArray.getJSONObject(i);
             }
         }
@@ -117,33 +120,33 @@ public class Package {
     }
     
     public JSONArray getResources(){
-        return this.getJSONObject().getJSONArray("resources");
+        return this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
     }
     
     public void addResource(JSONObject resource) throws ValidationException, PackageException{
-        if(!resource.has("name")){
+        if(!resource.has(JSON_KEY_NAME)){
             throw new PackageException("The resource does not have a name property.");
         }
         
-        String resourceName = resource.getString("name");
+        String resourceName = resource.getString(JSON_KEY_NAME);
         
-        JSONArray jsonArray = this.getJSONObject().getJSONArray("resources");
+        JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
         
         for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString("name").equalsIgnoreCase(resourceName)){
+            if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
                 throw new PackageException("A resource with the same name already exists.");
             }
         }
-        this.getJSONObject().getJSONArray("resources").put(resource);
+        this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES).put(resource);
         
         this.validator.validate(this.getJSONObject());
     }
     
     public void removeResource(String name){
-        JSONArray jsonArray = this.getJSONObject().getJSONArray("resources");
+        JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
         
         for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString("name").equalsIgnoreCase(name)){
+            if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(name)){
                 jsonArray.remove(i);
             }
         }
@@ -162,7 +165,7 @@ public class Package {
     }
     
     public void revalidate() throws ValidationException{
-        validator.validate(this.getJSONObject());
+        this.validator.validate(this.getJSONObject());
     }
     
     public String getBasePath(){
