@@ -1,8 +1,8 @@
 {
   "name": "multi-data",
   "resources": [
-    {"name": "first-resource", "path": ["foo.txt", "bar.txt", "baz.txt"]},
-    {"name": "second-resource", "path": ["bar.txt", "baz.txt"]},
-    {"name": "third-resource", "path": ["baz.txt"]}
+    {"name": "first-resource", "path": ["data/cities.csv", "data/population.csv", "data/area.csv"]},
+    {"name": "second-resource", "path": ["data/cities.csv", "data/population.csv"]},
+    {"name": "third-resource", "path": ["data/cities.csv"]}
   ]
 }
