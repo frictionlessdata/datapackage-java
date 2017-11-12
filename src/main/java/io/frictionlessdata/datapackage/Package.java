@@ -165,6 +165,15 @@ public class Package {
         this(filePath, basePath, false); 
     }
     
+    
+    public void infer(){
+        this.infer(false);
+    }
+    
+    public void infer(boolean pattern){
+        throw new UnsupportedOperationException();
+    }
+    
     public JSONObject getResource(String resourceName){
         JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
         
