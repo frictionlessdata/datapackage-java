@@ -222,6 +222,22 @@ public class Package {
         }
     }
     
+    public Object getProperty(String key){
+        return this.getJSONObject().get(key);
+    }
+    
+    public Object getPropertyString(String key){
+        return this.getJSONObject().getString(key);
+    }
+    
+    public Object getPropertyJSONObject(String key){
+        return this.getJSONObject().getJSONObject(key);
+    }
+    
+    public Object getPropertyJSONArray(String key){
+        return this.getJSONObject().getJSONArray(key);
+    }
+    
     public void addProperty(String key, String value) throws DataPackageException{
         if(this.getJSONObject().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
