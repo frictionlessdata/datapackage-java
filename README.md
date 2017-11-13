@@ -7,7 +7,7 @@ A Java library for working with Data Package.
 
 ## Usage
 
-### Data Package
+### Create a Data Package
 
 #### From JSONObject Object
 
@@ -15,7 +15,7 @@ A Java library for working with Data Package.
 // Create JSON Object for testing
 JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
 
-// Build resources
+// Build resources.
 JSONObject resource1 = new JSONObject("{\"name\": \"first-resource\", \"path\": [\"foo.txt\", \"bar.txt\", \"baz.txt\"]}");
 JSONObject resource2 = new JSONObject("{\"name\": \"second-resource\", \"path\": [\"bar.txt\", \"baz.txt\"]}");
 
@@ -25,23 +25,23 @@ resourceArrayList.add(resource2);
 
 JSONArray resources = new JSONArray(resourceArrayList);
 
-// Add the resources
+// Add the resources.
 jsonObject.put("resources", resources);
 
-// Build the datapackage
+// Build the datapackage.
 Package dp = new Package(jsonObject, true); // Set strict validation to true.
 ```
 
 #### From JSON String
 
 ```java
-// The path of the datapackage file:
+// The path of the datapackage file.
 String filepath = "/path/to/file/datapackage.json";
 
 // Get string content version of source file.
 String jsonString = new String(Files.readAllBytes(Paths.get(filepath)));
 
-// Create DataPackage instance from jsonString
+// Create DataPackage instance from jsonString.
 Package dp = new Package(jsonString, true); // Set strict validation to true.
 ```
 
@@ -60,6 +60,73 @@ String basePath = "/data";
         
 // Build DataPackage instance based on source file path.
 Package dp = new Package(relativePath, basePath, true); // Set strict validation to true.
+```
+
+### Edit a Data Package
+
+#### Add a Resource
+
+```java
+// Create a data package.
+Package dp = new Package();
+
+// Add a resource.
+JSONObject resource = new JSONObject("{\"name\": \"new-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}");
+dp.addResource(resource);
+```
+
+A `DataPackageException` will be thrown if the name of the new resource that is being added already exists.
+
+#### Remove a Resource
+
+```java
+// Create a data package.
+URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+Package dp = new Package(url, true); // Set strict validation to true.
+
+// Remove a resource.
+dp.removeResource("third-resource");
+```
+
+#### Add a Property
+
+```java
+// Create a data package
+Package dp = new Package();
+
+// Add a few properties.
+dp.addProperty("name", "a-unique-human-readable-and-url-usable-identifier");
+dp.addProperty("title", "A nice title");
+dp.addProperty("id", "b03ec84-77fd-4270-813b-0c698943f7ce");
+dp.addProperty("profile", "tabular-data-package");
+
+// Create and add license array.
+JSONObject license = new JSONObject();
+license.put("name", "ODC-PDDL-1.0");
+license.put("path", "http://opendatacommons.org/licenses/pddl/");
+license.put("title", "Open Data Commons Public Domain Dedication and License v1.0");
+
+JSONArray licenses = new JSONArray();
+licenses.put(license);
+
+dp.addProperty(licenses);
+```
+
+A `DataPackageException` will be thrown if the key of the new property that is being added already exists.
+
+
+#### Remove a Property
+
+```java
+// Create a data package
+Package dp = new Package();
+
+// Add a few properties.
+dp.addProperty("name", "a-unique-human-readable-and-url-usable-identifier");
+dp.addProperty("title", "A nice title");
+
+// Remove the title property.
+dp.removeProperty("title");
 ```
 
 ## Contributing

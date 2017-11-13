@@ -25,6 +25,9 @@ public class Package {
     private String basePath = null;
     private JSONObject jsonObject = null;
     private Validator validator = new Validator();
+    
+    public Package(){
+    }
 
     /**
      * Load from native Java JSONObject.
@@ -217,6 +220,34 @@ public class Package {
                 jsonArray.remove(i);
             }
         }
+    }
+    
+    public void addProperty(String key, String value) throws DataPackageException{
+        if(this.getJSONObject().has(key)){
+            throw new DataPackageException("A property with the same key already exists.");
+        }else{
+            this.getJSONObject().put(key, value);
+        }
+    }
+    
+    public void addProperty(String key, JSONObject value) throws DataPackageException{
+        if(this.getJSONObject().has(key)){
+            throw new DataPackageException("A property with the same key already exists.");
+        }else{
+            this.getJSONObject().put(key, value);
+        }
+    }
+    
+    public void addProperty(String key, JSONArray value) throws DataPackageException{
+        if(this.getJSONObject().has(key)){
+            throw new DataPackageException("A property with the same key already exists.");
+        }else{
+            this.getJSONObject().put(key, value);
+        }
+    }
+    
+    public void removeProperty(String key){
+        this.getJSONObject().remove(key);
     }
     
     public void addData(String resourceName){
