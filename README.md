@@ -52,7 +52,7 @@ URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackag
 Package dp = new Package(url, true); // Set strict validation to true.
 ```
 
-#### From Local File
+#### From Local JSON File
 
 ```java
 String relativePath = "datapackage.json";
@@ -61,6 +61,15 @@ String basePath = "/data";
 // Build DataPackage instance based on source file path.
 Package dp = new Package(relativePath, basePath, true); // Set strict validation to true.
 ```
+
+#### From Local Zip File
+```java
+Package dp = new Package("/path/of/zip/file/datapackage.zip", true); // Set strict validation to true.
+```
+
+The zip archive must contain a file named _datapackage.json_. If no such file exists, a `DataPackageException` will be thrown.
+If _datapackage.json_ does exist but it is invalid and validation is enabled then a `ValidationException` will be thrown.
+If the zip file does not exist, an `IOException` will be thrown.
 
 ### Edit a Data Package
 
@@ -127,6 +136,25 @@ dp.addProperty("title", "A nice title");
 
 // Remove the title property.
 dp.removeProperty("title");
+```
+
+### Save to File
+
+#### JSON file
+```java
+URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+Package dp = new Package(url);
+
+dp.save("/destination/path/datapackage.json")
+```
+
+
+#### Zip file
+```java
+URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+Package dp = new Package(url);
+
+dp.save("/destination/path/datapackage.zip")
 ```
 
 ## Contributing
