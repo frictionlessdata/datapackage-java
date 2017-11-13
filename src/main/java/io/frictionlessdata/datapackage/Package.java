@@ -1,17 +1,23 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import org.json.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.ValidationException;
 
@@ -170,9 +176,37 @@ public class Package {
         this(filePath, basePath, false); 
     }
     
-    public void save(String outputFilePath) throws IOException{
+    public void save(String outputFilePath) throws IOException, DataPackageException{
+        if(outputFilePath.toLowerCase().endsWith(".json")){
+            this.saveJson(outputFilePath);
+            
+        }else if(outputFilePath.toLowerCase().endsWith(".zip")){
+            this.saveZip(outputFilePath);
+            
+        }else{
+            throw new DataPackageException("Unrecognized file format.");
+        }
+    }
+    
+    private void saveJson(String outputFilePath) throws IOException, DataPackageException{
         try (FileWriter file = new FileWriter(outputFilePath)) {
             file.write(this.getJson().toString(JSON_INDENT_FACTOR));
+        }
+    }
+    
+    private void saveZip(String outputFilePath) throws IOException, DataPackageException{
+        try(FileOutputStream fos = new FileOutputStream(outputFilePath)){
+            try(BufferedOutputStream baos = new BufferedOutputStream(fos)){
+                try(ZipOutputStream zos = new ZipOutputStream(baos)){
+                    // File is not on the disk, test.txt indicates
+                    // only the file name to be put into the zip.
+                    ZipEntry entry = new ZipEntry("datapackage.json"); 
+
+                    zos.putNextEntry(entry);
+                    zos.write(this.getJson().toString(JSON_INDENT_FACTOR).getBytes());
+                    zos.closeEntry();
+                }           
+            }
         }
     }
     
