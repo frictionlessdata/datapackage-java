@@ -7,6 +7,7 @@ import org.json.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -19,8 +20,9 @@ import org.everit.json.schema.ValidationException;
  */
 public class Package {
     
-    private static final String JSON_KEY_RESOURCES = "resources";
-    private static final String JSON_KEY_NAME = "name";
+    private static final int JSON_INDENT_FACTOR = 4;
+    public static final String JSON_KEY_RESOURCES = "resources";
+    public static final String JSON_KEY_NAME = "name";
     
     private String basePath = null;
     private JSONObject jsonObject = null;
@@ -168,6 +170,12 @@ public class Package {
         this(filePath, basePath, false); 
     }
     
+    public void save(String outputFilePath) throws IOException{
+        try (FileWriter file = new FileWriter(outputFilePath)) {
+            file.write(this.getJson().toString(JSON_INDENT_FACTOR));
+        }
+    }
+    
     
     public void infer(){
         this.infer(false);
@@ -178,7 +186,7 @@ public class Package {
     }
     
     public JSONObject getResource(String resourceName){
-        JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
+        JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
         
         for (int i = 0; i < jsonArray.length(); i++) {
             if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
@@ -190,7 +198,7 @@ public class Package {
     }
     
     public JSONArray getResources(){
-        return this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
+        return this.getJson().getJSONArray(JSON_KEY_RESOURCES);
     }
     
     public void addResource(JSONObject resource) throws ValidationException, DataPackageException{
@@ -200,20 +208,20 @@ public class Package {
         
         String resourceName = resource.getString(JSON_KEY_NAME);
         
-        JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
+        JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
         
         for (int i = 0; i < jsonArray.length(); i++) {
             if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
                 throw new DataPackageException("A resource with the same name already exists.");
             }
         }
-        this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES).put(resource);
+        this.getJson().getJSONArray(JSON_KEY_RESOURCES).put(resource);
         
-        this.validator.validate(this.getJSONObject());
+        this.validator.validate(this.getJson());
     }
     
     public void removeResource(String name){
-        JSONArray jsonArray = this.getJSONObject().getJSONArray(JSON_KEY_RESOURCES);
+        JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
         
         for (int i = 0; i < jsonArray.length(); i++) {
             if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(name)){
@@ -223,47 +231,47 @@ public class Package {
     }
     
     public Object getProperty(String key){
-        return this.getJSONObject().get(key);
+        return this.getJson().get(key);
     }
     
     public Object getPropertyString(String key){
-        return this.getJSONObject().getString(key);
+        return this.getJson().getString(key);
     }
     
     public Object getPropertyJSONObject(String key){
-        return this.getJSONObject().getJSONObject(key);
+        return this.getJson().getJSONObject(key);
     }
     
     public Object getPropertyJSONArray(String key){
-        return this.getJSONObject().getJSONArray(key);
+        return this.getJson().getJSONArray(key);
     }
     
     public void addProperty(String key, String value) throws DataPackageException{
-        if(this.getJSONObject().has(key)){
+        if(this.getJson().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJSONObject().put(key, value);
+            this.getJson().put(key, value);
         }
     }
     
     public void addProperty(String key, JSONObject value) throws DataPackageException{
-        if(this.getJSONObject().has(key)){
+        if(this.getJson().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJSONObject().put(key, value);
+            this.getJson().put(key, value);
         }
     }
     
     public void addProperty(String key, JSONArray value) throws DataPackageException{
-        if(this.getJSONObject().has(key)){
+        if(this.getJson().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJSONObject().put(key, value);
+            this.getJson().put(key, value);
         }
     }
     
     public void removeProperty(String key){
-        this.getJSONObject().remove(key);
+        this.getJson().remove(key);
     }
     
     public void addData(String resourceName){
@@ -279,14 +287,14 @@ public class Package {
     }
     
     public void validate() throws ValidationException{
-        this.validator.validate(this.getJSONObject());
+        this.validator.validate(this.getJson());
     }
     
     public String getBasePath(){
         return this.basePath;
     }
     
-    public JSONObject getJSONObject(){
+    public JSONObject getJson(){
         return this.jsonObject;
     }
     

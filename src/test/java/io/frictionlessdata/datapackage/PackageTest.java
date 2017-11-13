@@ -106,7 +106,7 @@ public class PackageTest {
 
         // We're not asserting the String value since the order of the JSONObject elements is not guaranteed.
         // Just compare the length of the String, should be enough.
-        Assert.assertEquals(dp.getJSONObject().toString().length(), jsonString.length());
+        Assert.assertEquals(dp.getJson().toString().length(), jsonString.length());
         
     }
     
@@ -120,7 +120,7 @@ public class PackageTest {
         
         // Build DataPackage instance based on source file path.
         Package dp = new Package(relativePath, basePath, true);
-        Assert.assertNotNull(dp.getJSONObject());
+        Assert.assertNotNull(dp.getJson());
         
         // Check if base path was set properly;
         Assert.assertEquals(basePath, dp.getBasePath());
@@ -143,7 +143,7 @@ public class PackageTest {
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
         Package dp = new Package(url, true);
-        Assert.assertNotNull(dp.getJSONObject());
+        Assert.assertNotNull(dp.getJson());
     }
     
     @Test
@@ -161,7 +161,7 @@ public class PackageTest {
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
         
         Package dp = new Package(url);
-        Assert.assertNotNull(dp.getJSONObject());
+        Assert.assertNotNull(dp.getJson());
     }
     
     @Test
