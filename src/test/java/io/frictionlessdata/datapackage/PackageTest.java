@@ -257,6 +257,21 @@ public class PackageTest {
         Assert.assertTrue(readPackage.getJson().similar(savedPackage.getJson()));
     }
     
+    @Test
+    public void testSaveToAndReadFromZipFile() throws Exception{
+        
+    }
+    
+    @Test
+    public void testSaveToFilenameWithInvalidFileType() throws Exception{
+        File createdFile = folder.newFile("test_save_datapackage.txt");
+        
+        Package savedPackage = this.getSimpleMultiDataPackageFromString();
+        
+        exception.expect(DataPackageException.class);
+        savedPackage.save(createdFile.getAbsolutePath());
+    }
+    
     
     private Package getSimpleMultiDataPackageFromString() throws IOException{
         // Get path of source file:
