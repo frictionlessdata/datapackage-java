@@ -33,7 +33,7 @@ public class PackageTest {
     public final ExpectedException exception = ExpectedException.none();
     
     @Test
-    public void testLoadFromJsonString() throws IOException{
+    public void testLoadFromJsonString() throws DataPackageException, IOException{
 
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString();
@@ -178,14 +178,14 @@ public class PackageTest {
     }
     
     @Test
-    public void testGetResources() throws IOException{
+    public void testGetResources() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString();
         Assert.assertEquals(3, dp.getResources().length());
     }
     
     @Test
-    public void testGetExistingResource() throws IOException{
+    public void testGetExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString();
         JSONObject resourceJsonObject = dp.getResource("third-resource");
@@ -193,7 +193,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testGetNonExistingResource() throws IOException{
+    public void testGetNonExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString();
         JSONObject resourceJsonObject = dp.getResource("non-existing-resource");
@@ -201,7 +201,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testRemoveResource() throws IOException{
+    public void testRemoveResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString();
         
         Assert.assertEquals(3, dp.getResources().length());
@@ -254,12 +254,33 @@ public class PackageTest {
         
         Package readPackage = new Package(relativePath, basePath);
         
+        // Check if two data packages are have the same key/value pairs.
         Assert.assertTrue(readPackage.getJson().similar(savedPackage.getJson()));
     }
     
     @Test
     public void testSaveToAndReadFromZipFile() throws Exception{
+        File createdFile = folder.newFile("test_save_datapackage.zip");
         
+        // save the datapackage in zip file.
+        Package savedPackage = this.getSimpleMultiDataPackageFromString();
+        savedPackage.save(createdFile.getAbsolutePath());
+        
+        // Read the datapckage we just saved in the zip file.
+        Package readPackage = new Package(createdFile.getAbsolutePath());
+        
+        // Check if two data packages are have the same key/value pairs.
+        Assert.assertTrue(readPackage.getJson().similar(savedPackage.getJson()));
+    }
+    
+    @Test
+    public void testReadFromZipFileWithInvalidDatapackageFilenameInside() throws Exception{
+         exception.expect(DataPackageException.class);
+    }
+    
+    @Test
+    public void testReadFromZipFileWithInvalidDatapackageDescriptor() throws Exception{
+        exception.expect(ValidationException.class);
     }
     
     @Test
@@ -273,7 +294,7 @@ public class PackageTest {
     }
     
     
-    private Package getSimpleMultiDataPackageFromString() throws IOException{
+    private Package getSimpleMultiDataPackageFromString() throws DataPackageException, IOException{
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
 

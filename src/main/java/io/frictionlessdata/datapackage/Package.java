@@ -1,10 +1,8 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import org.json.*;
 
@@ -13,10 +11,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.ValidationException;
@@ -27,6 +27,7 @@ import org.everit.json.schema.ValidationException;
 public class Package {
     
     private static final int JSON_INDENT_FACTOR = 4;
+    private static final String DATAPACKAGE_FILENAME = "datapackage.json";
     public static final String JSON_KEY_RESOURCES = "resources";
     public static final String JSON_KEY_NAME = "name";
     
@@ -61,26 +62,66 @@ public class Package {
     }
     
     /**
-     * Load from JSON string.
+     * Load from String representation of JSON object or from a zip file path.
      * @param jsonStringSource
      * @param strict
-     * @throws ValidationException 
+     * @throws DataPackageException
+     * @throws ValidationException
+     * @throws IOException 
      */
-    public Package(String jsonStringSource, boolean strict) throws ValidationException{
-        if(strict){
-           // Validate data package JSON object before setting it.
-            this.validator.validate(jsonStringSource); // Will throw a ValidationException if JSON is not valid. 
-        }
+    public Package(String jsonStringSource, boolean strict) throws DataPackageException, ValidationException, IOException{
         
-        this.jsonObject = new JSONObject(jsonStringSource);
+        // If zip file is given.
+        if(jsonStringSource.toLowerCase().endsWith(".zip")){
+            // Read in memory the file inside the zip.
+            ZipFile zipFile = new ZipFile(jsonStringSource);
+            ZipEntry entry = zipFile.getEntry(DATAPACKAGE_FILENAME);
+            
+            // Throw exception if expected datapackage.json file not found.
+            if(entry == null){
+                throw new DataPackageException("The zip file does not contain the expected file: " + DATAPACKAGE_FILENAME);
+            }
+            
+            // Read the datapackage.json file inside the zip
+            try(InputStream is = zipFile.getInputStream(entry)){
+                StringBuilder out = new StringBuilder();
+                try(BufferedReader reader = new BufferedReader(new InputStreamReader(is))){
+                    String line = null;
+                    while ((line = reader.readLine()) != null) {
+                        out.append(line);
+                    }
+                }
+                
+                // Validate
+                if(strict){
+                    // Validate data package JSON String before setting it.
+                    this.validator.validate(out.toString()); // Will throw a ValidationException if JSON is not valid. 
+                }
+
+                // Create and set the JSONObject for the datapackage.json that was read from inside the zip file.
+                this.jsonObject = new JSONObject(out.toString());   
+            }
+   
+        }else{
+            // If String representation of desriptor JSON object is provided.
+            if(strict){
+               // Validate data package JSON String before setting it.
+               this.validator.validate(jsonStringSource); // Will throw a ValidationException if JSON is not valid. 
+            }
+
+            // Create and set the JSONObject fpr the String representation of desriptor JSON object.
+            this.jsonObject = new JSONObject(jsonStringSource);  
+        }
     }
     
     /**
-     * Load from JSON string.
-     * No validation by default.
-     * @param jsonStringSource 
+     * Load from String representation of JSON object or from a zip file path.
+     * @param jsonStringSource
+     * @throws DataPackageException
+     * @throws ValidationException
+     * @throws IOException 
      */
-    public Package(String jsonStringSource){
+    public Package(String jsonStringSource) throws DataPackageException, ValidationException, IOException{
         this(jsonStringSource, false);
     }
     
@@ -196,8 +237,8 @@ public class Package {
     
     private void saveZip(String outputFilePath) throws IOException, DataPackageException{
         try(FileOutputStream fos = new FileOutputStream(outputFilePath)){
-            try(BufferedOutputStream baos = new BufferedOutputStream(fos)){
-                try(ZipOutputStream zos = new ZipOutputStream(baos)){
+            try(BufferedOutputStream bos = new BufferedOutputStream(fos)){
+                try(ZipOutputStream zos = new ZipOutputStream(bos)){
                     // File is not on the disk, test.txt indicates
                     // only the file name to be put into the zip.
                     ZipEntry entry = new ZipEntry("datapackage.json"); 
