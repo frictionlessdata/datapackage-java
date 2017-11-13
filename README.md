@@ -82,7 +82,7 @@ A `DataPackageException` will be thrown if the name of the new resource that is 
 ```java
 // Create a data package.
 URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
-Package dp = new Package(url, true); // Set strict validation to true.
+Package dp = new Package(url);
 
 // Remove a resource.
 dp.removeResource("third-resource");
