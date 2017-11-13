@@ -67,9 +67,10 @@ Package dp = new Package(relativePath, basePath, true); // Set strict validation
 Package dp = new Package("/path/of/zip/file/datapackage.zip", true); // Set strict validation to true.
 ```
 
-The zip archive must contain a file named _datapackage.json_. If no such file exists, a `DataPackageException` will be thrown.
-If _datapackage.json_ does exist but it is invalid and validation is enabled then a `ValidationException` will be thrown.
-If the zip file does not exist, an `IOException` will be thrown.
+Exceptions are thrown for the following scenarios:
+- The zip archive must contain a file named _datapackage.json_. If no such file exists, a `DataPackageException` will be thrown.
+- If _datapackage.json_ does exist but it is invalid and validation is enabled then a `ValidationException` will be thrown.
+- If the zip file does not exist, an `IOException` will be thrown.
 
 ### Edit a Data Package
 
@@ -140,7 +141,7 @@ dp.removeProperty("title");
 
 ### Save to File
 
-#### JSON file
+#### JSON File
 ```java
 URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
 Package dp = new Package(url);
@@ -149,7 +150,7 @@ dp.save("/destination/path/datapackage.json")
 ```
 
 
-#### Zip file
+#### Zip File
 ```java
 URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
 Package dp = new Package(url);
