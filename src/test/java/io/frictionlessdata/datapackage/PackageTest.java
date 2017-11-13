@@ -275,12 +275,24 @@ public class PackageTest {
     
     @Test
     public void testReadFromZipFileWithInvalidDatapackageFilenameInside() throws Exception{
-         exception.expect(DataPackageException.class);
+        String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/zip/invalid_filename_datapackage.zip").getPath();
+        
+        exception.expect(DataPackageException.class);
+        Package p = new Package(sourceFileAbsPath);
     }
     
     @Test
-    public void testReadFromZipFileWithInvalidDatapackageDescriptor() throws Exception{
+    public void testReadFromZipFileWithInvalidDatapackageDescriptorAndStrictValidation() throws Exception{
+        String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/zip/invalid_datapackage.zip").getPath();
+        
         exception.expect(ValidationException.class);
+        Package p = new Package(sourceFileAbsPath, true);
+    }
+    
+    @Test
+    public void testReadFromInvalidZipFilePath() throws Exception{
+        exception.expect(IOException.class);
+        Package p = new Package("/invalid/path/does/not/exist/datapackage.zip");  
     }
     
     @Test
