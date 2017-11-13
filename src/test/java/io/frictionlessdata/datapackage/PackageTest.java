@@ -1,6 +1,7 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -17,6 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.Assert;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
@@ -25,8 +27,10 @@ import org.junit.Assert;
 public class PackageTest {
     
     @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+    
+    @Rule
     public final ExpectedException exception = ExpectedException.none();
-   
     
     @Test
     public void testLoadFromJsonString() throws IOException{
@@ -236,6 +240,21 @@ public class PackageTest {
         
         exception.expect(DataPackageException.class);
         dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+    }
+    
+    @Test
+    public void testSaveToJsonFile() throws Exception{
+        File createdFile = folder.newFile("test_save_datapackage.json");
+        
+        Package savedPackage = this.getSimpleMultiDataPackageFromString();
+        savedPackage.save(createdFile.getAbsolutePath());
+        
+        String relativePath = "test_save_datapackage.json";
+        String basePath = createdFile.getAbsolutePath().replace("/" + relativePath, "");
+        
+        Package readPackage = new Package(relativePath, basePath);
+        
+        Assert.assertTrue(readPackage.getJson().similar(savedPackage.getJson()));
     }
     
     
