@@ -32,6 +32,7 @@ public class Package {
     private static final String DATAPACKAGE_FILENAME = "datapackage.json";
     public static final String JSON_KEY_RESOURCES = "resources";
     public static final String JSON_KEY_NAME = "name";
+    public static final String JSON_KEY_PROFILE = "profile";
     
     private String basePath = null;
     private JSONObject jsonObject = null;
@@ -46,9 +47,11 @@ public class Package {
      * Load from native Java JSONObject.
      * @param jsonObjectSource
      * @param strict
+     * @throws IOException
+     * @throws DataPackageException
      * @throws ValidationException 
      */
-    public Package(JSONObject jsonObjectSource, boolean strict) throws ValidationException{ 
+    public Package(JSONObject jsonObjectSource, boolean strict) throws IOException, DataPackageException, ValidationException{ 
         this.jsonObject = jsonObjectSource;
         this.strictValidation = strict;
         
@@ -57,10 +60,11 @@ public class Package {
     
     /**
      * Load from native Java JSONObject.
-     * No validation by default.
-     * @param jsonObjectSource 
+     * @param jsonObjectSource
+     * @throws IOException
+     * @throws DataPackageException 
      */
-    public Package(JSONObject jsonObjectSource){
+    public Package(JSONObject jsonObjectSource) throws IOException, DataPackageException{
         this(jsonObjectSource, false);
     }
     
@@ -68,11 +72,12 @@ public class Package {
      * Load from String representation of JSON object or from a zip file path.
      * @param jsonStringSource
      * @param strict
+     * @throws IOException
      * @throws DataPackageException
      * @throws ValidationException
      * @throws IOException 
      */
-    public Package(String jsonStringSource, boolean strict) throws DataPackageException, ValidationException, IOException{
+    public Package(String jsonStringSource, boolean strict) throws IOException, DataPackageException, ValidationException, IOException{
         this.strictValidation = strict;
         
         // If zip file is given.
@@ -126,11 +131,12 @@ public class Package {
      * Load from URL (must be in either 'http' or 'https' schemes).
      * @param urlSource
      * @param strict
+     * @throws DataPackageException
      * @throws ValidationException
      * @throws IOException
      * @throws FileNotFoundException 
      */
-    public Package(URL urlSource, boolean strict) throws ValidationException, IOException, FileNotFoundException{
+    public Package(URL urlSource, boolean strict) throws DataPackageException, ValidationException, IOException, FileNotFoundException{
         this.strictValidation = strict;
         
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlSource.openStream()))) {
@@ -152,10 +158,11 @@ public class Package {
      * Load from URL (must be in either 'http' or 'https' schemes).
      * No validation by default.
      * @param urlSource
+     * @throws DataPackageException
      * @throws IOException
      * @throws FileNotFoundException 
      */
-    public Package(URL urlSource) throws IOException, FileNotFoundException{
+    public Package(URL urlSource) throws DataPackageException, IOException, FileNotFoundException{
         this(urlSource, false);
     }
     
@@ -164,10 +171,11 @@ public class Package {
      * @param filePath
      * @param basePath
      * @param strict
+     * @throws DataPackageException
      * @throws ValidationException
      * @throws FileNotFoundException 
      */
-    public Package(String filePath, String basePath, boolean strict) throws ValidationException, FileNotFoundException {
+    public Package(String filePath, String basePath, boolean strict) throws IOException, DataPackageException, ValidationException, FileNotFoundException {
         this.strictValidation = strict;
         File sourceFile = null;
         
@@ -203,10 +211,11 @@ public class Package {
      * No validation by default.
      * @param filePath
      * @param basePath
-     * @throws ValidationException
+     * @throws IOException
+     * @throws DataPackageException
      * @throws FileNotFoundException 
      */
-    public Package(String filePath, String basePath) throws FileNotFoundException {
+    public Package(String filePath, String basePath) throws IOException, DataPackageException, FileNotFoundException {
         this(filePath, basePath, false); 
     }
     
@@ -269,7 +278,7 @@ public class Package {
         return this.getJson().getJSONArray(JSON_KEY_RESOURCES);
     }
     
-    public void addResource(JSONObject resource) throws ValidationException, DataPackageException{
+    public void addResource(JSONObject resource) throws IOException, ValidationException, DataPackageException{
         
         // If a name property isn't given...
         if(!resource.has(JSON_KEY_NAME)){
@@ -374,9 +383,11 @@ public class Package {
     /**
      * Validation is strict or unstrict depending on how the package was
      * instanciated with the strict flag.
+     * @throws IOException
+     * @throws DataPackageException
      * @throws ValidationException 
      */
-    public final void validate() throws ValidationException{
+    public final void validate() throws IOException, DataPackageException, ValidationException{
         try{
             this.validator.validate(this.getJson());
             

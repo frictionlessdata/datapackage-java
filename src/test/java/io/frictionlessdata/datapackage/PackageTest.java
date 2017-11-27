@@ -43,7 +43,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadFromValidJsonObject(){
+    public void testLoadFromValidJsonObject() throws DataPackageException{
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
           
@@ -68,7 +68,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadInvalidJsonObject(){
+    public void testLoadInvalidJsonObject() throws DataPackageException{
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
         
@@ -78,7 +78,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadInvalidJsonObjectNoStrictValidation(){
+    public void testLoadInvalidJsonObjectNoStrictValidation() throws DataPackageException{
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
         
@@ -91,13 +91,13 @@ public class PackageTest {
     
 
     @Test
-    public void testLoadFromFileWhenPathDoesNotExist() throws FileNotFoundException {
+    public void testLoadFromFileWhenPathDoesNotExist() throws DataPackageException, FileNotFoundException {
         exception.expect(FileNotFoundException.class);
         Package dp = new Package("/this/path/does/not/exist", null, true);
     }
     
     @Test
-    public void testLoadFromFileWhenPathExists() throws FileNotFoundException, IOException {
+    public void testLoadFromFileWhenPathExists() throws DataPackageException, FileNotFoundException, IOException {
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
 
@@ -115,7 +115,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadFromFileBasePath() throws FileNotFoundException, IOException {
+    public void testLoadFromFileBasePath() throws DataPackageException, FileNotFoundException, IOException {
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
         
@@ -132,7 +132,7 @@ public class PackageTest {
     
     
     @Test
-    public void testLoadFromFileWhenPathExistsButIsNotJson() throws FileNotFoundException{
+    public void testLoadFromFileWhenPathExistsButIsNotJson() throws DataPackageException, FileNotFoundException{
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/not_a_json_datapackage.json").getPath();
         
@@ -142,7 +142,7 @@ public class PackageTest {
    
     
     @Test
-    public void testValidUrl() throws MalformedURLException, IOException{
+    public void testValidUrl() throws DataPackageException, MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
@@ -151,7 +151,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testValidUrlWithInvalidJson() throws MalformedURLException, IOException{
+    public void testValidUrlWithInvalidJson() throws DataPackageException, MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
@@ -161,7 +161,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testValidUrlWithInvalidJsonNoStrictValidation() throws MalformedURLException, IOException{
+    public void testValidUrlWithInvalidJsonNoStrictValidation() throws DataPackageException, MalformedURLException, IOException{
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
         
         Package dp = new Package(url);
@@ -169,7 +169,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testUrlDoesNotExist() throws MalformedURLException, IOException{
+    public void testUrlDoesNotExist() throws DataPackageException, MalformedURLException, IOException{
         // Preferably we would use mockito/powermock to mock URL Connection
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/NON-EXISTANT-FOLDER/multi_data_datapackage.json");
