@@ -48,14 +48,11 @@ public class Package {
      * @param strict
      * @throws ValidationException 
      */
-    public Package(JSONObject jsonObjectSource, boolean strict) throws ValidationException{
+    public Package(JSONObject jsonObjectSource, boolean strict) throws ValidationException{ 
         this.jsonObject = jsonObjectSource;
         this.strictValidation = strict;
         
-        if(strict){
-            // Validate data package JSON object before setting it.
-            this.validator.validate(jsonObjectSource); // Will throw a ValidationException if JSON is not valid.
-        }   
+        this.validate();
     }
     
     /**
@@ -99,25 +96,18 @@ public class Package {
                     }
                 }
                 
-                // Validate
-                if(strict){
-                    // Validate data package JSON String before setting it.
-                    this.validator.validate(out.toString()); // Will throw a ValidationException if JSON is not valid. 
-                }
-
                 // Create and set the JSONObject for the datapackage.json that was read from inside the zip file.
-                this.jsonObject = new JSONObject(out.toString());   
+                this.jsonObject = new JSONObject(out.toString());  
+                
+                this.validate();
             }
    
         }else{
-            // If String representation of desriptor JSON object is provided.
-            if(strict){
-               // Validate data package JSON String before setting it.
-               this.validator.validate(jsonStringSource); // Will throw a ValidationException if JSON is not valid. 
-            }
-
             // Create and set the JSONObject fpr the String representation of desriptor JSON object.
-            this.jsonObject = new JSONObject(jsonStringSource);  
+            this.jsonObject = new JSONObject(jsonStringSource); 
+            
+            // If String representation of desriptor JSON object is provided.
+            this.validate(); 
         }
     }
     
@@ -153,11 +143,8 @@ public class Package {
 
             String jsonString = builder.toString();
             
-            if(strict){
-                this.validator.validate(jsonString); // Will throw a ValidationException if JSON is not valid.
-            }
-
             this.jsonObject = new JSONObject(jsonString);
+            this.validate();  
         }
     }
     
@@ -203,13 +190,9 @@ public class Package {
             // Read file, it should be a JSON.
             JSONObject sourceJsonObject = parseJsonString(sourceFile.getAbsolutePath());
             
-            if(strict){
-                // Validate obtained data package JSON object before setting it.
-                this.validator.validate(sourceJsonObject);
-            }
-            
             this.jsonObject = sourceJsonObject;
-            
+            this.validate();
+
         }else{
             throw new FileNotFoundException();
         }
@@ -317,16 +300,7 @@ public class Package {
         }
         
         // Validate.
-        try{
-            this.validator.validate(this.getJson());
-            
-        }catch(ValidationException ve){
-            if(this.strictValidation){
-                throw ve;
-            }else{
-                errors.add(ve);
-            }
-        }
+        this.validate();
         
         this.getJson().getJSONArray(JSON_KEY_RESOURCES).put(resource);  
     }
@@ -397,8 +371,22 @@ public class Package {
         throw new UnsupportedOperationException();
     }
     
-    public void validate() throws ValidationException{
-        this.validator.validate(this.getJson());
+    /**
+     * Validation is strict or unstrict depending on how the package was
+     * instanciated with the strict flag.
+     * @throws ValidationException 
+     */
+    public final void validate() throws ValidationException{
+        try{
+            this.validator.validate(this.getJson());
+            
+        }catch(ValidationException ve){
+            if(this.strictValidation){
+                throw ve;
+            }else{
+                errors.add(ve);
+            }
+        }
     }
     
     public String getBasePath(){
