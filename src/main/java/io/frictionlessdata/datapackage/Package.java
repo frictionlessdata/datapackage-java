@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -33,6 +35,8 @@ public class Package {
     
     private String basePath = null;
     private JSONObject jsonObject = null;
+    private boolean strictValidation = false;
+    private List<Exception> errors = new ArrayList();
     private Validator validator = new Validator();
     
     public Package(){
@@ -45,11 +49,13 @@ public class Package {
      * @throws ValidationException 
      */
     public Package(JSONObject jsonObjectSource, boolean strict) throws ValidationException{
+        this.jsonObject = jsonObjectSource;
+        this.strictValidation = strict;
+        
         if(strict){
             // Validate data package JSON object before setting it.
             this.validator.validate(jsonObjectSource); // Will throw a ValidationException if JSON is not valid.
-        }
-        this.jsonObject = jsonObjectSource;
+        }   
     }
     
     /**
@@ -70,6 +76,7 @@ public class Package {
      * @throws IOException 
      */
     public Package(String jsonStringSource, boolean strict) throws DataPackageException, ValidationException, IOException{
+        this.strictValidation = strict;
         
         // If zip file is given.
         if(jsonStringSource.toLowerCase().endsWith(".zip")){
@@ -134,6 +141,8 @@ public class Package {
      * @throws FileNotFoundException 
      */
     public Package(URL urlSource, boolean strict) throws ValidationException, IOException, FileNotFoundException{
+        this.strictValidation = strict;
+        
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlSource.openStream()))) {
             StringBuilder builder = new StringBuilder();
             int read;
@@ -172,6 +181,7 @@ public class Package {
      * @throws FileNotFoundException 
      */
     public Package(String filePath, String basePath, boolean strict) throws ValidationException, FileNotFoundException {
+        this.strictValidation = strict;
         File sourceFile = null;
         
         if(StringUtils.isEmpty(basePath)){
@@ -277,22 +287,48 @@ public class Package {
     }
     
     public void addResource(JSONObject resource) throws ValidationException, DataPackageException{
+        
+        // If a name property isn't given...
         if(!resource.has(JSON_KEY_NAME)){
-            throw new DataPackageException("The resource does not have a name property.");
-        }
-        
-        String resourceName = resource.getString(JSON_KEY_NAME);
-        
-        JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
-        
-        for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
-                throw new DataPackageException("A resource with the same name already exists.");
+            DataPackageException dpe = new DataPackageException("The resource does not have a name property.");
+
+            if(this.strictValidation){
+                throw dpe;
+            }else{
+                errors.add(dpe);
+            }
+            
+        }else{
+            String resourceName = resource.getString(JSON_KEY_NAME);
+            JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
+
+            // Check if there is duplication.
+            for (int i = 0; i < jsonArray.length(); i++) {
+                if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
+                    DataPackageException dpe = new DataPackageException("A resource with the same name already exists.");
+
+                    if(this.strictValidation){
+                        throw dpe;
+                    }else{
+                        errors.add(dpe);
+                    }
+                }
             }
         }
-        this.getJson().getJSONArray(JSON_KEY_RESOURCES).put(resource);
         
-        this.validator.validate(this.getJson());
+        // Validate.
+        try{
+            this.validator.validate(this.getJson());
+            
+        }catch(ValidationException ve){
+            if(this.strictValidation){
+                throw ve;
+            }else{
+                errors.add(ve);
+            }
+        }
+        
+        this.getJson().getJSONArray(JSON_KEY_RESOURCES).put(resource);  
     }
     
     public void removeResource(String name){
@@ -371,6 +407,10 @@ public class Package {
     
     public JSONObject getJson(){
         return this.jsonObject;
+    }
+    
+    public List<Exception> getErrors(){
+        return this.errors;
     }
     
     private JSONObject parseJsonString(String absoluteFilePath) throws JSONException{

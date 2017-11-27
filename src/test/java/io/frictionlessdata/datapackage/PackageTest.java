@@ -36,7 +36,7 @@ public class PackageTest {
     public void testLoadFromJsonString() throws DataPackageException, IOException{
 
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString();
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
         
         // Assert
         Assert.assertNotNull(dp);
@@ -180,14 +180,14 @@ public class PackageTest {
     @Test
     public void testGetResources() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString();
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
         Assert.assertEquals(3, dp.getResources().length());
     }
     
     @Test
     public void testGetExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString();
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
         JSONObject resourceJsonObject = dp.getResource("third-resource");
         Assert.assertNotNull(resourceJsonObject);
     }
@@ -195,14 +195,14 @@ public class PackageTest {
     @Test
     public void testGetNonExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString();
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
         JSONObject resourceJsonObject = dp.getResource("non-existing-resource");
         Assert.assertNull(resourceJsonObject);
     }
     
     @Test
     public void testRemoveResource() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString();
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
         
         Assert.assertEquals(3, dp.getResources().length());
         dp.removeResource("second-resource");
@@ -217,7 +217,7 @@ public class PackageTest {
     
     @Test
     public void testAddValidResource() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString();
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
         
         Assert.assertEquals(3, dp.getResources().length());
         dp.addResource(new JSONObject("{\"name\": \"new-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
@@ -228,25 +228,47 @@ public class PackageTest {
     }
     
     @Test
-    public void testAddInvalidResource() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString();
-        exception.expect(DataPackageException.class);
+    public void testAddInvalidResourceWithStrictValidation() throws DataPackageException, IOException{
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
+
+        exception.expectMessage("The resource does not have a name property.");
         dp.addResource(new JSONObject("{}"));
     }
     
     @Test
-    public void testAddDuplicateNameResource() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString();
+    public void testAddInvalidResourceWithoutStrictValidation() throws DataPackageException, IOException{
+        Package dp = this.getSimpleMultiDataPackageFromString(false);
+        dp.addResource(new JSONObject("{}"));
         
-        exception.expect(DataPackageException.class);
+        Assert.assertEquals(1, dp.getErrors().size());
+        Assert.assertEquals("The resource does not have a name property.", dp.getErrors().get(0).getMessage());
+    }
+
+    
+    @Test
+    public void testAddDuplicateNameResourceWithStrictValidation() throws DataPackageException, IOException{
+        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        
+        exception.expectMessage("A resource with the same name already exists.");
         dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
     }
+    
+    @Test
+    public void testAddDuplicateNameResourceWithoutStrictValidation() throws DataPackageException, IOException{
+        Package dp = this.getSimpleMultiDataPackageFromString(false);
+        
+        dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+        
+        Assert.assertEquals(1, dp.getErrors().size());
+        Assert.assertEquals("A resource with the same name already exists.", dp.getErrors().get(0).getMessage());
+    }
+    
     
     @Test
     public void testSaveToJsonFile() throws Exception{
         File createdFile = folder.newFile("test_save_datapackage.json");
         
-        Package savedPackage = this.getSimpleMultiDataPackageFromString();
+        Package savedPackage = this.getSimpleMultiDataPackageFromString(true);
         savedPackage.save(createdFile.getAbsolutePath());
         
         String relativePath = "test_save_datapackage.json";
@@ -263,7 +285,7 @@ public class PackageTest {
         File createdFile = folder.newFile("test_save_datapackage.zip");
         
         // save the datapackage in zip file.
-        Package savedPackage = this.getSimpleMultiDataPackageFromString();
+        Package savedPackage = this.getSimpleMultiDataPackageFromString(true);
         savedPackage.save(createdFile.getAbsolutePath());
         
         // Read the datapckage we just saved in the zip file.
@@ -299,14 +321,14 @@ public class PackageTest {
     public void testSaveToFilenameWithInvalidFileType() throws Exception{
         File createdFile = folder.newFile("test_save_datapackage.txt");
         
-        Package savedPackage = this.getSimpleMultiDataPackageFromString();
+        Package savedPackage = this.getSimpleMultiDataPackageFromString(true);
         
         exception.expect(DataPackageException.class);
         savedPackage.save(createdFile.getAbsolutePath());
     }
     
     
-    private Package getSimpleMultiDataPackageFromString() throws DataPackageException, IOException{
+    private Package getSimpleMultiDataPackageFromString(boolean strict) throws DataPackageException, IOException{
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
 
@@ -314,7 +336,7 @@ public class PackageTest {
         String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
         
         // Create DataPackage instance from jsonString
-        Package dp = new Package(jsonString, true);
+        Package dp = new Package(jsonString, strict);
         
         return dp;
     }    
