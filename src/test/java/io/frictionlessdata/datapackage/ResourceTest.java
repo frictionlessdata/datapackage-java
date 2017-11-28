@@ -3,7 +3,6 @@ package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.csv.CSVRecord;
@@ -19,8 +18,8 @@ public class ResourceTest {
     @Test
     public void testValidationWithValidProfileUrl() throws IOException, DataPackageException, MalformedURLException{
 
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/valid_population_datapackage.json");
-        Resource resource = new Resource("population", url, "csv");
+        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
+        Resource resource = new Resource("population", filePath);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);

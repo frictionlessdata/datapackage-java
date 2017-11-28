@@ -49,7 +49,7 @@ public class Resource {
 
     public Iterable<CSVRecord> iter() throws IOException, FileNotFoundException, DataPackageException{
         // Error for non tabular
-        if(this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
+        if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
             throw new DataPackageException("Unsupported for non tabular data.");
         }
         
@@ -68,7 +68,7 @@ public class Resource {
     }
     
     public void read() throws DataPackageException{
-        if(this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
+        if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
             throw new DataPackageException("Unsupported for non tabular data.");
         }
         
