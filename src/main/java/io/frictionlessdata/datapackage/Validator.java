@@ -17,7 +17,7 @@ import org.json.JSONTokener;
  */
 public class Validator {
     
-    private final static String PROFILE_DEFAULT = "data-package";
+    
     
     /**
      * Validates a given JSON Object against the default profile schema.
@@ -43,7 +43,7 @@ public class Validator {
             
         }else{
             // If no profile value is provided, use default value.
-            this.validate(datapackageJsonObject, PROFILE_DEFAULT);
+            this.validate(datapackageJsonObject, Profile.PROFILE_DEFAULT);
         }   
     }
     

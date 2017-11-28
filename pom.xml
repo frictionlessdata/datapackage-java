@@ -75,5 +75,13 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.6</version>
         </dependency>
+        
+        <!-- Commons CSV: https://commons.apache.org/proper/commons-csv/ -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.5</version>
+        </dependency>
+
     </dependencies>
 </project>
