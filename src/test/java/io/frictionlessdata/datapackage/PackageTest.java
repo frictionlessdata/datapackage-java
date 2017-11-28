@@ -43,7 +43,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadFromValidJsonObject() throws DataPackageException{
+    public void testLoadFromValidJsonObject() throws IOException, DataPackageException{
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
           
@@ -68,7 +68,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadInvalidJsonObject() throws DataPackageException{
+    public void testLoadInvalidJsonObject() throws IOException, DataPackageException{
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
         
@@ -78,7 +78,7 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadInvalidJsonObjectNoStrictValidation() throws DataPackageException{
+    public void testLoadInvalidJsonObjectNoStrictValidation() throws IOException, DataPackageException{
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
         
@@ -91,7 +91,7 @@ public class PackageTest {
     
 
     @Test
-    public void testLoadFromFileWhenPathDoesNotExist() throws DataPackageException, FileNotFoundException {
+    public void testLoadFromFileWhenPathDoesNotExist() throws IOException, DataPackageException, FileNotFoundException {
         exception.expect(FileNotFoundException.class);
         Package dp = new Package("/this/path/does/not/exist", null, true);
     }
@@ -132,7 +132,7 @@ public class PackageTest {
     
     
     @Test
-    public void testLoadFromFileWhenPathExistsButIsNotJson() throws DataPackageException, FileNotFoundException{
+    public void testLoadFromFileWhenPathExistsButIsNotJson() throws IOException, DataPackageException, FileNotFoundException{
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/not_a_json_datapackage.json").getPath();
         

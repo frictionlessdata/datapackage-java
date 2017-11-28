@@ -1,5 +1,6 @@
 package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -67,15 +68,15 @@ public class Validator {
     }
     
     public void validate(JSONObject datapackageJsonObject, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
-        InputStream inputStream = schemaUrl.openStream();
-        if(inputStream != null){
+        try{
+            InputStream inputStream = schemaUrl.openStream();
             JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
             Schema schema = SchemaLoader.load(rawSchema);
             schema.validate(datapackageJsonObject); // throws a ValidationException if this object is invalid
-        }else{
-            throw new DataPackageException("Invalid profile schema URL: " + schemaUrl);
-        }
-        
+            
+        }catch(FileNotFoundException e){
+             throw new DataPackageException("Invalid profile schema URL: " + schemaUrl);   
+        }  
     }
     
     /**
