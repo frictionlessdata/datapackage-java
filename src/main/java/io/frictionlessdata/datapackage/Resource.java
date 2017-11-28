@@ -5,8 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Iterator;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.json.JSONArray;
 
 /**
  * Resource.
@@ -35,6 +38,9 @@ public class Resource {
     private String hash = null;
     
     // hashes and licenes?
+    
+    public final static String FORMAT_CSV = "csv";
+    public final static String FORMAT_JSON = "json";
  
     public Resource(String name, String path){
         this.name = name;
@@ -47,7 +53,7 @@ public class Resource {
         this.format = format;
     }
 
-    public Iterable<CSVRecord> iter() throws IOException, FileNotFoundException, DataPackageException{
+    public Iterator<CSVRecord> iter() throws IOException, FileNotFoundException, DataPackageException{
         // Error for non tabular
         if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
             throw new DataPackageException("Unsupported for non tabular data.");
@@ -55,12 +61,21 @@ public class Resource {
         
         if(this.path != null){
             Reader in = new FileReader(this.path);
-            Iterable<CSVRecord> csvRecords = CSVFormat.RFC4180.parse(in);
-            
-            return csvRecords;
+            return CSVFormat.RFC4180.parse(in).iterator();
             
         }else if (this.data != null){
-            return null;
+            if(this.data instanceof String){
+                CSVParser parser = CSVParser.parse((String)this.data, CSVFormat.RFC4180);
+                return parser.getRecords().iterator();
+                
+            }else if(this.data instanceof JSONArray){
+                //TODO: Implement: 
+                JSONArray dataArr = (JSONArray)this.data;
+                return null;
+                
+            }else{
+                throw new DataPackageException("A resource has an invalid data format. It should be a CSV String or a JSON Array.");
+            }
             
         }else{
             throw new DataPackageException("No data has been set.");
