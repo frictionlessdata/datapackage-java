@@ -81,7 +81,7 @@ Exceptions are thrown for the following scenarios:
 Package dp = new Package();
 
 // Add a resource.
-JSONObject resource = new JSONObject("{\"name\": \"new-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}");
+Resource resource = new Resource("new-resource", "data.csv");
 dp.addResource(resource);
 ```
 
