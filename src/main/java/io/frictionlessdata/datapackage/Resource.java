@@ -6,10 +6,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.List;
+import org.apache.commons.collections.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -45,6 +46,9 @@ public class Resource {
     private String hash = null;
     
     // hashes and licenes?
+    
+    // Needed to iterate through data in local or remote file.
+    private String basePath = null;
     
     public final static String FORMAT_CSV = "csv";
     public final static String FORMAT_JSON = "json";
@@ -115,26 +119,24 @@ public class Resource {
         }
         
         if(this.getPath() != null){
-            if(this.getPath() instanceof String){
-                // First check if it's a URL String:
-                String[] schemes = {"http", "https"};
-                UrlValidator urlValidator = new UrlValidator(schemes);
             
-                if (urlValidator.isValid((String)this.getPath())) {
-                    CSVParser parser = CSVParser.parse(new URL((String)this.getPath()), Charset.forName("UTF-8"), CSVFormat.RFC4180);
-                    return parser.getRecords().iterator();
-
-                }else{
-                    // If it's not a URL String, then it's a CSV String.
-                    Reader fr = new FileReader((String)this.getPath());
-                    return CSVFormat.RFC4180.parse(fr).iterator();
+            // If just one part resource.
+            if(this.getPath() instanceof String){
+                return this.getIterator((String)this.getPath());
+                
+            }else if(this.getPath() instanceof JSONArray){ // If multipart resource.
+                JSONArray paths = ((JSONArray)this.getPath());
+                Iterator<CSVRecord>[] interatorChain  = new Iterator[paths.length()];
+                
+                // Chain the iterators.
+                for(int i = 0; i < paths.length(); i++){
+                    interatorChain[i] = this.getIterator(paths.getString(i));
                 }
-            }else if(this.getPath() instanceof List){
-                // TODO: Implement.
-                throw new UnsupportedOperationException();
+                
+                return new IteratorChain(interatorChain);
                 
             }else{
-                throw new DataPackageException("Unsupported data type for Resource path. Should be String or List.");
+                throw new DataPackageException("Unsupported data type for Resource path. Should be String or List but was " + this.getPath().getClass().getTypeName());
             }
                
         }else if (this.getData() != null){
@@ -161,6 +163,27 @@ public class Resource {
             
         }else{
             throw new DataPackageException("No data has been set.");
+        }
+    }
+    
+    private Iterator<CSVRecord> getIterator(String path) throws IOException, MalformedURLException{
+        
+        // If there is a base path, construct the full path so that the file can be found.
+        if(this.getBasePath() != null){
+            path = this.getBasePath() + "/" + path;
+        }
+        
+        String[] schemes = {"http", "https"};
+        UrlValidator urlValidator = new UrlValidator(schemes);
+                
+        if (urlValidator.isValid(path)) {
+            CSVParser parser = CSVParser.parse(new URL(path), Charset.forName("UTF-8"), CSVFormat.RFC4180);
+            return parser.getRecords().iterator();
+
+        }else{
+            // If it's not a URL String, then it's a CSV String.
+            Reader fr = new FileReader(path);
+            return CSVFormat.RFC4180.parse(fr).iterator();
         }
     }
     
@@ -355,6 +378,20 @@ public class Resource {
      */
     public void setHash(String hash) {
         this.hash = hash;
+    }
+    
+    /**
+     * @return the basePath
+     */
+    public String getBasePath() {
+        return basePath;
+    }
+
+    /**
+     * @param basePath the basePath to set
+     */
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
     }
     
     

@@ -193,7 +193,7 @@ public class Package {
         if(StringUtils.isEmpty(basePath)){
             // There is no basePath, i.e. it is empty ("") or null.
             // Hence the source is the absolute path of the file.
-            // In this case we grab the directory of the source path and st it as the basePath.
+            // In this case we grab the directory of the source path and set it as the basePath.
             sourceFile = new File(filePath);
                   
         }else{
@@ -204,7 +204,7 @@ public class Package {
         
         if(sourceFile.exists()){
             // Set base path
-            this.basePath = sourceFile.getParent();
+            this.setBasePath(sourceFile.getParent());
 
             // Read file, it should be a JSON.
             JSONObject sourceJsonObject = parseJsonString(sourceFile.getAbsolutePath());
@@ -380,18 +380,6 @@ public class Package {
         this.getJson().remove(key);
     }
     
-    public void addData(String resourceName){
-        throw new UnsupportedOperationException();
-    }
-    
-    public void saveDescriptor(){
-        throw new UnsupportedOperationException();
-    }
-    
-    public void setTabularDataSchema(String resourceName){
-        throw new UnsupportedOperationException();
-    }
-    
     /**
      * Validation is strict or unstrict depending on how the package was
      * instanciated with the strict flag.
@@ -412,8 +400,12 @@ public class Package {
         }
     }
     
-    public String getBasePath(){
+    final public String getBasePath(){
         return this.basePath;
+    }
+    
+    final public void setBasePath(String basePath){
+        this.basePath = basePath;
     }
     
     public JSONObject getJson(){
@@ -477,11 +469,21 @@ public class Package {
                     resource = new Resource(name, path, profile,
                         title, description, mediaType,
                         encoding, bytes, hash);
+                    
+                    // Set the base path if it exists.
+                    if(this.getBasePath() != null){
+                        resource.setBasePath(this.getBasePath());
+                    }
 
                 }else if(data != null && format != null){
                     resource = new Resource(name, data, format, profile,
                     title, description, mediaType,
                     encoding, bytes, hash);
+                    
+                    // Set the base path if it exists.
+                    if(this.getBasePath() != null){
+                        resource.setBasePath(this.getBasePath());
+                    }
 
                 }else{
                     DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");
@@ -502,8 +504,6 @@ public class Package {
                 }
                 
             }         
-        }
-
-        
+        }  
     }
 }

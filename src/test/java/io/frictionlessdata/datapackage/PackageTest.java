@@ -10,7 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import org.apache.commons.csv.CSVRecord;
 import org.everit.json.schema.ValidationException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -392,13 +394,37 @@ public class PackageTest {
         savedPackage.save(createdFile.getAbsolutePath());
     }
     
-    
     @Test
     public void testMultiPathIteration() throws DataPackageException, IOException{
         Package pkg = this.getSimpleMultiDataPackageFromString(true);
-        pkg.getResource("first-resource");
+        Resource resource = pkg.getResource("first-resource");
+        
+        // Set the resource base path.
+        String basePath = PackageTest.class.getResource("/fixtures").getPath();
+        resource.setBasePath(basePath);
+        
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        
+        // Expected data.
+        List<String[]> expectedData = this.getAllCityData();
+        
+        // Get Iterator.
+        Iterator<CSVRecord> iter = resource.iter();
+        int expectedDataIndex = 0;
+        
+        // Assert data.
+        while(iter.hasNext()){
+            CSVRecord record = iter.next();
+            String city = record.get(0);
+            String location = record.get(1);
+            
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], location);
+            
+            expectedDataIndex++;
+        } 
     }
-    
     
     private Package getSimpleMultiDataPackageFromString(boolean strict) throws DataPackageException, IOException{
         // Get path of source file:
@@ -412,6 +438,22 @@ public class PackageTest {
         
         return dp;
     } 
+    
+    private List<String[]> getAllCityData(){
+        List<String[]> expectedData  = new ArrayList();
+        expectedData.add(new String[]{"city", "location"});
+        expectedData.add(new String[]{"libreville", "0.41,9.29"});
+        expectedData.add(new String[]{"dakar", "14.71,-17.53"});
+        expectedData.add(new String[]{"ouagadougou", "12.35,-1.67"});
+        expectedData.add(new String[]{"barranquilla", "10.98,-74.88"});
+        expectedData.add(new String[]{"rio de janeiro", "-22.91,-43.72"});
+        expectedData.add(new String[]{"cuidad de guatemala", "14.62,-90.56"});
+        expectedData.add(new String[]{"london", "51.50,-0.11"});
+        expectedData.add(new String[]{"paris", "48.85,2.30"});
+        expectedData.add(new String[]{"rome", "41.89,12.51"});
+        
+        return expectedData;
+    }
     
     //TODO: come up with attribute edit tests:
     // Examples here: https://github.com/frictionlessdata/datapackage-py/blob/master/tests/test_datapackage.py

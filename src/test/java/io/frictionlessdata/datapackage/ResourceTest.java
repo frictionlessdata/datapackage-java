@@ -7,12 +7,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.csv.CSVRecord;
-import org.everit.json.schema.ValidationException;
 import org.json.JSONArray;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 /**
  *
@@ -85,8 +82,6 @@ public class ResourceTest {
     
     @Test
     public void testIterateDataFromCsvFormat() throws IOException, DataPackageException{
-        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
-        
         String dataString = "city,year,population\nlondon,2017,8780000\nparis,2017,2240000\nrome,2017,2860000";
         Resource resource = new Resource("population", dataString, Resource.FORMAT_CSV);
         
@@ -117,7 +112,6 @@ public class ResourceTest {
     
     @Test
     public void testIterateDataFromJSONFormat() throws IOException, DataPackageException{
-        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
         JSONArray jsonData = new JSONArray("[" +
             "{" +
               "\"city\": \"london\"," +
@@ -172,5 +166,4 @@ public class ResourceTest {
         
         return expectedData;
     }
-
 }
