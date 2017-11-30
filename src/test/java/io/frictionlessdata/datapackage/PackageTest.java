@@ -395,13 +395,41 @@ public class PackageTest {
     }
     
     @Test
-    public void testMultiPathIteration() throws DataPackageException, IOException{
+    public void testMultiPathIterationForLocalFiles() throws DataPackageException, IOException{
         Package pkg = this.getSimpleMultiDataPackageFromString(true);
         Resource resource = pkg.getResource("first-resource");
         
         // Set the resource base path.
         String basePath = PackageTest.class.getResource("/fixtures").getPath();
         resource.setBasePath(basePath);
+        
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        
+        // Expected data.
+        List<String[]> expectedData = this.getAllCityData();
+        
+        // Get Iterator.
+        Iterator<CSVRecord> iter = resource.iter();
+        int expectedDataIndex = 0;
+        
+        // Assert data.
+        while(iter.hasNext()){
+            CSVRecord record = iter.next();
+            String city = record.get(0);
+            String location = record.get(1);
+            
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], location);
+            
+            expectedDataIndex++;
+        } 
+    }
+    
+    @Test
+    public void testMultiPathIterationForRemoteFile() throws DataPackageException, IOException{
+        Package pkg = this.getSimpleMultiDataPackageFromString(true);
+        Resource resource = pkg.getResource("second-resource");
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
