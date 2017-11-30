@@ -497,7 +497,10 @@ public class Package {
                     }
                 }
 
-                this.resources.add(resource);
+                if(resource != null){
+                    this.resources.add(resource);
+                }
+                
             }         
         }
 
