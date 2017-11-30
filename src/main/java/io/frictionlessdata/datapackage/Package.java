@@ -1,5 +1,14 @@
 package io.frictionlessdata.datapackage;
 
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_BYTES;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_DATA;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_DESCRIPTION;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_ENCODING;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_FORMAT;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_HASH;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_MEDIA_TYPE;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_PATH;
+import static io.frictionlessdata.datapackage.Resource.JSON_KEY_TITLE;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -16,6 +25,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -35,8 +45,10 @@ public class Package {
     public static final String JSON_KEY_PROFILE = "profile";
     
     private String basePath = null;
-    private JSONObject jsonObject = null;
+    
+    private JSONObject jsonObject = new JSONObject();
     private boolean strictValidation = false;
+    private List<Resource> resources = new ArrayList();
     private List<Exception> errors = new ArrayList();
     private Validator validator = new Validator();
     
@@ -52,7 +64,7 @@ public class Package {
      * @throws ValidationException 
      */
     public Package(JSONObject jsonObjectSource, boolean strict) throws IOException, DataPackageException, ValidationException{ 
-        this.jsonObject = jsonObjectSource;
+        this.setJson(jsonObjectSource);
         this.strictValidation = strict;
         
         this.validate();
@@ -75,9 +87,8 @@ public class Package {
      * @throws IOException
      * @throws DataPackageException
      * @throws ValidationException
-     * @throws IOException 
      */
-    public Package(String jsonStringSource, boolean strict) throws IOException, DataPackageException, ValidationException, IOException{
+    public Package(String jsonStringSource, boolean strict) throws IOException, DataPackageException, ValidationException{
         this.strictValidation = strict;
         
         // If zip file is given.
@@ -102,14 +113,14 @@ public class Package {
                 }
                 
                 // Create and set the JSONObject for the datapackage.json that was read from inside the zip file.
-                this.jsonObject = new JSONObject(out.toString());  
+                this.setJson(new JSONObject(out.toString()));  
                 
                 this.validate();
             }
    
         }else{
             // Create and set the JSONObject fpr the String representation of desriptor JSON object.
-            this.jsonObject = new JSONObject(jsonStringSource); 
+            this.setJson(new JSONObject(jsonStringSource)); 
             
             // If String representation of desriptor JSON object is provided.
             this.validate(); 
@@ -149,7 +160,7 @@ public class Package {
 
             String jsonString = builder.toString();
             
-            this.jsonObject = new JSONObject(jsonString);
+            this.setJson(new JSONObject(jsonString));
             this.validate();  
         }
     }
@@ -198,7 +209,7 @@ public class Package {
             // Read file, it should be a JSON.
             JSONObject sourceJsonObject = parseJsonString(sourceFile.getAbsolutePath());
             
-            this.jsonObject = sourceJsonObject;
+            this.setJson(sourceJsonObject);
             this.validate();
 
         }else{
@@ -262,26 +273,25 @@ public class Package {
         throw new UnsupportedOperationException();
     }
     
-    public JSONObject getResource(String resourceName){
-        JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
-        
-        for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
-                return jsonArray.getJSONObject(i);
+    public Resource getResource(String resourceName){
+        Iterator<Resource> iter = this.resources.iterator();
+        while(iter.hasNext()) {
+            Resource resource = iter.next();
+            if(resource.getName().equalsIgnoreCase(resourceName)){
+                return resource;
             }
         }
-        
         return null;
     }
     
-    public JSONArray getResources(){
-        return this.getJson().getJSONArray(JSON_KEY_RESOURCES);
+    public List<Resource> getResources(){
+        return this.resources;
     }
     
-    public void addResource(JSONObject resource) throws IOException, ValidationException, DataPackageException{
+    public void addResource(Resource resource) throws IOException, ValidationException, DataPackageException{
         
         // If a name property isn't given...
-        if(!resource.has(JSON_KEY_NAME)){
+        if(resource.getName() == null){
             DataPackageException dpe = new DataPackageException("The resource does not have a name property.");
 
             if(this.strictValidation){
@@ -290,13 +300,21 @@ public class Package {
                 errors.add(dpe);
             }
             
+        }else if(resource.getPath() == null && (resource.getData() == null || resource.getFormat() == null)){
+            DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");
+            
+            if(this.strictValidation){
+                throw dpe;
+            }else{
+                errors.add(dpe);
+            }
+            
         }else{
-            String resourceName = resource.getString(JSON_KEY_NAME);
-            JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
+            Iterator<Resource> iter = this.resources.iterator();
 
             // Check if there is duplication.
-            for (int i = 0; i < jsonArray.length(); i++) {
-                if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(resourceName)){
+            while(iter.hasNext()){
+                if(iter.next().getName().equalsIgnoreCase(resource.getName())){
                     DataPackageException dpe = new DataPackageException("A resource with the same name already exists.");
 
                     if(this.strictValidation){
@@ -311,17 +329,11 @@ public class Package {
         // Validate.
         this.validate();
         
-        this.getJson().getJSONArray(JSON_KEY_RESOURCES).put(resource);  
+        this.resources.add(resource);
     }
     
     public void removeResource(String name){
-        JSONArray jsonArray = this.getJson().getJSONArray(JSON_KEY_RESOURCES);
-        
-        for (int i = 0; i < jsonArray.length(); i++) {
-            if(jsonArray.getJSONObject(i).getString(JSON_KEY_NAME).equalsIgnoreCase(name)){
-                jsonArray.remove(i);
-            }
-        }
+        this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
     }
     
     public Object getProperty(String key){
@@ -405,6 +417,18 @@ public class Package {
     }
     
     public JSONObject getJson(){
+        Iterator<Resource> resourceIter = resources.iterator();
+        
+        JSONArray resourcesJsonArray = new JSONArray();
+        while(resourceIter.hasNext()){
+            Resource resource = resourceIter.next();
+            resourcesJsonArray.put(resource.getJson());
+        }
+        
+        if(resourcesJsonArray.length() > 0){
+            this.jsonObject.put(JSON_KEY_RESOURCES, resourcesJsonArray);
+        }
+
         return this.jsonObject;
     }
     
@@ -422,5 +446,61 @@ public class Package {
             // TODO: Come up with better exception handling?
             return null;
         }
+    }
+    
+    private void setJson(JSONObject jsonObjectSource) throws DataPackageException{
+        this.jsonObject = jsonObjectSource;
+        
+        // Create Resource list, is there are resources.
+        if(jsonObjectSource.has(JSON_KEY_RESOURCES)){
+            JSONArray resourcesJsonArray = jsonObjectSource.getJSONArray(JSON_KEY_RESOURCES);
+            for(int i=0; i < resourcesJsonArray.length(); i++){
+                JSONObject resourceJson = resourcesJsonArray.getJSONObject(i);
+
+                //FIXME: Again, could be greatly simplified amd much more elegant if
+                // using a library like GeoJson...
+                String name = resourceJson.has(JSON_KEY_NAME) ? resourceJson.getString(JSON_KEY_NAME) : null;
+                Object path = resourceJson.has(JSON_KEY_PATH) ? resourceJson.get(JSON_KEY_PATH) : null;
+                Object data = resourceJson.has(JSON_KEY_DATA) ? resourceJson.get(JSON_KEY_DATA) : null;
+                String profile = resourceJson.has(JSON_KEY_PROFILE) ? resourceJson.getString(JSON_KEY_PROFILE) : null;
+                String title = resourceJson.has(JSON_KEY_TITLE) ? resourceJson.getString(JSON_KEY_TITLE) : null;
+                String description = resourceJson.has(JSON_KEY_DESCRIPTION) ? resourceJson.getString(JSON_KEY_DESCRIPTION) : null;
+                String format = resourceJson.has(JSON_KEY_FORMAT) ? resourceJson.getString(JSON_KEY_FORMAT) : null;
+                String mediaType = resourceJson.has(JSON_KEY_MEDIA_TYPE) ? resourceJson.getString(JSON_KEY_MEDIA_TYPE) : null;
+                String encoding = resourceJson.has(JSON_KEY_ENCODING) ? resourceJson.getString(JSON_KEY_ENCODING) : null;
+                Integer bytes = resourceJson.has(JSON_KEY_BYTES) ? resourceJson.getInt(JSON_KEY_BYTES) : null;
+                String hash = resourceJson.has(JSON_KEY_HASH) ? resourceJson.getString(JSON_KEY_HASH) : null;
+
+                Resource resource = null;
+
+                if(path != null){
+                    resource = new Resource(name, path, profile,
+                        title, description, mediaType,
+                        encoding, bytes, hash);
+
+                }else if(data != null && format != null){
+                    resource = new Resource(name, data, format, profile,
+                    title, description, mediaType,
+                    encoding, bytes, hash);
+
+                }else{
+                    DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");
+
+                    if(this.strictValidation){
+                        this.jsonObject = null;
+                        this.resources.clear();
+
+                        throw dpe;
+                        
+                    }else{
+                        this.errors.add(dpe);
+                    }
+                }
+
+                this.resources.add(resource);
+            }         
+        }
+
+        
     }
 }

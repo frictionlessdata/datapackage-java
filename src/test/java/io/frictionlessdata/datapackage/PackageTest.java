@@ -9,6 +9,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.everit.json.schema.ValidationException;
 import org.json.JSONArray;
@@ -178,53 +179,112 @@ public class PackageTest {
     }
     
     @Test
+    public void testLoadFromJsonFileResourceWithStrictValidationForInvalidNullPath() throws IOException, MalformedURLException, DataPackageException{
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/invalid_multi_data_datapackage.json");
+        
+        exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
+        Package dp = new Package(url, true);
+    }
+    
+    @Test
+    public void testLoadFromJsonFileResourceWithoutStrictValidationForInvalidNullPath() throws IOException, MalformedURLException, DataPackageException{
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/invalid_multi_data_datapackage.json");
+        
+        Package dp = new Package(url, false);
+        Assert.assertEquals("Invalid Resource. The path property or the data and format properties cannot be null.", dp.getErrors().get(0).getMessage());
+    }
+    
+    @Test
+    public void testCreatingResourceWithInvalidPathNullValue() throws IOException, MalformedURLException, DataPackageException{
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+        Package dp = new Package(url, true);
+        
+        // path property is null.
+        Resource resource = new Resource("resource-name", null,
+                null, null, null, null, null, null, null);
+        
+        exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
+        dp.addResource(resource); 
+    }
+    
+    @Test
+    public void testCreatingResourceWithInvalidFormatNullValue() throws IOException, MalformedURLException, DataPackageException{
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+        Package dp = new Package(url, true);
+        
+        // format property is null but data is not null.
+        Resource resource = new Resource("resource-name", "data.csv", null, // Format is null when it shouldn't
+                null, null, null, null, null, null, null);
+        
+        exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
+        dp.addResource(resource); 
+    }
+    
+    @Test
+    public void testCreatingResourceWithInvalidFormatDataValue() throws IOException, MalformedURLException, DataPackageException{
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+        Package dp = new Package(url, true);
+        
+        // data property is null but format is not null.
+        Resource resource = new Resource("resource-name", null, "csv", // data is null when it shouldn't
+                null, null, null, null, null, null, null);
+        
+        exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
+        dp.addResource(resource);
+    }
+    
+    @Test
     public void testGetResources() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString(true);
-        Assert.assertEquals(3, dp.getResources().length());
+        Assert.assertEquals(3, dp.getResources().size());
     }
     
     @Test
     public void testGetExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString(true);
-        JSONObject resourceJsonObject = dp.getResource("third-resource");
-        Assert.assertNotNull(resourceJsonObject);
+        Resource resource = dp.getResource("third-resource");
+        Assert.assertNotNull(resource);
     }
     
     @Test
     public void testGetNonExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString(true);
-        JSONObject resourceJsonObject = dp.getResource("non-existing-resource");
-        Assert.assertNull(resourceJsonObject);
+        Resource resource = dp.getResource("non-existing-resource");
+        Assert.assertNull(resource);
     }
     
     @Test
     public void testRemoveResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(true);
         
-        Assert.assertEquals(3, dp.getResources().length());
+        Assert.assertEquals(3, dp.getResources().size());
+        
         dp.removeResource("second-resource");
-        
-        Assert.assertEquals(2, dp.getResources().length());
-        dp.removeResource("third-resource");
-        Assert.assertEquals(1, dp.getResources().length());
+        Assert.assertEquals(2, dp.getResources().size());
         
         dp.removeResource("third-resource");
-        Assert.assertEquals(1, dp.getResources().length());
+        Assert.assertEquals(1, dp.getResources().size());
+        
+        dp.removeResource("third-resource");
+        Assert.assertEquals(1, dp.getResources().size());
     }
     
     @Test
     public void testAddValidResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(true);
         
-        Assert.assertEquals(3, dp.getResources().length());
-        dp.addResource(new JSONObject("{\"name\": \"new-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
-        Assert.assertEquals(4, dp.getResources().length());
+        Assert.assertEquals(3, dp.getResources().size());
         
-        JSONObject resourceJsonObject = dp.getResource("new-resource");
-        Assert.assertNotNull(resourceJsonObject);
+        List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
+        Resource resource = new Resource("new-resource", paths);
+        dp.addResource(resource);
+        Assert.assertEquals(4, dp.getResources().size());
+        
+        Resource gotResource = dp.getResource("new-resource");
+        Assert.assertNotNull(gotResource);
     }
     
     @Test
@@ -232,13 +292,13 @@ public class PackageTest {
         Package dp = this.getSimpleMultiDataPackageFromString(true);
 
         exception.expectMessage("The resource does not have a name property.");
-        dp.addResource(new JSONObject("{}"));
+        dp.addResource(new Resource(null, null));
     }
     
     @Test
     public void testAddInvalidResourceWithoutStrictValidation() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(false);
-        dp.addResource(new JSONObject("{}"));
+        dp.addResource(new Resource(null, null));
         
         Assert.assertEquals(1, dp.getErrors().size());
         Assert.assertEquals("The resource does not have a name property.", dp.getErrors().get(0).getMessage());
@@ -249,15 +309,20 @@ public class PackageTest {
     public void testAddDuplicateNameResourceWithStrictValidation() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(true);
         
+        List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
+        Resource resource = new Resource("third-resource", paths);
+        
         exception.expectMessage("A resource with the same name already exists.");
-        dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+        dp.addResource(resource);
     }
     
     @Test
     public void testAddDuplicateNameResourceWithoutStrictValidation() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(false);
         
-        dp.addResource(new JSONObject("{\"name\": \"third-resource\", \"path\": [\"foo.txt\", \"baz.txt\"]}"));
+        List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
+        Resource resource = new Resource("third-resource", paths);
+        dp.addResource(resource);
         
         Assert.assertEquals(1, dp.getErrors().size());
         Assert.assertEquals("A resource with the same name already exists.", dp.getErrors().get(0).getMessage());
@@ -328,6 +393,13 @@ public class PackageTest {
     }
     
     
+    @Test
+    public void testMultiPathIteration() throws DataPackageException, IOException{
+        Package pkg = this.getSimpleMultiDataPackageFromString(true);
+        pkg.getResource("first-resource");
+    }
+    
+    
     private Package getSimpleMultiDataPackageFromString(boolean strict) throws DataPackageException, IOException{
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
@@ -339,11 +411,8 @@ public class PackageTest {
         Package dp = new Package(jsonString, strict);
         
         return dp;
-    }    
-
+    } 
     
     //TODO: come up with attribute edit tests:
     // Examples here: https://github.com/frictionlessdata/datapackage-py/blob/master/tests/test_datapackage.py
-
-
 }
