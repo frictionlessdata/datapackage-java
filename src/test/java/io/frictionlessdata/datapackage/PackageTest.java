@@ -39,7 +39,7 @@ public class PackageTest {
     public void testLoadFromJsonString() throws DataPackageException, IOException{
 
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
         
         // Assert
         Assert.assertNotNull(dp);
@@ -236,14 +236,14 @@ public class PackageTest {
     @Test
     public void testGetResources() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
-        Assert.assertEquals(4, dp.getResources().size());
+        Package dp = this.getDataPackageFromFilePath(true);
+        Assert.assertEquals(5, dp.getResources().size());
     }
     
     @Test
     public void testGetExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
         Resource resource = dp.getResource("third-resource");
         Assert.assertNotNull(resource);
     }
@@ -251,37 +251,37 @@ public class PackageTest {
     @Test
     public void testGetNonExistingResource() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
         Resource resource = dp.getResource("non-existing-resource");
         Assert.assertNull(resource);
     }
     
     @Test
     public void testRemoveResource() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
         
-        Assert.assertEquals(4, dp.getResources().size());
+        Assert.assertEquals(5, dp.getResources().size());
         
         dp.removeResource("second-resource");
+        Assert.assertEquals(4, dp.getResources().size());
+        
+        dp.removeResource("third-resource");
         Assert.assertEquals(3, dp.getResources().size());
         
         dp.removeResource("third-resource");
-        Assert.assertEquals(2, dp.getResources().size());
-        
-        dp.removeResource("third-resource");
-        Assert.assertEquals(2, dp.getResources().size());
+        Assert.assertEquals(3, dp.getResources().size());
     }
     
     @Test
     public void testAddValidResource() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
         
-        Assert.assertEquals(4, dp.getResources().size());
+        Assert.assertEquals(5, dp.getResources().size());
         
         List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
         Resource resource = new Resource("new-resource", paths);
         dp.addResource(resource);
-        Assert.assertEquals(5, dp.getResources().size());
+        Assert.assertEquals(6, dp.getResources().size());
         
         Resource gotResource = dp.getResource("new-resource");
         Assert.assertNotNull(gotResource);
@@ -289,7 +289,7 @@ public class PackageTest {
     
     @Test
     public void testAddInvalidResourceWithStrictValidation() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
 
         exception.expectMessage("The resource does not have a name property.");
         dp.addResource(new Resource(null, null));
@@ -297,7 +297,7 @@ public class PackageTest {
     
     @Test
     public void testAddInvalidResourceWithoutStrictValidation() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString(false);
+        Package dp = this.getDataPackageFromFilePath(false);
         dp.addResource(new Resource(null, null));
         
         Assert.assertEquals(1, dp.getErrors().size());
@@ -307,7 +307,7 @@ public class PackageTest {
     
     @Test
     public void testAddDuplicateNameResourceWithStrictValidation() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString(true);
+        Package dp = this.getDataPackageFromFilePath(true);
         
         List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
         Resource resource = new Resource("third-resource", paths);
@@ -318,7 +318,7 @@ public class PackageTest {
     
     @Test
     public void testAddDuplicateNameResourceWithoutStrictValidation() throws DataPackageException, IOException{
-        Package dp = this.getSimpleMultiDataPackageFromString(false);
+        Package dp = this.getDataPackageFromFilePath(false);
         
         List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
         Resource resource = new Resource("third-resource", paths);
@@ -333,7 +333,7 @@ public class PackageTest {
     public void testSaveToJsonFile() throws Exception{
         File createdFile = folder.newFile("test_save_datapackage.json");
         
-        Package savedPackage = this.getSimpleMultiDataPackageFromString(true);
+        Package savedPackage = this.getDataPackageFromFilePath(true);
         savedPackage.save(createdFile.getAbsolutePath());
         
         String relativePath = "test_save_datapackage.json";
@@ -350,7 +350,7 @@ public class PackageTest {
         File createdFile = folder.newFile("test_save_datapackage.zip");
         
         // save the datapackage in zip file.
-        Package savedPackage = this.getSimpleMultiDataPackageFromString(true);
+        Package savedPackage = this.getDataPackageFromFilePath(true);
         savedPackage.save(createdFile.getAbsolutePath());
         
         // Read the datapckage we just saved in the zip file.
@@ -386,7 +386,7 @@ public class PackageTest {
     public void testSaveToFilenameWithInvalidFileType() throws Exception{
         File createdFile = folder.newFile("test_save_datapackage.txt");
         
-        Package savedPackage = this.getSimpleMultiDataPackageFromString(true);
+        Package savedPackage = this.getDataPackageFromFilePath(true);
         
         exception.expect(DataPackageException.class);
         savedPackage.save(createdFile.getAbsolutePath());
@@ -394,7 +394,7 @@ public class PackageTest {
     
     @Test
     public void testMultiPathIterationForLocalFiles() throws DataPackageException, IOException{
-        Package pkg = this.getSimpleMultiDataPackageFromString(true);
+        Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("first-resource");
         
         // Set the profile to tabular data resource.
@@ -422,7 +422,7 @@ public class PackageTest {
     
     @Test
     public void testMultiPathIterationForRemoteFile() throws DataPackageException, IOException{
-        Package pkg = this.getSimpleMultiDataPackageFromString(true);
+        Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("second-resource");
         
         // Set the profile to tabular data resource.
@@ -449,18 +449,51 @@ public class PackageTest {
     }
     
     @Test
-    public void testSchemaDereferencingForLocalDataFileAndRemoteSchemaFile(){
+    public void testResourceSchemaDereferencingForLocalDataFileAndRemoteSchemaFile() throws DataPackageException, IOException{
+        Package pkg = this.getDataPackageFromFilePath(true);
+        Resource resource = pkg.getResource("third-resource");
         
+        // Get path of schema file used when creating the test package.
+        String schemaFilePath = PackageTest.class.getResource("/fixtures/schema/population_schema.json").getPath();
+
+        // Get string content version of the schema file.
+        String schemaJsonString = new String(Files.readAllBytes(Paths.get(schemaFilePath)));
+        
+        // Get JSON Object
+        JSONObject schemaJson = new JSONObject(schemaJsonString);
+        
+        // Compare.
+        Assert.assertTrue(schemaJson.similar(resource.getSchema()));
     }
     
     @Test
-    public void testSchemaDereferencingForRemoteDataFileAndLocalSchemaFile(){
+    public void testResourceSchemaDereferencingForRemoteDataFileAndLocalSchemaFile() throws DataPackageException, IOException{
+        Package pkg = this.getDataPackageFromFilePath(true);
+        Resource resource = pkg.getResource("fourth-resource");
         
+        // Get path of schema file used when creating the test package.
+        String schemaFilePath = PackageTest.class.getResource("/fixtures/schema/population_schema.json").getPath();
+
+        // Get string content version of the schema file.
+        String schemaJsonString = new String(Files.readAllBytes(Paths.get(schemaFilePath)));
+        
+        // Get JSON Object
+        JSONObject schemaJson = new JSONObject(schemaJsonString);
+        
+        // Compare.
+        Assert.assertTrue(schemaJson.similar(resource.getSchema()));
     }
     
-    private Package getSimpleMultiDataPackageFromString(boolean strict) throws DataPackageException, IOException{
+    /** TODO: Implement more thorough testing.
+    @Test
+    public void testResourceSchemaDereferencingWithInvalidResourceSchema() throws DataPackageException, IOException{
+        exception.expect(ValidationException.class);
+        Package pkg = this.getDataPackageFromFilePath(true, "/fixtures/multi_data_datapackage_with_invalid_resource_schema.json");
+    }**/
+    
+    private Package getDataPackageFromFilePath(boolean strict, String datapackageFilePath) throws DataPackageException, IOException{
         // Get path of source file:
-        String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
+        String sourceFileAbsPath = PackageTest.class.getResource(datapackageFilePath).getPath();
 
         // Get string content version of source file.
         String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
@@ -469,6 +502,10 @@ public class PackageTest {
         Package dp = new Package(jsonString, strict);
         
         return dp;
+    } 
+    
+    private Package getDataPackageFromFilePath(boolean strict) throws DataPackageException, IOException{
+        return this.getDataPackageFromFilePath(strict, "/fixtures/multi_data_datapackage.json");
     } 
     
     private List<String[]> getAllCityData(){

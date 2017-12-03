@@ -46,7 +46,7 @@ public class Resource {
     private Integer bytes = null;
     private String hash = null;
     
-    // hashes and licenes?
+    // hashes and licenses?
     
     // Schema
     private JSONObject schema = null;
@@ -218,9 +218,9 @@ public class Resource {
             throw new DataPackageException("Unsupported for non tabular data.");
         }
         
-        if(getPath() != null){
+        if(this.getPath() != null){
             
-        }else if (getData() != null){
+        }else if (this.getData() != null){
             
         }else{
             throw new DataPackageException("No data has been set.");
@@ -248,6 +248,7 @@ public class Resource {
         json.put(JSON_KEY_ENCODING, this.getEncoding());
         json.put(JSON_KEY_BYTES, this.getBytes());
         json.put(JSON_KEY_HASH, this.getHash());
+        json.put(JSON_KEY_SCHEMA, this.getSchema());
         
         return json;
     }
@@ -404,5 +405,9 @@ public class Resource {
      */
     public void setHash(String hash) {
         this.hash = hash;
+    }
+    
+    public JSONObject getSchema(){
+        return this.schema;
     }
 }

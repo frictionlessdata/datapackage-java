@@ -16,50 +16,49 @@ import org.json.JSONTokener;
  * Validates against schema.
  */
 public class Validator {
-    
-    
-    
+
     /**
      * Validates a given JSON Object against the default profile schema.
-     * @param datapackageJsonObject
+     * @param jsonObjectToValidate
      * @throws IOException
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JSONObject datapackageJsonObject) throws IOException, DataPackageException, ValidationException{
+    public void validate(JSONObject jsonObjectToValidate) throws IOException, DataPackageException, ValidationException{
         
         // If a profile value is provided.
-        if(datapackageJsonObject.has(Package.JSON_KEY_PROFILE)){
-            String profile = datapackageJsonObject.getString(Package.JSON_KEY_PROFILE);
+        if(jsonObjectToValidate.has(Package.JSON_KEY_PROFILE)){
+            String profile = jsonObjectToValidate.getString(Package.JSON_KEY_PROFILE);
             
             String[] schemes = {"http", "https"};
             UrlValidator urlValidator = new UrlValidator(schemes);
             
             if (urlValidator.isValid(profile)) {
-                this.validate(datapackageJsonObject, new URL(profile));
+                this.validate(jsonObjectToValidate, new URL(profile));
             }else{
-                this.validate(datapackageJsonObject, profile);
+                this.validate(jsonObjectToValidate, profile);
             }
             
         }else{
             // If no profile value is provided, use default value.
-            this.validate(datapackageJsonObject, Profile.PROFILE_DEFAULT);
+            this.validate(jsonObjectToValidate, Profile.PROFILE_DEFAULT);
         }   
     }
     
     /**
      * Validates a given JSON Object against the a given profile schema.
-     * @param datapackageJsonObject
+     * @param jsonObjectToValidate
      * @param profileId
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JSONObject datapackageJsonObject, String profileId) throws DataPackageException, ValidationException{ 
+    public void validate(JSONObject jsonObjectToValidate, String profileId) throws DataPackageException, ValidationException{ 
+
         InputStream inputStream = Validator.class.getResourceAsStream("/schemas/" + profileId + ".json");
         if(inputStream != null){
             JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
             Schema schema = SchemaLoader.load(rawSchema);
-            schema.validate(datapackageJsonObject); // throws a ValidationException if this object is invalid
+            schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }else{
             throw new DataPackageException("Invalid profile id: " + profileId);
@@ -67,12 +66,20 @@ public class Validator {
         
     }
     
-    public void validate(JSONObject datapackageJsonObject, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
+    /**
+     * 
+     * @param jsonObjectToValidate
+     * @param schemaUrl
+     * @throws IOException
+     * @throws DataPackageException
+     * @throws ValidationException 
+     */
+    public void validate(JSONObject jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
         try{
             InputStream inputStream = schemaUrl.openStream();
             JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
             Schema schema = SchemaLoader.load(rawSchema);
-            schema.validate(datapackageJsonObject); // throws a ValidationException if this object is invalid
+            schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }catch(FileNotFoundException e){
              throw new DataPackageException("Invalid profile schema URL: " + schemaUrl);   
@@ -81,13 +88,13 @@ public class Validator {
     
     /**
      * Validates a given JSON String against the default profile schema.
-     * @param datapackageJsonString
+     * @param jsonStringToValidate
      * @throws IOException
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(String datapackageJsonString) throws IOException, DataPackageException, ValidationException{
-        JSONObject datapackageJsonObject = new JSONObject(datapackageJsonString);
-        validate(datapackageJsonObject);
+    public void validate(String jsonStringToValidate) throws IOException, DataPackageException, ValidationException{
+        JSONObject jsonObject = new JSONObject(jsonStringToValidate);
+        validate(jsonObject);
     }
 }

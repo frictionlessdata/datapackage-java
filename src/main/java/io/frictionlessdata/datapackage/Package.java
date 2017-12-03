@@ -108,6 +108,7 @@ public class Package {
                 // Create and set the JSONObject for the datapackage.json that was read from inside the zip file.
                 this.setJson(new JSONObject(out.toString()));  
                 
+                // Validate.
                 this.validate();
             }
    
@@ -466,7 +467,7 @@ public class Package {
                 String hash = resourceJson.has(Resource.JSON_KEY_HASH) ? resourceJson.getString(Resource.JSON_KEY_HASH) : null;
  
                 // Get the schema and dereference it. Will have to validate against this.
-                Object schemaObj = resourceJson.has(Resource.JSON_KEY_SCHEMA) ? resourceJson.getString(Resource.JSON_KEY_SCHEMA) : null;
+                Object schemaObj = resourceJson.has(Resource.JSON_KEY_SCHEMA) ? resourceJson.get(Resource.JSON_KEY_SCHEMA) : null;
                 JSONObject dereferencedSchema = this.getDereferencedSchema(schemaObj);
 
                 // Now we can build the resource objects

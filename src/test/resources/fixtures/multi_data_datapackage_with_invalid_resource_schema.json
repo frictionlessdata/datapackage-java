@@ -1,0 +1,14 @@
+
+{
+    "name": "multi-data",
+    "resources": [{
+        "name": "first-resource",
+        "path": ["src/test/resources/fixtures/data/cities.csv", "src/test/resources/fixtures/data/cities2.csv", "src/test/resources/fixtures/data/cities3.csv"]
+    },
+    {
+        "name": "second-resource", 
+        "schema": "src/test/resources/fixtures/schema/invalid_population_schema.json",
+        "path": "src/test/resources/fixtures/data/population.csv"
+    }
+  ]
+}
