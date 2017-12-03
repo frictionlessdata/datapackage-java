@@ -45,6 +45,7 @@ public class Resource {
     private String encoding = null;
     private Integer bytes = null;
     private String hash = null;
+    private String dialect = null;
     
     private JSONArray sources = null;
     private JSONArray licenses = null;
@@ -70,6 +71,7 @@ public class Resource {
     public final static String JSON_KEY_BYTES = "bytes";
     public final static String JSON_KEY_HASH = "hash";
     public final static String JSON_KEY_SCHEMA = "schema";
+    public final static String JSON_KEY_DIALECT = "dialect";
     
     public final static String JSON_KEY_SOURCES = "sources";
     public final static String JSON_KEY_LICENSES = "licenses";
@@ -256,7 +258,11 @@ public class Resource {
         json.put(JSON_KEY_ENCODING, this.getEncoding());
         json.put(JSON_KEY_BYTES, this.getBytes());
         json.put(JSON_KEY_HASH, this.getHash());
+        json.put(JSON_KEY_SOURCES, this.getSources());
+        json.put(JSON_KEY_LICENSES, this.getLicenses());
         json.put(JSON_KEY_SCHEMA, this.getSchema());
+        
+        
         
         return json;
     }
