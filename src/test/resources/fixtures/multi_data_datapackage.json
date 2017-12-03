@@ -25,7 +25,8 @@
     {
         "name": "fifth-resource", 
         "schema": "src/test/resources/fixtures/schema/population_schema.json",
-        "path": "src/test/resources/fixtures/data/population.csv"
+        "path": "src/test/resources/fixtures/data/population.csv",
+        "dialect": "src/test/resources/fixtures/dialect.json"
     }
   ]
 }

@@ -466,18 +466,22 @@ public class Package {
                 Integer bytes = resourceJson.has(Resource.JSON_KEY_BYTES) ? resourceJson.getInt(Resource.JSON_KEY_BYTES) : null;
                 String hash = resourceJson.has(Resource.JSON_KEY_HASH) ? resourceJson.getString(Resource.JSON_KEY_HASH) : null;
  
-                JSONArray licenses = resourceJson.has(Resource.JSON_KEY_LICENSES) ? resourceJson.getJSONArray(Resource.JSON_KEY_LICENSES) : null;
                 JSONArray sources = resourceJson.has(Resource.JSON_KEY_SOURCES) ? resourceJson.getJSONArray(Resource.JSON_KEY_SOURCES) : null;
+                JSONArray licenses = resourceJson.has(Resource.JSON_KEY_LICENSES) ? resourceJson.getJSONArray(Resource.JSON_KEY_LICENSES) : null;
                 
-                // Get the schema and dereference it. Will have to validate against this.
+                // Get the schema and dereference it. Enables validation against it.
                 Object schemaObj = resourceJson.has(Resource.JSON_KEY_SCHEMA) ? resourceJson.get(Resource.JSON_KEY_SCHEMA) : null;
-                JSONObject dereferencedSchema = this.getDereferencedSchema(schemaObj);
+                JSONObject dereferencedSchema = this.getDereferencedObject(schemaObj);
 
                 // Now we can build the resource objects
                 Resource resource = null;
                 
                 if(path != null){
-                    resource = new Resource(name, path, dereferencedSchema,
+                    // Get the dialect and dereference it. Enables validation against it.
+                    Object dialectObj = resourceJson.has(Resource.JSON_KEY_DIALECT) ? resourceJson.get(Resource.JSON_KEY_DIALECT) : null; 
+                    JSONObject dereferencedDialect = this.getDereferencedObject(dialectObj);
+                
+                    resource = new Resource(name, path, dereferencedSchema, dereferencedDialect,
                         profile, title, description, mediaType, encoding, bytes, hash, sources, licenses);
                     
                 }else if(data != null && format != null){
@@ -506,49 +510,48 @@ public class Package {
         }  
     }
     
-    private JSONObject getDereferencedSchema(Object schemaObj) throws IOException, FileNotFoundException, MalformedURLException{
+    private JSONObject getDereferencedObject(Object obj) throws IOException, FileNotFoundException, MalformedURLException{
         // The JSONObject that will represent the schema.
-        JSONObject dereferencedSchema = null;
+        JSONObject dereferencedObj = null;
 
-        // schema object is already a dereferences schema.
-        if(schemaObj instanceof JSONObject){
+        // Object is already a dereferences object.
+        if(obj instanceof JSONObject){
             
             // Don't need to do anything, just cast and return.
-            dereferencedSchema = (JSONObject)schemaObj;
+            dereferencedObj = (JSONObject)obj;
 
-        }else if(schemaObj instanceof String){
+        }else if(obj instanceof String){
             
-            // The string value of the given schema variable value.
-            String schemaStr = (String)schemaObj;
+            // The string value of the given object value.
+            String objStr = (String)obj;
 
-            // If schema value is Url.
+            // If object value is Url.
             // Grab the JSON string content of that remote file.
             String[] schemes = {"http", "https"};
             UrlValidator urlValidator = new UrlValidator(schemes);
 
-            if (urlValidator.isValid(schemaStr)) {
+            if (urlValidator.isValid(objStr)) {
 
-                // Create the dereferenced schema object from the remote file.
-                String schemaJsonContentString = this.getJsonStringContentFromRemoteFile(new URL(schemaStr));
-                dereferencedSchema = new JSONObject(schemaJsonContentString);
+                // Create the dereferenced object from the remote file.
+                String jsonContentString = this.getJsonStringContentFromRemoteFile(new URL(objStr));
+                dereferencedObj = new JSONObject(jsonContentString);
 
             }else{
                 // If schema is file path.
-                File sourceFile = new File(schemaStr);  
+                File sourceFile = new File(objStr);  
                 if(sourceFile.exists()){
 
                     // Create the dereferenced schema object from the local file.
-                    String schemaJsonContentString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
-                    dereferencedSchema = new JSONObject(schemaJsonContentString);
+                    String jsonContentString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
+                    dereferencedObj = new JSONObject(jsonContentString);
                     
-                    return dereferencedSchema;
 
                 }else{
-                    throw new FileNotFoundException("Local schema file not found: " + sourceFile);
+                    throw new FileNotFoundException("Local file not found: " + sourceFile);
                 }
             }
         }
         
-        return dereferencedSchema;
+        return dereferencedObj;
     }
 }

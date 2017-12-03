@@ -45,8 +45,8 @@ public class Resource {
     private String encoding = null;
     private Integer bytes = null;
     private String hash = null;
-    private String dialect = null;
     
+    private JSONObject dialect = null;
     private JSONArray sources = null;
     private JSONArray licenses = null;
 
@@ -99,13 +99,14 @@ public class Resource {
         this.schema = schema;
     }
     
-    public Resource(String name, Object path, JSONObject schema, String profile, String title,
+    public Resource(String name, Object path, JSONObject schema, JSONObject dialect, String profile, String title,
             String description, String mediaType,
             String encoding, Integer bytes, String hash, JSONArray sources, JSONArray licenses){
         
         this.name = name;
         this.path = path;
         this.schema = schema;
+        this.dialect = dialect;
         this.profile = profile;
         this.title = title;
         this.description = description;
@@ -256,6 +257,7 @@ public class Resource {
         json.put(JSON_KEY_TITLE, this.getTitle());
         json.put(JSON_KEY_DESCRIPTION, this.getDescription());
         json.put(JSON_KEY_FORMAT, this.getFormat());
+        json.put(JSON_KEY_DIALECT, this.getDialect());
         json.put(JSON_KEY_MEDIA_TYPE, this.getMediaType());
         json.put(JSON_KEY_ENCODING, this.getEncoding());
         json.put(JSON_KEY_BYTES, this.getBytes());
@@ -420,6 +422,20 @@ public class Resource {
     public void setHash(String hash) {
         this.hash = hash;
     }
+
+    /**
+     * @return the dialect
+     */
+    public JSONObject getDialect() {
+        return dialect;
+    }
+
+    /**
+     * @param dialect the dialect to set
+     */
+    public void setDialect(JSONObject dialect) {
+        this.dialect = dialect;
+    }    
     
     public JSONObject getSchema(){
         return this.schema;
@@ -452,6 +468,4 @@ public class Resource {
     public void setLicenses(JSONArray licenses) {
         this.licenses = licenses;
     }
-    
-    
 }
