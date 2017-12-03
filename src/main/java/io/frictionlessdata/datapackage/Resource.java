@@ -229,8 +229,10 @@ public class Resource {
         }
         
         if(this.getPath() != null){
+            throw new UnsupportedOperationException("Not yet implemented.");
             
         }else if (this.getData() != null){
+            throw new UnsupportedOperationException("Not yet implemented.");
             
         }else{
             throw new DataPackageException("No data has been set.");
@@ -261,8 +263,6 @@ public class Resource {
         json.put(JSON_KEY_SOURCES, this.getSources());
         json.put(JSON_KEY_LICENSES, this.getLicenses());
         json.put(JSON_KEY_SCHEMA, this.getSchema());
-        
-        
         
         return json;
     }
