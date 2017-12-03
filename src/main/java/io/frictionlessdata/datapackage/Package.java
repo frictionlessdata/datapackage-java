@@ -1,14 +1,5 @@
 package io.frictionlessdata.datapackage;
 
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_BYTES;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_DATA;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_DESCRIPTION;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_ENCODING;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_FORMAT;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_HASH;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_MEDIA_TYPE;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_PATH;
-import static io.frictionlessdata.datapackage.Resource.JSON_KEY_TITLE;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -22,6 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -31,6 +23,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.everit.json.schema.ValidationException;
 
 /**
@@ -149,22 +142,16 @@ public class Package {
      */
     public Package(URL urlSource, boolean strict) throws DataPackageException, ValidationException, IOException, FileNotFoundException{
         this.strictValidation = strict;
-        
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlSource.openStream()))) {
-            StringBuilder builder = new StringBuilder();
-            int read;
-            char[] chars = new char[1024];
-            while ((read = reader.read(chars)) != -1){
-                builder.append(chars, 0, read); 
-            }
 
-            String jsonString = builder.toString();
-            
-            this.setJson(new JSONObject(jsonString));
-            this.validate();  
-        }
+        // Get string content of given remove file.
+        String jsonString = getJsonStringContentFromRemoteFile(urlSource);
+
+        // Create JSONObject and validate.
+        this.setJson(new JSONObject(jsonString));
+        this.validate();  
+        
     }
-    
+
     /**
      * Load from URL (must be in either 'http' or 'https' schemes).
      * No validation by default.
@@ -207,7 +194,8 @@ public class Package {
             this.setBasePath(sourceFile.getParent());
 
             // Read file, it should be a JSON.
-            JSONObject sourceJsonObject = parseJsonString(sourceFile.getAbsolutePath());
+            String sourceJsonString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
+            JSONObject sourceJsonObject = new JSONObject(sourceJsonString);
             
             this.setJson(sourceJsonObject);
             this.validate();
@@ -428,19 +416,33 @@ public class Package {
         return this.errors;
     }
     
-    private JSONObject parseJsonString(String absoluteFilePath) throws JSONException{
+    private String getJsonStringContentFromRemoteFile(URL url) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+            StringBuilder builder = new StringBuilder();
+            int read;
+            char[] chars = new char[1024];
+            
+            while ((read = reader.read(chars)) != -1){
+                builder.append(chars, 0, read); 
+            }
+
+            return builder.toString();
+        }
+    }
+    
+    private String getJsonStringContentFromLocalFile(String absoluteFilePath) throws JSONException{
         // Read file, it should be a JSON.
         try{
             String jsonString = new String(Files.readAllBytes(Paths.get(absoluteFilePath)));
-            return new JSONObject(jsonString);
+            return jsonString;
             
         }catch(IOException ioe){
-            // TODO: Come up with better exception handling?
+            // FIXME: Come up with better exception handling?
             return null;
         }
     }
     
-    private void setJson(JSONObject jsonObjectSource) throws DataPackageException{
+    private void setJson(JSONObject jsonObjectSource) throws IOException, MalformedURLException, FileNotFoundException, DataPackageException{
         this.jsonObject = jsonObjectSource;
         
         // Create Resource list, is there are resources.
@@ -449,42 +451,35 @@ public class Package {
             for(int i=0; i < resourcesJsonArray.length(); i++){
                 JSONObject resourceJson = resourcesJsonArray.getJSONObject(i);
 
-                //FIXME: Again, could be greatly simplified amd much more elegant if
-                // using a library like GeoJson...
-                String name = resourceJson.has(JSON_KEY_NAME) ? resourceJson.getString(JSON_KEY_NAME) : null;
-                Object path = resourceJson.has(JSON_KEY_PATH) ? resourceJson.get(JSON_KEY_PATH) : null;
-                Object data = resourceJson.has(JSON_KEY_DATA) ? resourceJson.get(JSON_KEY_DATA) : null;
-                String profile = resourceJson.has(JSON_KEY_PROFILE) ? resourceJson.getString(JSON_KEY_PROFILE) : null;
-                String title = resourceJson.has(JSON_KEY_TITLE) ? resourceJson.getString(JSON_KEY_TITLE) : null;
-                String description = resourceJson.has(JSON_KEY_DESCRIPTION) ? resourceJson.getString(JSON_KEY_DESCRIPTION) : null;
-                String format = resourceJson.has(JSON_KEY_FORMAT) ? resourceJson.getString(JSON_KEY_FORMAT) : null;
-                String mediaType = resourceJson.has(JSON_KEY_MEDIA_TYPE) ? resourceJson.getString(JSON_KEY_MEDIA_TYPE) : null;
-                String encoding = resourceJson.has(JSON_KEY_ENCODING) ? resourceJson.getString(JSON_KEY_ENCODING) : null;
-                Integer bytes = resourceJson.has(JSON_KEY_BYTES) ? resourceJson.getInt(JSON_KEY_BYTES) : null;
-                String hash = resourceJson.has(JSON_KEY_HASH) ? resourceJson.getString(JSON_KEY_HASH) : null;
+                //FIXME: Again, could be greatly simplified amd much more
+                // elegant if we use a library like GJSON...
+                String name = resourceJson.has(Resource.JSON_KEY_NAME) ? resourceJson.getString(Resource.JSON_KEY_NAME) : null;
+                Object path = resourceJson.has(Resource.JSON_KEY_PATH) ? resourceJson.get(Resource.JSON_KEY_PATH) : null;
+                Object data = resourceJson.has(Resource.JSON_KEY_DATA) ? resourceJson.get(Resource.JSON_KEY_DATA) : null;
+                String profile = resourceJson.has(Resource.JSON_KEY_PROFILE) ? resourceJson.getString(Resource.JSON_KEY_PROFILE) : null;
+                String title = resourceJson.has(Resource.JSON_KEY_TITLE) ? resourceJson.getString(Resource.JSON_KEY_TITLE) : null;
+                String description = resourceJson.has(Resource.JSON_KEY_DESCRIPTION) ? resourceJson.getString(Resource.JSON_KEY_DESCRIPTION) : null;
+                String format = resourceJson.has(Resource.JSON_KEY_FORMAT) ? resourceJson.getString(Resource.JSON_KEY_FORMAT) : null;
+                String mediaType = resourceJson.has(Resource.JSON_KEY_MEDIA_TYPE) ? resourceJson.getString(Resource.JSON_KEY_MEDIA_TYPE) : null;
+                String encoding = resourceJson.has(Resource.JSON_KEY_ENCODING) ? resourceJson.getString(Resource.JSON_KEY_ENCODING) : null;
+                Integer bytes = resourceJson.has(Resource.JSON_KEY_BYTES) ? resourceJson.getInt(Resource.JSON_KEY_BYTES) : null;
+                String hash = resourceJson.has(Resource.JSON_KEY_HASH) ? resourceJson.getString(Resource.JSON_KEY_HASH) : null;
+ 
+                // Get the schema and dereference it. Will have to validate against this.
+                Object schemaObj = resourceJson.has(Resource.JSON_KEY_SCHEMA) ? resourceJson.getString(Resource.JSON_KEY_SCHEMA) : null;
+                JSONObject dereferencedSchema = this.getDereferencedSchema(schemaObj);
 
+                // Now we can build the resource objects
                 Resource resource = null;
-
+                
                 if(path != null){
-                    resource = new Resource(name, path, profile,
-                        title, description, mediaType,
-                        encoding, bytes, hash);
+                    resource = new Resource(name, path, dereferencedSchema,
+                        profile, title, description, mediaType, encoding, bytes, hash);
                     
-                    // Set the base path if it exists.
-                    if(this.getBasePath() != null){
-                        resource.setBasePath(this.getBasePath());
-                    }
-
                 }else if(data != null && format != null){
-                    resource = new Resource(name, data, format, profile,
-                    title, description, mediaType,
-                    encoding, bytes, hash);
+                    resource = new Resource(name, data, format, dereferencedSchema,
+                        profile, title, description, mediaType, encoding, bytes, hash);
                     
-                    // Set the base path if it exists.
-                    if(this.getBasePath() != null){
-                        resource.setBasePath(this.getBasePath());
-                    }
-
                 }else{
                     DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");
 
@@ -505,5 +500,51 @@ public class Package {
                 
             }         
         }  
+    }
+    
+    private JSONObject getDereferencedSchema(Object schemaObj) throws IOException, FileNotFoundException, MalformedURLException{
+        // The JSONObject that will represent the schema.
+        JSONObject dereferencedSchema = null;
+
+        // schema object is already a dereferences schema.
+        if(schemaObj instanceof JSONObject){
+            
+            // Don't need to do anything, just cast and return.
+            dereferencedSchema = (JSONObject)schemaObj;
+
+        }else if(schemaObj instanceof String){
+            
+            // The string value of the given schema variable value.
+            String schemaStr = (String)schemaObj;
+
+            // If schema value is Url.
+            // Grab the JSON string content of that remote file.
+            String[] schemes = {"http", "https"};
+            UrlValidator urlValidator = new UrlValidator(schemes);
+
+            if (urlValidator.isValid(schemaStr)) {
+
+                // Create the dereferenced schema object from the remote file.
+                String schemaJsonContentString = this.getJsonStringContentFromRemoteFile(new URL(schemaStr));
+                dereferencedSchema = new JSONObject(schemaJsonContentString);
+
+            }else{
+                // If schema is file path.
+                File sourceFile = new File(schemaStr);  
+                if(sourceFile.exists()){
+
+                    // Create the dereferenced schema object from the local file.
+                    String schemaJsonContentString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
+                    dereferencedSchema = new JSONObject(schemaJsonContentString);
+                    
+                    return dereferencedSchema;
+
+                }else{
+                    throw new FileNotFoundException("Local schema file not found: " + sourceFile);
+                }
+            }
+        }
+        
+        return dereferencedSchema;
     }
 }

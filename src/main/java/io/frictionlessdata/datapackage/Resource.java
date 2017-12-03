@@ -1,6 +1,7 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -47,14 +48,14 @@ public class Resource {
     
     // hashes and licenes?
     
-    // Needed to iterate through data in local or remote file.
-    private String basePath = null;
+    // Schema
+    private JSONObject schema = null;
     
     public final static String FORMAT_CSV = "csv";
     public final static String FORMAT_JSON = "json";
     
     // JSON keys.
-    // FIXME: Use somethign like GeoJson instead so this explicit mapping is not
+    // FIXME: Use somethign like GSON instead so this explicit mapping is not
     // necessary?
     public final static String JSON_KEY_PATH = "path";
     public final static String JSON_KEY_DATA = "data";
@@ -67,25 +68,38 @@ public class Resource {
     public final static String JSON_KEY_ENCODING = "encoding";
     public final static String JSON_KEY_BYTES = "bytes";
     public final static String JSON_KEY_HASH = "hash";
+    public final static String JSON_KEY_SCHEMA = "schema";
     
- 
     public Resource(String name, Object path){
-        this.name = name;
-        this.path = path;
+        this(name, path, new JSONObject());
     }
     
+    public Resource(String name, Object path, JSONObject schema){
+        this.name = name;
+        this.path = path;
+        if(schema.length() > 0){
+            this.schema = schema;
+        }
+    }
+        
     public Resource(String name, Object data, String format){
+        this(name, data, format, null);
+    }
+    
+    public Resource(String name, Object data, String format, JSONObject schema){
         this.name = name;
         this.data = data;
         this.format = format;
+        this.schema = schema;
     }
     
-    public Resource(String name, Object path, String profile, String title,
+    public Resource(String name, Object path, JSONObject schema, String profile, String title,
             String description, String mediaType,
             String encoding, Integer bytes, String hash){
         
         this.name = name;
         this.path = path;
+        this.schema = schema;
         this.profile = profile;
         this.title = title;
         this.description = description;
@@ -96,13 +110,14 @@ public class Resource {
 
     }
     
-    public Resource(String name, Object data, String format, String profile,
+    public Resource(String name, Object data, String format, JSONObject schema, String profile,
             String title, String description, String mediaType,
             String encoding, Integer bytes, String hash){
         
         this.name = name;
         this.data = data;
         this.format = format;
+        this.schema = schema;
         this.profile = profile;
         this.title = title;
         this.description = description;
@@ -118,13 +133,17 @@ public class Resource {
             throw new DataPackageException("Unsupported for non tabular data.");
         }
         
+        // If the path of a data file has been set.
         if(this.getPath() != null){
             
-            // If just one part resource.
+            // And if it's just a one part resource (i.e. only one file path is given).
             if(this.getPath() instanceof String){
+                // then just return the interator for the data located in that file
                 return this.getIterator((String)this.getPath());
                 
-            }else if(this.getPath() instanceof JSONArray){ // If multipart resource.
+            }else if(this.getPath() instanceof JSONArray){ // If multipart resource (i.e. multiple file paths are given).
+                
+                // Create an iterator for each file, chain them, and then return them as a single iterator.
                 JSONArray paths = ((JSONArray)this.getPath());
                 Iterator<CSVRecord>[] interatorChain  = new Iterator[paths.length()];
                 
@@ -133,6 +152,7 @@ public class Resource {
                     interatorChain[i] = this.getIterator(paths.getString(i));
                 }
                 
+                // Return the chained iterator.
                 return new IteratorChain(interatorChain);
                 
             }else{
@@ -167,12 +187,7 @@ public class Resource {
     }
     
     private Iterator<CSVRecord> getIterator(String path) throws IOException, MalformedURLException{
-        
-        // If there is a base path, construct the full path so that the file can be found.
-        if(this.getBasePath() != null){
-            path = this.getBasePath() + "/" + path;
-        }
-        
+         
         String[] schemes = {"http", "https"};
         UrlValidator urlValidator = new UrlValidator(schemes);
                 
@@ -182,7 +197,18 @@ public class Resource {
 
         }else{
             // If it's not a URL String, then it's a CSV String.
+            
+            // The path value can either be a relative path or a full path.
+            // If it's a relative path then build the full path by using the working directory.
+            File f = new File(path);
+            if(!f.exists()) { 
+                path = System.getProperty("user.dir") + "/" + path;
+            }
+
+            // Read the file.
             Reader fr = new FileReader(path);
+            
+            // Return iterator.
             return CSVFormat.RFC4180.parse(fr).iterator();
         }
     }
@@ -206,7 +232,7 @@ public class Resource {
      * @return 
      */
     public JSONObject getJson(){
-        //FIXME: Maybe use something lke GeoJson so we don't have to explicitly
+        //FIXME: Maybe use something lke GSON so we don't have to explicitly
         //code this...
         JSONObject json = new JSONObject();
         
@@ -379,20 +405,4 @@ public class Resource {
     public void setHash(String hash) {
         this.hash = hash;
     }
-    
-    /**
-     * @return the basePath
-     */
-    public String getBasePath() {
-        return basePath;
-    }
-
-    /**
-     * @param basePath the basePath to set
-     */
-    public void setBasePath(String basePath) {
-        this.basePath = basePath;
-    }
-    
-    
 }

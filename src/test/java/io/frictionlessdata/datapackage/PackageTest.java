@@ -106,15 +106,13 @@ public class PackageTest {
 
         // Get string content version of source file.
         String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
-        jsonString = jsonString.replace("\n", "").replace("\r", "").replace(" ", "");
-
+   
         // Build DataPackage instance based on source file path.
         Package dp = new Package(sourceFileAbsPath, null, true);
 
         // We're not asserting the String value since the order of the JSONObject elements is not guaranteed.
         // Just compare the length of the String, should be enough.
-        Assert.assertEquals(dp.getJson().toString().length(), jsonString.length());
-        
+        Assert.assertEquals(dp.getJson().length(), new JSONObject(jsonString).length());
     }
     
     @Test
@@ -203,7 +201,7 @@ public class PackageTest {
         
         // path property is null.
         Resource resource = new Resource("resource-name", null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
         
         exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
         dp.addResource(resource); 
@@ -216,7 +214,7 @@ public class PackageTest {
         
         // format property is null but data is not null.
         Resource resource = new Resource("resource-name", "data.csv", null, // Format is null when it shouldn't
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
         
         exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
         dp.addResource(resource); 
@@ -229,7 +227,7 @@ public class PackageTest {
         
         // data property is null but format is not null.
         Resource resource = new Resource("resource-name", null, "csv", // data is null when it shouldn't
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
         
         exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
         dp.addResource(resource);
@@ -239,7 +237,7 @@ public class PackageTest {
     public void testGetResources() throws DataPackageException, IOException{
         // Create simple multi DataPackage from Json String
         Package dp = this.getSimpleMultiDataPackageFromString(true);
-        Assert.assertEquals(3, dp.getResources().size());
+        Assert.assertEquals(4, dp.getResources().size());
     }
     
     @Test
@@ -262,28 +260,28 @@ public class PackageTest {
     public void testRemoveResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(true);
         
-        Assert.assertEquals(3, dp.getResources().size());
+        Assert.assertEquals(4, dp.getResources().size());
         
         dp.removeResource("second-resource");
+        Assert.assertEquals(3, dp.getResources().size());
+        
+        dp.removeResource("third-resource");
         Assert.assertEquals(2, dp.getResources().size());
         
         dp.removeResource("third-resource");
-        Assert.assertEquals(1, dp.getResources().size());
-        
-        dp.removeResource("third-resource");
-        Assert.assertEquals(1, dp.getResources().size());
+        Assert.assertEquals(2, dp.getResources().size());
     }
     
     @Test
     public void testAddValidResource() throws DataPackageException, IOException{
         Package dp = this.getSimpleMultiDataPackageFromString(true);
         
-        Assert.assertEquals(3, dp.getResources().size());
+        Assert.assertEquals(4, dp.getResources().size());
         
         List<String> paths = new ArrayList<>(Arrays.asList("cities.csv", "cities2.csv"));
         Resource resource = new Resource("new-resource", paths);
         dp.addResource(resource);
-        Assert.assertEquals(4, dp.getResources().size());
+        Assert.assertEquals(5, dp.getResources().size());
         
         Resource gotResource = dp.getResource("new-resource");
         Assert.assertNotNull(gotResource);
@@ -399,10 +397,6 @@ public class PackageTest {
         Package pkg = this.getSimpleMultiDataPackageFromString(true);
         Resource resource = pkg.getResource("first-resource");
         
-        // Set the resource base path.
-        String basePath = PackageTest.class.getResource("/fixtures").getPath();
-        resource.setBasePath(basePath);
-        
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
@@ -452,6 +446,16 @@ public class PackageTest {
             
             expectedDataIndex++;
         } 
+    }
+    
+    @Test
+    public void testSchemaDereferencingForLocalDataFileAndRemoteSchemaFile(){
+        
+    }
+    
+    @Test
+    public void testSchemaDereferencingForRemoteDataFileAndLocalSchemaFile(){
+        
     }
     
     private Package getSimpleMultiDataPackageFromString(boolean strict) throws DataPackageException, IOException{

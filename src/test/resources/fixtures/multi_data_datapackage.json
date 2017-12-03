@@ -1,8 +1,26 @@
 {
-  "name": "multi-data",
-  "resources": [
-    {"name": "first-resource", "path": ["data/cities.csv", "data/cities2.csv", "data/cities3.csv"]},
-    {"name": "second-resource", "path": ["https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities.csv", "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities2.csv", "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities3.csv"]},
-    {"name": "third-resource", "path": ["data/cities.csv"]}
+    "name": "multi-data",
+    "resources": [{
+        "name": "first-resource",
+        "path": ["src/test/resources/fixtures/data/cities.csv", "src/test/resources/fixtures/data/cities2.csv", "src/test/resources/fixtures/data/cities3.csv"]
+    },
+    {
+        "name": "second-resource",
+        "path": [
+            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities.csv",
+            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities2.csv",
+            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities3.csv"
+        ]
+    },
+    {
+        "name": "third-resource", 
+        "schema": "src/test/resources/fixtures/schema/population_schema.json",
+        "path": ["src/test/resources/fixtures/data/population.csv"]
+    },
+    {
+        "name": "fourth-resource", 
+        "schema": "src/test/resources/fixtures/schema/population_schema.json",
+        "path": ["https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/population.csv"]
+    }
   ]
 }
