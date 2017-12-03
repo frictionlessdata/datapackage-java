@@ -466,6 +466,9 @@ public class Package {
                 Integer bytes = resourceJson.has(Resource.JSON_KEY_BYTES) ? resourceJson.getInt(Resource.JSON_KEY_BYTES) : null;
                 String hash = resourceJson.has(Resource.JSON_KEY_HASH) ? resourceJson.getString(Resource.JSON_KEY_HASH) : null;
  
+                JSONArray licenses = resourceJson.has(Resource.JSON_KEY_LICENSES) ? resourceJson.getJSONArray(Resource.JSON_KEY_LICENSES) : null;
+                JSONArray sources = resourceJson.has(Resource.JSON_KEY_SOURCES) ? resourceJson.getJSONArray(Resource.JSON_KEY_SOURCES) : null;
+                
                 // Get the schema and dereference it. Will have to validate against this.
                 Object schemaObj = resourceJson.has(Resource.JSON_KEY_SCHEMA) ? resourceJson.get(Resource.JSON_KEY_SCHEMA) : null;
                 JSONObject dereferencedSchema = this.getDereferencedSchema(schemaObj);
@@ -475,11 +478,11 @@ public class Package {
                 
                 if(path != null){
                     resource = new Resource(name, path, dereferencedSchema,
-                        profile, title, description, mediaType, encoding, bytes, hash);
+                        profile, title, description, mediaType, encoding, bytes, hash, sources, licenses);
                     
                 }else if(data != null && format != null){
                     resource = new Resource(name, data, format, dereferencedSchema,
-                        profile, title, description, mediaType, encoding, bytes, hash);
+                        profile, title, description, mediaType, encoding, bytes, hash, sources, licenses);
                     
                 }else{
                     DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");

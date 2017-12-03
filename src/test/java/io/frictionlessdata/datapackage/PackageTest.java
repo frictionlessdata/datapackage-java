@@ -201,7 +201,7 @@ public class PackageTest {
         
         // path property is null.
         Resource resource = new Resource("resource-name", null,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         
         exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
         dp.addResource(resource); 
@@ -214,7 +214,7 @@ public class PackageTest {
         
         // format property is null but data is not null.
         Resource resource = new Resource("resource-name", "data.csv", null, // Format is null when it shouldn't
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         
         exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
         dp.addResource(resource); 
@@ -227,7 +227,7 @@ public class PackageTest {
         
         // data property is null but format is not null.
         Resource resource = new Resource("resource-name", null, "csv", // data is null when it shouldn't
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         
         exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
         dp.addResource(resource);

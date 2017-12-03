@@ -46,8 +46,9 @@ public class Resource {
     private Integer bytes = null;
     private String hash = null;
     
-    // hashes and licenses?
-    
+    private JSONArray sources = null;
+    private JSONArray licenses = null;
+
     // Schema
     private JSONObject schema = null;
     
@@ -69,6 +70,9 @@ public class Resource {
     public final static String JSON_KEY_BYTES = "bytes";
     public final static String JSON_KEY_HASH = "hash";
     public final static String JSON_KEY_SCHEMA = "schema";
+    
+    public final static String JSON_KEY_SOURCES = "sources";
+    public final static String JSON_KEY_LICENSES = "licenses";
     
     public Resource(String name, Object path){
         this(name, path, new JSONObject());
@@ -95,7 +99,7 @@ public class Resource {
     
     public Resource(String name, Object path, JSONObject schema, String profile, String title,
             String description, String mediaType,
-            String encoding, Integer bytes, String hash){
+            String encoding, Integer bytes, String hash, JSONArray sources, JSONArray licenses){
         
         this.name = name;
         this.path = path;
@@ -107,12 +111,14 @@ public class Resource {
         this.encoding = encoding;
         this.bytes = bytes;
         this.hash = hash;
+        this.sources = sources;
+        this.licenses = licenses;
 
     }
     
     public Resource(String name, Object data, String format, JSONObject schema, String profile,
             String title, String description, String mediaType,
-            String encoding, Integer bytes, String hash){
+            String encoding, Integer bytes, String hash, JSONArray sources, JSONArray licenses){
         
         this.name = name;
         this.data = data;
@@ -124,7 +130,9 @@ public class Resource {
         this.mediaType = mediaType;
         this.encoding = encoding;
         this.bytes = bytes;
-        this.hash = hash;  
+        this.hash = hash;
+        this.sources = sources;
+        this.licenses = licenses;
     }
 
     public Iterator<CSVRecord> iter() throws IOException, FileNotFoundException, DataPackageException{
@@ -410,4 +418,34 @@ public class Resource {
     public JSONObject getSchema(){
         return this.schema;
     }
+
+    /**
+     * @return the sources
+     */
+    public JSONArray getSources() {
+        return sources;
+    }
+
+    /**
+     * @param sources the sources to set
+     */
+    public void setSources(JSONArray sources) {
+        this.sources = sources;
+    }
+
+    /**
+     * @return the licenses
+     */
+    public JSONArray getLicenses() {
+        return licenses;
+    }
+
+    /**
+     * @param licenses the licenses to set
+     */
+    public void setLicenses(JSONArray licenses) {
+        this.licenses = licenses;
+    }
+    
+    
 }
