@@ -73,7 +73,7 @@ Exceptions are thrown for the following scenarios:
 - If the zip file does not exist, an `IOException` will be thrown.
 
 
-### Iterate
+### Iterate through Data
 #### Without Casting
 ```java
 // Get the resource from the data package.
