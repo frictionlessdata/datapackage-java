@@ -6,6 +6,7 @@ import io.frictionlessdata.tableschema.TableIterator;
 import java.io.File;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.List;
 import org.apache.commons.collections.iterators.IteratorChain;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.json.JSONArray;
@@ -222,17 +223,52 @@ public class Resource {
             throw new DataPackageException("No data has been set.");
         }
     }
+    
+    public List<Object[]> read() throws Exception{
+        return this.read(false);
+    }
 
-    public void read() throws DataPackageException{
+    public List<Object[]> read(boolean cast) throws Exception{
         if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
             throw new DataPackageException("Unsupported for non tabular data.");
         }
         
         if(this.getPath() != null){
-            throw new UnsupportedOperationException("Not yet implemented.");
+            // And if it's just a one part resource (i.e. only one file path is given).
+            if(this.getPath() instanceof File){
+                // then just return the interator for the data located in that file
+                File file = (File)this.getPath();
+                Table table = new Table(file);
+                
+                return table.read(cast);
+  
+            }else if(this.getPath() instanceof URL){
+                URL url = (URL)this.getPath();
+                Table table = new Table(url);
+                
+                return table.read(cast);
+                
+                //FIXME: Multipart data.
+            }else{
+                throw new DataPackageException("Unsupported data type for Resource path. Should be String or List but was " + this.getPath().getClass().getTypeName());
+            }
             
         }else if (this.getData() != null){
-            throw new UnsupportedOperationException("Not yet implemented.");
+            // Data is in String, hence in CSV Format.
+            if(this.getData() instanceof String && this.getFormat().equalsIgnoreCase(FORMAT_CSV)){
+                Table table = new Table((String)this.getData());
+                return table.read(cast);
+            }
+            // Data is not String, hence in JSON Array format.
+            else if(this.getData() instanceof JSONArray && this.getFormat().equalsIgnoreCase(FORMAT_JSON)){
+                JSONArray dataJsonArray = (JSONArray)this.getData();            
+                Table table = new Table(dataJsonArray);
+                return table.read(cast);
+                
+            }else{
+                // Data is in unexpected format. Throw exception.
+                throw new DataPackageException("A resource has an invalid data format. It should be a CSV String or a JSON Array.");
+            }
             
         }else{
             throw new DataPackageException("No data has been set.");

@@ -149,6 +149,29 @@ public class ResourceTest {
         }
     }
     
+    //FIXME: Cast not working.
+    /**
+    @Test
+    public void testIterateDataWithCast() throws Exception{
+        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
+        File file = new File(filePath);
+        Resource resource = new Resource("population", file);
+        
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        
+        Iterator<String[]> iter = resource.iter(false, false, true);
+        
+        // Assert data.
+        while(iter.hasNext()){
+            Object[] record = iter.next();
+            
+            Assert.assertEquals(String.class, record[0].getClass());
+            Assert.assertEquals(Integer.class, record[1].getClass());
+            Assert.assertEquals(Integer.class, record[2].getClass());
+        }
+    }**/
+    
     @Test
     public void testIterateDataFromCsvFormat() throws Exception{
         String dataString = "city,year,population\nlondon,2017,8780000\nparis,2017,2240000\nrome,2017,2860000";
