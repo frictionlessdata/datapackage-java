@@ -76,7 +76,7 @@ Exceptions are thrown for the following scenarios:
 ### Iterate
 #### Without Casting
 ```java
-// Get the resoource from the data package.
+// Get the resource from the data package.
 Resource resource = pkg.getResource("first-resource");
 
 // Set the profile to tabular data resource (if it hasn't been set already).
