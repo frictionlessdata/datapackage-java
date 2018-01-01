@@ -182,7 +182,7 @@ public class Resource {
                     String thePath = paths.getString(i);
                     
                     if (urlValidator.isValid(thePath)) {
-                        URL url = (URL)this.getPath();
+                        URL url = new URL(thePath);
                         Table table = new Table(url);
                         tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
                 
