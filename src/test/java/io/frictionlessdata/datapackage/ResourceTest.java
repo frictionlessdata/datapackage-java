@@ -152,7 +152,6 @@ public class ResourceTest {
         }
     }
     
-    //FIXME: Cast not working.
     @Test
     public void testIterateDataWithCast() throws Exception{
         
@@ -260,6 +259,38 @@ public class ResourceTest {
             
             expectedDataIndex++;
         } 
+    }
+    
+    @Test
+    public void testRead() throws Exception{  
+        // Get data file.
+        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
+        File file = new File(filePath);
+
+        Resource resource = new Resource("population", file);
+        
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        
+        // Assert
+        Assert.assertEquals(3, resource.read().size());
+    }
+    
+    @Test
+    public void testHeadings() throws Exception{
+        // Get data file.
+        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
+        File file = new File(filePath);
+
+        Resource resource = new Resource("population", file);
+        
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        
+        // Assert
+        Assert.assertEquals("city", resource.getHeaders()[0]);
+        Assert.assertEquals("year", resource.getHeaders()[1]);
+        Assert.assertEquals("population", resource.getHeaders()[2]);
     }
     
     private List<String[]> getExpectedPopulationData(){

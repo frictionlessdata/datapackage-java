@@ -275,6 +275,53 @@ public class Resource {
         }
     }
     
+    public String[] getHeaders() throws Exception{
+        if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
+            throw new DataPackageException("Unsupported for non tabular data.");
+        }
+        
+        if(this.getPath() != null){
+            // And if it's just a one part resource (i.e. only one file path is given).
+            if(this.getPath() instanceof File){
+                // then just return the interator for the data located in that file
+                File file = (File)this.getPath();
+                Table table = new Table(file);
+                
+                return table.getHeaders();
+  
+            }else if(this.getPath() instanceof URL){
+                URL url = (URL)this.getPath();
+                Table table = new Table(url);
+                
+                return table.getHeaders();
+                
+                //FIXME: Multipart data.
+            }else{
+                throw new DataPackageException("Unsupported data type for Resource path. Should be String or List but was " + this.getPath().getClass().getTypeName());
+            }
+            
+        }else if (this.getData() != null){
+            // Data is in String, hence in CSV Format.
+            if(this.getData() instanceof String && this.getFormat().equalsIgnoreCase(FORMAT_CSV)){
+                Table table = new Table((String)this.getData());
+                return table.getHeaders();
+            }
+            // Data is not String, hence in JSON Array format.
+            else if(this.getData() instanceof JSONArray && this.getFormat().equalsIgnoreCase(FORMAT_JSON)){
+                JSONArray dataJsonArray = (JSONArray)this.getData();            
+                Table table = new Table(dataJsonArray);
+                return table.getHeaders();
+                
+            }else{
+                // Data is in unexpected format. Throw exception.
+                throw new DataPackageException("A resource has an invalid data format. It should be a CSV String or a JSON Array.");
+            }
+            
+        }else{
+            throw new DataPackageException("No data has been set.");
+        }
+    }
+    
     /**
      * Get JSON representation of the object.
      * @return 
