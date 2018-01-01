@@ -72,6 +72,42 @@ Exceptions are thrown for the following scenarios:
 - If _datapackage.json_ does exist but it is invalid and validation is enabled then a `ValidationException` will be thrown.
 - If the zip file does not exist, an `IOException` will be thrown.
 
+
+### Iterate
+#### Without Casting
+```java
+// Get the resoource from the data package.
+Resource resource = pkg.getResource("first-resource");
+
+// Set the profile to tabular data resource (if it hasn't been set already).
+resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+
+// Get Iterator.
+Iterator<String[]> iter = resource.iter();
+
+// Iterate.
+while(iter.hasNext()){
+    String[] row = iter.next();
+    String city = row[0];
+    String population = row[1];
+} 
+```
+
+#### With Casting
+
+```
+// Get Iterator. 
+// Third boolean is the cast flag (First on is for keyed and second for extended).
+Iterator<Object[]> iter = resource.iter(false, false, true));
+
+// Iterator
+while(iter.hasNext()){
+    Object[] row = iter.next();
+    String city = row[0];
+    Integer population = row[1];
+} 
+```
+
 ### Edit a Data Package
 
 #### Add a Resource
