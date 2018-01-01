@@ -159,13 +159,13 @@ public class Resource {
             if(this.getPath() instanceof File){
                 // then just return the interator for the data located in that file
                 File file = (File)this.getPath();
-                Table table = new Table(file);
+                Table table = (this.schema != null) ? new Table(file, this.schema) : new Table(file);
                 
                 return table.iterator(keyed, extended, cast, relations);
   
             }else if(this.getPath() instanceof URL){
                 URL url = (URL)this.getPath();
-                Table table = new Table(url);
+                Table table = (this.schema != null) ? new Table(url, this.schema) : new Table(url);
                 return table.iterator(keyed, extended, cast, relations);
                 
             }else if(this.getPath() instanceof JSONArray){ // If multipart resource (i.e. multiple file paths are given).
@@ -184,12 +184,12 @@ public class Resource {
                     
                     if (urlValidator.isValid(thePath)) {
                         URL url = new URL(thePath);
-                        Table table = new Table(url);
+                        Table table = (this.schema != null) ? new Table(url, this.schema) : new Table(url);
                         tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
                 
                     }else{
                         File file = new File(thePath);
-                        Table table = new Table(file);
+                        Table table = (this.schema != null) ? new Table(file, this.schema) : new Table(file);
                         tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
                     }
                 }

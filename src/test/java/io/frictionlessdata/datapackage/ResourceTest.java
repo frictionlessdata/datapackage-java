@@ -2,10 +2,13 @@ package io.frictionlessdata.datapackage;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -150,17 +153,27 @@ public class ResourceTest {
     }
     
     //FIXME: Cast not working.
-    /**
     @Test
     public void testIterateDataWithCast() throws Exception{
+        
+        // Get data file.
         String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
         File file = new File(filePath);
-        Resource resource = new Resource("population", file);
+
+        // Get path of schema file used when creating the test package.
+        String schemaFilePath = PackageTest.class.getResource("/fixtures/schema/population_schema.json").getPath();
+
+        // Get string content version of the schema file.
+        String schemaJsonString = new String(Files.readAllBytes(Paths.get(schemaFilePath)));
+        
+        // Get JSON Object
+        JSONObject schemaJson = new JSONObject(schemaJsonString);
+        Resource resource = new Resource("population", file, schemaJson);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<String[]> iter = resource.iter(false, false, true);
+        Iterator<Object[]> iter = resource.iter(false, false, true);
         
         // Assert data.
         while(iter.hasNext()){
@@ -170,7 +183,7 @@ public class ResourceTest {
             Assert.assertEquals(Integer.class, record[1].getClass());
             Assert.assertEquals(Integer.class, record[2].getClass());
         }
-    }**/
+    }
     
     @Test
     public void testIterateDataFromCsvFormat() throws Exception{
