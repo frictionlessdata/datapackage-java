@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import org.everit.json.schema.ValidationException;
 import org.json.JSONArray;
@@ -394,9 +395,8 @@ public class PackageTest {
         savedPackage.save(createdFile.getAbsolutePath());
     }
     
-    /**
     @Test
-    public void testMultiPathIterationForLocalFiles() throws DataPackageException, IOException{
+    public void testMultiPathIterationForLocalFiles() throws Exception{
         Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("first-resource");
         
@@ -407,25 +407,24 @@ public class PackageTest {
         List<String[]> expectedData = this.getAllCityData();
         
         // Get Iterator.
-        Iterator<CSVRecord> iter = resource.iter();
+        Iterator<String[]> iter = resource.iter();
         int expectedDataIndex = 0;
         
         // Assert data.
         while(iter.hasNext()){
-            CSVRecord record = iter.next();
-            String city = record.get(0);
-            String location = record.get(1);
+            String[] record = iter.next();
+            String city = record[0];
+            String location = record[1];
             
             Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
             Assert.assertEquals(expectedData.get(expectedDataIndex)[1], location);
             
             expectedDataIndex++;
         } 
-    }**/
+    }
     
-    /**
     @Test
-    public void testMultiPathIterationForRemoteFile() throws DataPackageException, IOException{
+    public void testMultiPathIterationForRemoteFile() throws Exception{
         Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("second-resource");
         
@@ -436,21 +435,21 @@ public class PackageTest {
         List<String[]> expectedData = this.getAllCityData();
         
         // Get Iterator.
-        Iterator<CSVRecord> iter = resource.iter();
+        Iterator<String[]> iter = resource.iter();
         int expectedDataIndex = 0;
         
         // Assert data.
         while(iter.hasNext()){
-            CSVRecord record = iter.next();
-            String city = record.get(0);
-            String location = record.get(1);
+            String[] record = iter.next();
+            String city = record[0];
+            String location = record[1];
             
             Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
             Assert.assertEquals(expectedData.get(expectedDataIndex)[1], location);
             
             expectedDataIndex++;
         } 
-    }**/
+    }
     
     @Test
     public void testResourceSchemaDereferencingForLocalDataFileAndRemoteSchemaFile() throws DataPackageException, IOException{
@@ -533,7 +532,6 @@ public class PackageTest {
     
     private List<String[]> getAllCityData(){
         List<String[]> expectedData  = new ArrayList();
-        expectedData.add(new String[]{"city", "location"});
         expectedData.add(new String[]{"libreville", "0.41,9.29"});
         expectedData.add(new String[]{"dakar", "14.71,-17.53"});
         expectedData.add(new String[]{"ouagadougou", "12.35,-1.67"});
