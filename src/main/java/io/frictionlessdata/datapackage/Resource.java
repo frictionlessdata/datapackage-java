@@ -1,22 +1,13 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.TableIterator;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.Iterator;
 import org.apache.commons.collections.iterators.IteratorChain;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.json.CDL;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -137,10 +128,26 @@ public class Resource {
         this.sources = sources;
         this.licenses = licenses;
     }
-
-    public Iterator<CSVRecord> iter() throws IOException, FileNotFoundException, DataPackageException{
+    
+    public Iterator iter() throws Exception{
+        return this.iter(false, false, true, false);
+    }
+    
+    public Iterator iter(boolean keyed) throws Exception{
+       return this.iter(keyed, false, true, false);
+    }
+    
+    public Iterator iter(boolean keyed, boolean extended) throws Exception{
+       return this.iter(keyed, extended, true, false);
+    }
+    
+    public Iterator iter(boolean keyed, boolean extended, boolean cast) throws Exception{
+       return this.iter(keyed, extended, cast, false);
+    }
+    
+    public Iterator iter(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
         // Error for non tabular
-        if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
+        if(this.profile == null || !this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
             throw new DataPackageException("Unsupported for non tabular data.");
         }
         
@@ -148,23 +155,46 @@ public class Resource {
         if(this.getPath() != null){
             
             // And if it's just a one part resource (i.e. only one file path is given).
-            if(this.getPath() instanceof String){
+            if(this.getPath() instanceof File){
                 // then just return the interator for the data located in that file
-                return this.getIterator((String)this.getPath());
+                File file = (File)this.getPath();
+                Table table = new Table(file);
+                
+                return table.iterator(keyed, extended, cast, relations);
+  
+            }else if(this.getPath() instanceof URL){
+                URL url = (URL)this.getPath();
+                Table table = new Table(url);
+                return table.iterator(keyed, extended, cast, relations);
                 
             }else if(this.getPath() instanceof JSONArray){ // If multipart resource (i.e. multiple file paths are given).
                 
                 // Create an iterator for each file, chain them, and then return them as a single iterator.
                 JSONArray paths = ((JSONArray)this.getPath());
-                Iterator<CSVRecord>[] interatorChain  = new Iterator[paths.length()];
+                Iterator[] tableIteratorArray = new TableIterator[paths.length()];
                 
                 // Chain the iterators.
                 for(int i = 0; i < paths.length(); i++){
-                    interatorChain[i] = this.getIterator(paths.getString(i));
+                    
+                    String[] schemes = {"http", "https"};
+                    UrlValidator urlValidator = new UrlValidator(schemes);
+
+                    String thePath = paths.getString(i);
+                    
+                    if (urlValidator.isValid(thePath)) {
+                        URL url = (URL)this.getPath();
+                        Table table = new Table(url);
+                        tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
+                
+                    }else{
+                        File file = new File(thePath);
+                        Table table = new Table(file);
+                        tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
+                    }
                 }
                 
-                // Return the chained iterator.
-                return new IteratorChain(interatorChain);
+                IteratorChain iterChain = new IteratorChain(tableIteratorArray);
+                return iterChain;
                 
             }else{
                 throw new DataPackageException("Unsupported data type for Resource path. Should be String or List but was " + this.getPath().getClass().getTypeName());
@@ -174,18 +204,14 @@ public class Resource {
             
             // Data is in String, hence in CSV Format.
             if(this.getData() instanceof String && this.getFormat().equalsIgnoreCase(FORMAT_CSV)){
-                
-                Reader sr = new StringReader((String)this.getData());
-                return CSVFormat.RFC4180.parse(sr).iterator();
-                
+                Table table = new Table((String)this.getData());
+                return table.iterator();
             }
             // Data is not String, hence in JSON Array format.
             else if(this.getData() instanceof JSONArray && this.getFormat().equalsIgnoreCase(FORMAT_JSON)){
-                JSONArray dataJsonArray = (JSONArray)this.getData();
-                String dataCsv = CDL.toString(dataJsonArray);
-                
-                Reader sr = new StringReader(dataCsv);
-                return CSVFormat.RFC4180.parse(sr).iterator();
+                JSONArray dataJsonArray = (JSONArray)this.getData();            
+                Table table = new Table(dataJsonArray);
+                return table.iterator();
                 
             }else{
                 // Data is in unexpected format. Throw exception.
@@ -196,34 +222,7 @@ public class Resource {
             throw new DataPackageException("No data has been set.");
         }
     }
-    
-    private Iterator<CSVRecord> getIterator(String path) throws IOException, MalformedURLException{
-         
-        String[] schemes = {"http", "https"};
-        UrlValidator urlValidator = new UrlValidator(schemes);
-                
-        if (urlValidator.isValid(path)) {
-            CSVParser parser = CSVParser.parse(new URL(path), Charset.forName("UTF-8"), CSVFormat.RFC4180);
-            return parser.getRecords().iterator();
 
-        }else{
-            // If it's not a URL String, then it's a CSV String.
-            
-            // The path value can either be a relative path or a full path.
-            // If it's a relative path then build the full path by using the working directory.
-            File f = new File(path);
-            if(!f.exists()) { 
-                path = System.getProperty("user.dir") + "/" + path;
-            }
-
-            // Read the file.
-            Reader fr = new FileReader(path);
-            
-            // Return iterator.
-            return CSVFormat.RFC4180.parse(fr).iterator();
-        }
-    }
-    
     public void read() throws DataPackageException{
         if(!this.profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE)){
             throw new DataPackageException("Unsupported for non tabular data.");

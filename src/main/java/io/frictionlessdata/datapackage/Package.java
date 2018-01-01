@@ -540,11 +540,9 @@ public class Package {
                 // If schema is file path.
                 File sourceFile = new File(objStr);  
                 if(sourceFile.exists()){
-
                     // Create the dereferenced schema object from the local file.
                     String jsonContentString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
                     dereferencedObj = new JSONObject(jsonContentString);
-                    
 
                 }else{
                     throw new FileNotFoundException("Local file not found: " + sourceFile);

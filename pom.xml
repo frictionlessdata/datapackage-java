@@ -5,11 +5,26 @@
     <artifactId>datapackage-java</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <issueManagement>
+        <url>https://github.com/frictionlessdata/datapackage-java/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+    <scm>
+        <url>https://github.com/kevinsawicki/github-maven-example</url>
+        <connection>scm:git:git://github.com/frictionlessdata/datapackage-java.git</connection>
+        <developerConnection>scm:git:git@github.com:frictionlessdata/datapackage-java.git</developerConnection>
+    </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <build>
         <plugins>
             <!-- Test Coverage: https://github.com/trautonen/coveralls-maven-plugin -->
@@ -18,16 +33,6 @@
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>4.3.0</version>
             </plugin>
-            <!--plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
-                <configuration>
-                    <format>xml</format>
-                    <maxmem>256m</maxmem>
-                    <aggregate>true</aggregate>
-                </configuration>
-            </plugin-->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -52,8 +57,6 @@
         </resources>
     </build>
     <dependencies>
-        
-        
         <!-- Unit Testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -76,12 +79,18 @@
             <version>3.6</version>
         </dependency>
         
-        <!-- Commons CSV: https://commons.apache.org/proper/commons-csv/ -->
+        <!-- https://commons.apache.org/proper/commons-csv/ -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>1.5</version>
         </dependency>
-
+        
+        <!-- tableschema-java -->
+        <dependency>
+	    <groupId>com.github.frictionlessdata</groupId>
+	    <artifactId>tableschema-java</artifactId>
+	    <version>b736208145</version>
+	</dependency>
     </dependencies>
 </project>

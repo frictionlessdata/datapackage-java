@@ -10,9 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import org.apache.commons.csv.CSVRecord;
 import org.everit.json.schema.ValidationException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -396,6 +394,7 @@ public class PackageTest {
         savedPackage.save(createdFile.getAbsolutePath());
     }
     
+    /**
     @Test
     public void testMultiPathIterationForLocalFiles() throws DataPackageException, IOException{
         Package pkg = this.getDataPackageFromFilePath(true);
@@ -422,8 +421,9 @@ public class PackageTest {
             
             expectedDataIndex++;
         } 
-    }
+    }**/
     
+    /**
     @Test
     public void testMultiPathIterationForRemoteFile() throws DataPackageException, IOException{
         Package pkg = this.getDataPackageFromFilePath(true);
@@ -450,7 +450,7 @@ public class PackageTest {
             
             expectedDataIndex++;
         } 
-    }
+    }**/
     
     @Test
     public void testResourceSchemaDereferencingForLocalDataFileAndRemoteSchemaFile() throws DataPackageException, IOException{
