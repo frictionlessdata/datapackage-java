@@ -250,7 +250,7 @@ public class Resource {
                 
                 //FIXME: Multipart data.
             }else{
-                throw new DataPackageException("Unsupported data type for Resource path. Should be String or List but was " + this.getPath().getClass().getTypeName());
+                throw new DataPackageException("Unsupported data type for Resource path. Should be String or URL but was " + this.getPath().getClass().getTypeName());
             }
             
         }else if (this.getData() != null){
