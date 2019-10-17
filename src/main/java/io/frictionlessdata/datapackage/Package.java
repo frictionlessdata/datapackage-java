@@ -1,24 +1,17 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
+
+import java.io.*;
 import java.net.URL;
 import org.json.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -96,22 +89,14 @@ public class Package {
             }
             
             // Read the datapackage.json file inside the zip
-            try(InputStream is = zipFile.getInputStream(entry)){
-                StringBuilder out = new StringBuilder();
-                try(BufferedReader reader = new BufferedReader(new InputStreamReader(is))){
-                    String line = null;
-                    while ((line = reader.readLine()) != null) {
-                        out.append(line);
-                    }
-                }
-                
+            try (InputStream stream = zipFile.getInputStream(entry)) {
+                String content = getJsonStringContentFromInputStream(stream);
                 // Create and set the JSONObject for the datapackage.json that was read from inside the zip file.
-                this.setJson(new JSONObject(out.toString()));  
-                
+                this.setJson(new JSONObject(content));
+
                 // Validate.
                 this.validate();
             }
-   
         }else{
             // Create and set the JSONObject fpr the String representation of desriptor JSON object.
             this.setJson(new JSONObject(jsonStringSource)); 
@@ -416,27 +401,26 @@ public class Package {
     public List<Exception> getErrors(){
         return this.errors;
     }
+
+    private static String getJsonStringContentFromInputStream(InputStream stream) {
+        List<String> lines = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
+                .lines()
+                .collect(Collectors.toList());
+        // check whether the JSON texts starts with a BOM, and remove if so
+        if (!lines.isEmpty()) {
+            lines.set(0, lines.get(0).replaceFirst("\\uFEFF", ""));
+        }
+        return String.join("\n", lines);
+    }
     
     private String getJsonStringContentFromRemoteFile(URL url) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
-            StringBuilder builder = new StringBuilder();
-            int read;
-            char[] chars = new char[1024];
-            
-            while ((read = reader.read(chars)) != -1){
-                builder.append(chars, 0, read); 
-            }
-
-            return builder.toString();
-        }
+        return getJsonStringContentFromInputStream(url.openStream());
     }
     
     private String getJsonStringContentFromLocalFile(String absoluteFilePath) throws JSONException{
         // Read file, it should be a JSON.
         try{
-            String jsonString = new String(Files.readAllBytes(Paths.get(absoluteFilePath)));
-            return jsonString;
-            
+            return getJsonStringContentFromInputStream(new FileInputStream(new File(absoluteFilePath)));
         }catch(IOException ioe){
             // FIXME: Come up with better exception handling?
             return null;
