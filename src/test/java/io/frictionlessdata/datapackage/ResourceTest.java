@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -159,12 +160,9 @@ public class ResourceTest {
         String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
         File file = new File(filePath);
 
-        // Get path of schema file used when creating the test package.
-        String schemaFilePath = PackageTest.class.getResource("/fixtures/schema/population_schema.json").getPath();
-
         // Get string content version of the schema file.
-        String schemaJsonString = new String(Files.readAllBytes(Paths.get(schemaFilePath)));
-        
+        String schemaJsonString = getFileContents("/fixtures/schema/population_schema.json");
+
         // Get JSON Object
         JSONObject schemaJson = new JSONObject(schemaJsonString);
         Resource resource = new Resource("population", file, schemaJson);
@@ -291,6 +289,19 @@ public class ResourceTest {
         Assert.assertEquals("city", resource.getHeaders()[0]);
         Assert.assertEquals("year", resource.getHeaders()[1]);
         Assert.assertEquals("population", resource.getHeaders()[2]);
+    }
+
+
+    private static String getFileContents(String fileName) {
+        try {
+            // Create file-URL of source file:
+            URL sourceFileUrl = ResourceTest.class.getResource(fileName);
+            // Get path of URL
+            Path path = Paths.get(sourceFileUrl.toURI());
+            return new String(Files.readAllBytes(path));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
     
     private List<String[]> getExpectedPopulationData(){
