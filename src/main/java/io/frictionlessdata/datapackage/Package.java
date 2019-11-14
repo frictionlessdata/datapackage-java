@@ -465,7 +465,7 @@ public class Package {
                     Object dialectObj = resourceJson.has(Resource.JSON_KEY_DIALECT) ? resourceJson.get(Resource.JSON_KEY_DIALECT) : null; 
                     JSONObject dereferencedDialect = this.getDereferencedObject(dialectObj);
                 
-                    resource = new Resource(name, path, dereferencedSchema, dereferencedDialect,
+                    resource = new Resource(name, path, dereferencedSchema.toString(), dereferencedDialect,
                         profile, title, description, mediaType, encoding, bytes, hash, sources, licenses);
                     
                 }else if(data != null && format != null){

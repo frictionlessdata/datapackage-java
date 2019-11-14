@@ -198,7 +198,7 @@ public class PackageTest {
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
         Package dp = new Package(url, true);
         
-        Resource resource = new Resource("resource-name", (Object)null, // Path property is null.
+        Resource resource = new Resource("resource-name", (Object)null, null, // Path property is null.
             (JSONObject)null, (JSONObject)null, null, null, null, null, // Casting to JSONObject to resolve ambiguous constructor reference.
             null, null, null, null, null);
         
@@ -291,13 +291,13 @@ public class PackageTest {
         Package dp = this.getDataPackageFromFilePath(true);
 
         exception.expectMessage("The resource does not have a name property.");
-        dp.addResource(new Resource(null, null));
+        dp.addResource(new Resource((String)null, (JSONArray)null));
     }
     
     @Test
     public void testAddInvalidResourceWithoutStrictValidation() throws DataPackageException, IOException{
         Package dp = this.getDataPackageFromFilePath(false);
-        dp.addResource(new Resource(null, null));
+        dp.addResource(new Resource((String)null, (JSONArray)null));
         
         Assert.assertEquals(1, dp.getErrors().size());
         Assert.assertEquals("The resource does not have a name property.", dp.getErrors().get(0).getMessage());
