@@ -55,7 +55,7 @@ public class ResourceTest {
 
         String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
         File file = new File(filePath);
-        Resource resource = new Resource("population", file);
+        Resource resource = new Resource("population", file, file.getParentFile());
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -167,7 +167,7 @@ public class ResourceTest {
         
         // Get JSON Object
         JSONObject schemaJson = new JSONObject(schemaJsonString);
-        Resource resource = new Resource("population", file, schemaJson);
+        Resource resource = new Resource("population", file, file.getParentFile(), schemaJson);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -267,7 +267,7 @@ public class ResourceTest {
         String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
         File file = new File(filePath);
 
-        Resource resource = new Resource("population", file);
+        Resource resource = new Resource("population", file, file.getParentFile());
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -282,7 +282,7 @@ public class ResourceTest {
         String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
         File file = new File(filePath);
 
-        Resource resource = new Resource("population", file);
+        Resource resource = new Resource("population", file, file.getParentFile());
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
