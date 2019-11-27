@@ -1,7 +1,6 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.TableIterator;
 import java.io.File;
@@ -22,7 +21,6 @@ public class Resource {
     // Data properties.
     private Object path = null;
     private Object data = null;
-    private File workDir;
     
     // Metadata properties.
     // Required properties.
@@ -70,40 +68,18 @@ public class Resource {
     public final static String JSON_KEY_SOURCES = "sources";
     public final static String JSON_KEY_LICENSES = "licenses";
     
-    public Resource(String name, File path, File workDir){
-        this(name, path, workDir, new JSONObject());
-    }
-
-    public Resource(String name, URL path){
+    public Resource(String name, Object path){
         this(name, path, new JSONObject());
     }
-
-    public Resource(String name, URL path, JSONObject schema){
+    
+    public Resource(String name, Object path, JSONObject schema){
         this.name = name;
         this.path = path;
-        if ((null != schema) && (schema.length() > 0)) {
+        if(schema.length() > 0){
             this.schema = schema;
         }
     }
-
-    public Resource(String name, JSONArray data){
-        this.name = name;
-        this.data = data;
-    }
-
-    public Resource(String name, Object data){
-        this(name, data, null, null);
-    }
-
-    public Resource(String name, File path, File workDir, JSONObject schema){
-        this.name = name;
-        this.path = path;
-        this.workDir = workDir;
-        if ((null != schema) && (schema.length() > 0)) {
-            this.schema = schema;
-        }
-    }
-
+        
     public Resource(String name, Object data, String format){
         this(name, data, format, null);
     }
@@ -115,13 +91,12 @@ public class Resource {
         this.schema = schema;
     }
     
-    public Resource(String name, Object path, File workDir, JSONObject schema, JSONObject dialect, String profile, String title,
+    public Resource(String name, Object path, JSONObject schema, JSONObject dialect, String profile, String title,
             String description, String mediaType,
             String encoding, Integer bytes, String hash, JSONArray sources, JSONArray licenses){
         
         this.name = name;
         this.path = path;
-        this.workDir = workDir;
         this.schema = schema;
         this.dialect = dialect;
         this.profile = profile;
@@ -184,17 +159,13 @@ public class Resource {
             if(this.getPath() instanceof File){
                 // then just return the interator for the data located in that file
                 File file = (File)this.getPath();
-                Table table = (this.schema != null)
-                        ? new Table(file, workDir, this.schema)
-                        : new Table(file, workDir);
+                Table table = (this.schema != null) ? new Table(file, this.schema) : new Table(file);
                 
                 return table.iterator(keyed, extended, cast, relations);
   
             }else if(this.getPath() instanceof URL){
                 URL url = (URL)this.getPath();
-                Table table = (this.schema != null)
-                        ? new Table(url, new Schema(this.schema.toString(), false))
-                        : new Table(url);
+                Table table = (this.schema != null) ? new Table(url, this.schema) : new Table(url);
                 return table.iterator(keyed, extended, cast, relations);
                 
             }else if(this.getPath() instanceof JSONArray){ // If multipart resource (i.e. multiple file paths are given).
@@ -213,16 +184,12 @@ public class Resource {
                     
                     if (urlValidator.isValid(thePath)) {
                         URL url = new URL(thePath);
-                        Table table = (this.schema != null)
-                                ? new Table(url, new Schema(this.schema.toString(), false))
-                                : new Table(url);
+                        Table table = (this.schema != null) ? new Table(url, this.schema) : new Table(url);
                         tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
                 
                     }else{
                         File file = new File(thePath);
-                        Table table = (this.schema != null)
-                                ? new Table(file, workDir, this.schema)
-                                : new Table(file, workDir);
+                        Table table = (this.schema != null) ? new Table(file, this.schema) : new Table(file);
                         tableIteratorArray[i] = table.iterator(keyed, extended, cast, relations);
                     }
                 }
@@ -244,7 +211,7 @@ public class Resource {
             // Data is not String, hence in JSON Array format.
             else if(this.getData() instanceof JSONArray && this.getFormat().equalsIgnoreCase(FORMAT_JSON)){
                 JSONArray dataJsonArray = (JSONArray)this.getData();            
-                Table table = new Table(dataJsonArray.toString());
+                Table table = new Table(dataJsonArray);
                 return table.iterator();
                 
             }else{
@@ -271,7 +238,7 @@ public class Resource {
             if(this.getPath() instanceof File){
                 // then just return the interator for the data located in that file
                 File file = (File)this.getPath();
-                Table table = new Table(file, workDir);
+                Table table = new Table(file);
                 
                 return table.read(cast);
   
@@ -283,7 +250,7 @@ public class Resource {
                 
                 //FIXME: Multipart data.
             }else{
-                throw new DataPackageException("Unsupported data type for Resource path. Should be File or URL but was " + this.getPath().getClass().getTypeName());
+                throw new DataPackageException("Unsupported data type for Resource path. Should be String or List but was " + this.getPath().getClass().getTypeName());
             }
             
         }else if (this.getData() != null){
@@ -295,7 +262,7 @@ public class Resource {
             // Data is not String, hence in JSON Array format.
             else if(this.getData() instanceof JSONArray && this.getFormat().equalsIgnoreCase(FORMAT_JSON)){
                 JSONArray dataJsonArray = (JSONArray)this.getData();            
-                Table table = new Table(dataJsonArray.toString());
+                Table table = new Table(dataJsonArray);
                 return table.read(cast);
                 
             }else{
@@ -318,7 +285,7 @@ public class Resource {
             if(this.getPath() instanceof File){
                 // then just return the interator for the data located in that file
                 File file = (File)this.getPath();
-                Table table = new Table(file, workDir);
+                Table table = new Table(file);
                 
                 return table.getHeaders();
   
@@ -342,7 +309,7 @@ public class Resource {
             // Data is not String, hence in JSON Array format.
             else if(this.getData() instanceof JSONArray && this.getFormat().equalsIgnoreCase(FORMAT_JSON)){
                 JSONArray dataJsonArray = (JSONArray)this.getData();            
-                Table table = new Table(dataJsonArray.toString());
+                Table table = new Table(dataJsonArray);
                 return table.getHeaders();
                 
             }else{
