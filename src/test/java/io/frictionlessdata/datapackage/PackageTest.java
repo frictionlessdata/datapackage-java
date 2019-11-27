@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,12 +100,11 @@ public class PackageTest {
     
     @Test
     public void testLoadFromFileWhenPathExists() throws DataPackageException, FileNotFoundException, IOException {
-        String fName = "/fixtures/multi_data_datapackage.json";
         // Get path of source file:
-        String sourceFileAbsPath = PackageTest.class.getResource(fName).getPath();
+        String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
 
         // Get string content version of source file.
-        String jsonString = getFileContents(fName);
+        String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
    
         // Build DataPackage instance based on source file path.
         Package dp = new Package(sourceFileAbsPath, null, true);
@@ -117,16 +115,15 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadFromFileBasePath() throws Exception {
-        String pathSegment =  "/fixtures";
-        String sourceFileName = "multi_data_datapackage.json";
-        String pathName = pathSegment + "/" +sourceFileName;
+    public void testLoadFromFileBasePath() throws DataPackageException, FileNotFoundException, IOException {
         // Get path of source file:
-        Path sourceFileAbsPath = Paths.get(PackageTest.class.getResource(pathName).toURI());
-        String basePath = sourceFileAbsPath.getParent().toString();
+        String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/multi_data_datapackage.json").getPath();
+        
+        String relativePath = "multi_data_datapackage.json";
+        String basePath = sourceFileAbsPath.replace("/" + relativePath, "");
         
         // Build DataPackage instance based on source file path.
-        Package dp = new Package(sourceFileName, basePath, true);
+        Package dp = new Package(relativePath, basePath, true);
         Assert.assertNotNull(dp.getJson());
         
         // Check if base path was set properly;
@@ -201,7 +198,7 @@ public class PackageTest {
         URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
         Package dp = new Package(url, true);
         
-        Resource resource = new Resource("resource-name", (Object)null, null, // Path property is null.
+        Resource resource = new Resource("resource-name", (Object)null, // Path property is null.
             (JSONObject)null, (JSONObject)null, null, null, null, null, // Casting to JSONObject to resolve ambiguous constructor reference.
             null, null, null, null, null);
         
@@ -294,13 +291,13 @@ public class PackageTest {
         Package dp = this.getDataPackageFromFilePath(true);
 
         exception.expectMessage("The resource does not have a name property.");
-        dp.addResource(new Resource((String)null, (JSONArray)null));
+        dp.addResource(new Resource(null, null));
     }
     
     @Test
     public void testAddInvalidResourceWithoutStrictValidation() throws DataPackageException, IOException{
         Package dp = this.getDataPackageFromFilePath(false);
-        dp.addResource(new Resource((String)null, (JSONArray)null));
+        dp.addResource(new Resource(null, null));
         
         Assert.assertEquals(1, dp.getErrors().size());
         Assert.assertEquals("The resource does not have a name property.", dp.getErrors().get(0).getMessage());
@@ -333,16 +330,15 @@ public class PackageTest {
     
     @Test
     public void testSaveToJsonFile() throws Exception{
-        String sourceFileName = "test_save_datapackage.json";
-
-        File createdFile = folder.newFile(sourceFileName);
+        File createdFile = folder.newFile("test_save_datapackage.json");
         
         Package savedPackage = this.getDataPackageFromFilePath(true);
         savedPackage.save(createdFile.getAbsolutePath());
-
-        String basePath = createdFile.toPath().getParent().toString();
         
-        Package readPackage = new Package(sourceFileName, basePath);
+        String relativePath = "test_save_datapackage.json";
+        String basePath = createdFile.getAbsolutePath().replace("/" + relativePath, "");
+        
+        Package readPackage = new Package(relativePath, basePath);
         
         // Check if two data packages are have the same key/value pairs.
         // For some reason JSONObject.similar() is not working even though both
@@ -459,9 +455,12 @@ public class PackageTest {
     public void testResourceSchemaDereferencingForLocalDataFileAndRemoteSchemaFile() throws DataPackageException, IOException{
         Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("third-resource");
+        
+        // Get path of schema file used when creating the test package.
+        String schemaFilePath = PackageTest.class.getResource("/fixtures/schema/population_schema.json").getPath();
 
         // Get string content version of the schema file.
-        String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
+        String schemaJsonString = new String(Files.readAllBytes(Paths.get(schemaFilePath)));
         
         // Get JSON Object
         JSONObject schemaJson = new JSONObject(schemaJsonString);
@@ -474,9 +473,12 @@ public class PackageTest {
     public void testResourceSchemaDereferencingForRemoteDataFileAndLocalSchemaFile() throws DataPackageException, IOException{
         Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("fourth-resource");
+        
+        // Get path of schema file used when creating the test package.
+        String schemaFilePath = PackageTest.class.getResource("/fixtures/schema/population_schema.json").getPath();
 
         // Get string content version of the schema file.
-        String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
+        String schemaJsonString = new String(Files.readAllBytes(Paths.get(schemaFilePath)));
         
         // Get JSON Object
         JSONObject schemaJson = new JSONObject(schemaJsonString);
@@ -497,9 +499,12 @@ public class PackageTest {
         Package pkg = this.getDataPackageFromFilePath(true);
         
         Resource resource = pkg.getResource("fifth-resource");
+        
+        // Get path of dialect file used when creating the test package.
+        String dialectFilePath = PackageTest.class.getResource("/fixtures/dialect.json").getPath();
 
         // Get string content version of the dialect file.
-        String dialectJsonString =getFileContents("/fixtures/dialect.json");
+        String dialectJsonString = new String(Files.readAllBytes(Paths.get(dialectFilePath)));
         
         // Get JSON Object
         JSONObject dialectJson = new JSONObject(dialectJsonString);
@@ -509,8 +514,11 @@ public class PackageTest {
     }
     
     private Package getDataPackageFromFilePath(boolean strict, String datapackageFilePath) throws DataPackageException, IOException{
+        // Get path of source file:
+        String sourceFileAbsPath = PackageTest.class.getResource(datapackageFilePath).getPath();
+
         // Get string content version of source file.
-        String jsonString = getFileContents(datapackageFilePath);
+        String jsonString = new String(Files.readAllBytes(Paths.get(sourceFileAbsPath)));
         
         // Create DataPackage instance from jsonString
         Package dp = new Package(jsonString, strict);
@@ -520,19 +528,7 @@ public class PackageTest {
     
     private Package getDataPackageFromFilePath(boolean strict) throws DataPackageException, IOException{
         return this.getDataPackageFromFilePath(strict, "/fixtures/multi_data_datapackage.json");
-    }
-
-    private static String getFileContents(String fileName) {
-        try {
-            // Create file-URL of source file:
-            URL sourceFileUrl = PackageTest.class.getResource(fileName);
-            // Get path of URL
-            Path path = Paths.get(sourceFileUrl.toURI());
-            return new String(Files.readAllBytes(path));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
+    } 
     
     private List<String[]> getAllCityData(){
         List<String[]> expectedData  = new ArrayList();
