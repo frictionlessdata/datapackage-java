@@ -250,13 +250,12 @@
         </dependency>
 
         <!-- tableschema-java -->
-        <dependency>
-            <groupId>io.frictionlessdata</groupId>
-            <artifactId>tableschema-java</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/tableschema-java-1.0-SNAPSHOT.jar</systemPath>
-        </dependency>
+       <dependency>
+	    <groupId>com.github.frictionlessdata</groupId>
+	    <artifactId>tableschema-java</artifactId>
+	    <version>b736208145</version>
+	   </dependency>
+
 
     </dependencies>
 </project>
