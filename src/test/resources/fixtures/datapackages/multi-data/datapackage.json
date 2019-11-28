@@ -7,9 +7,9 @@
     {
         "name": "second-resource",
         "path": [
-            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities.csv",
-            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities2.csv",
-            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities3.csv"
+            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/datapackages/multi-data/data/cities.csv",
+            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/datapackages/multi-data/data/cities2.csv",
+            "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/datapackages/multi-data/data/cities3.csv"
         ]
     },
     {
@@ -20,7 +20,7 @@
     {
         "name": "fourth-resource", 
         "schema": "schema/population_schema.json",
-        "path": "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/population.csv"
+        "path": "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/datapackages/multi-data/data/population.csv"
     },
     {
         "name": "fifth-resource", 
