@@ -1,136 +1,136 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.resource.*;
+import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.Table;
+import org.apache.commons.collections.list.UnmodifiableList;
+import org.apache.commons.collections.set.UnmodifiableSet;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.UrlValidator;
+import org.everit.json.schema.ValidationException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.*;
-import java.net.URL;
-import org.json.*;
-
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.nio.file.FileSystem;
+import java.nio.file.*;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.UrlValidator;
-import org.everit.json.schema.ValidationException;
+
 
 /**
- * Load, validate and create a datapackage object.
+ * Load, validate, create, and save a datapackage object according to the specifications at
+ * https://github.com/frictionlessdata/specs/blob/master/specs/data-package.md
  */
-public class Package {
-    
-    private static final int JSON_INDENT_FACTOR = 4;
-    private static final String DATAPACKAGE_FILENAME = "datapackage.json";
-    public static final String JSON_KEY_RESOURCES = "resources";
-    public static final String JSON_KEY_NAME = "name";
-    public static final String JSON_KEY_PROFILE = "profile";
-    
-    private String basePath = null;
+public class Package extends JSONBase{
+    public static final String DATAPACKAGE_FILENAME = "datapackage.json";
+    private static final String JSON_KEY_RESOURCES = "resources";
+    private static final String JSON_KEY_ID = "id";
+    private static final String JSON_KEY_VERSION = "version";
+    private static final String JSON_KEY_HOMEPAGE = "homepage";
+    private static final String JSON_KEY_KEYWORDS = "keywords";
+    private static final String JSON_KEY_IMAGE = "image";
+    private static final String JSON_KEY_CREATED = "created";
+    private static final String JSON_KEY_CONTRIBUTORS = "contributors";
+
+    private Object basePath = null;
+    private String id;
+    private String version;
+    private URL homepage;
+    private Set<String> keywords = new TreeSet<>();
+    private String image;
+    private ZonedDateTime created;
+    private List<Contributor> contributors = new ArrayList<>();
+    private Map<String, Object> otherProperties = new LinkedHashMap<>();
     
     private JSONObject jsonObject = new JSONObject();
     private boolean strictValidation = false;
-    private List<Resource> resources = new ArrayList();
-    private List<Exception> errors = new ArrayList();
+    private List<Resource> resources = new ArrayList<>();
+    private List<Exception> errors = new ArrayList<>();
     private Validator validator = new Validator();
-    
-    public Package(){
-    }
 
     /**
-     * Load from native Java JSONObject.
-     * @param jsonObjectSource
-     * @param strict
-     * @throws IOException
-     * @throws DataPackageException
-     * @throws ValidationException 
+     * Create a new DataPackage and initialize with a number of Resources.
+     *
+     * According to the spec, a DataPackage MUST have at least one Resource,
+     * therefore an Exception will be thrown if `resources` is empty.
+     *
+     * @param resources the initial Resouces for the DataPackage
      */
-    public Package(JSONObject jsonObjectSource, boolean strict) throws IOException, DataPackageException, ValidationException{ 
-        this.setJson(jsonObjectSource);
+    public Package(Collection<Resource> resources) throws IOException {
+        for (Resource r : resources) {
+            addResource(r);
+                   }
+        UUID uuid = UUID.randomUUID();
+        id = uuid.toString();
+        validate();
+    }
+    
+    /**
+     * Load from String representation of JSON object. To prevent file system traversal attacks,
+     * the basePath must be explicitly set here, the `basePath` variable cannot be null.
+     *
+     * The basePath is the path that is used as a jail root for Resource creation -
+     * no absolute paths for Resources are allowed, they must all be relative to and
+     * children of the basePath.
+     *
+     * Security: JSON-based Packages can load Resources as JSON strings, from
+     * local files below the basePath or from URLs.
+     *
+     * @param jsonStringSource the String representation of the Descriptor JSON object
+     * @param strict whether to use strict schema parsing
+     * @throws IOException thrown if I/O operations fail
+     * @throws DataPackageException thrown if constructing the Descriptor fails
+     */
+    public Package(String jsonStringSource, Path basePath, boolean strict) throws Exception {
         this.strictValidation = strict;
-        
+        if (null == basePath)
+            throw new DataPackageException("basePath cannot be null for JSON-based DataPackages ");
+        this.basePath = basePath;
+
+        // Create and set the JSONObject fpr the String representation of desriptor JSON object.
+        this.setJson(new JSONObject(jsonStringSource));
+
+        // If String representation of desriptor JSON object is provided.
         this.validate();
     }
-    
-    /**
-     * Load from native Java JSONObject.
-     * @param jsonObjectSource
-     * @throws IOException
-     * @throws DataPackageException 
-     */
-    public Package(JSONObject jsonObjectSource) throws IOException, DataPackageException{
-        this(jsonObjectSource, false);
-    }
-    
-    /**
-     * Load from String representation of JSON object or from a zip file path.
-     * @param jsonStringSource
-     * @param strict
-     * @throws IOException
-     * @throws DataPackageException
-     * @throws ValidationException
-     */
-    public Package(String jsonStringSource, boolean strict) throws IOException, DataPackageException, ValidationException{
-        this.strictValidation = strict;
-        
-        // If zip file is given.
-        if(jsonStringSource.toLowerCase().endsWith(".zip")){
-            // Read in memory the file inside the zip.
-            ZipFile zipFile = new ZipFile(jsonStringSource);
-            ZipEntry entry = zipFile.getEntry(DATAPACKAGE_FILENAME);
-            
-            // Throw exception if expected datapackage.json file not found.
-            if(entry == null){
-                throw new DataPackageException("The zip file does not contain the expected file: " + DATAPACKAGE_FILENAME);
-            }
-            
-            // Read the datapackage.json file inside the zip
-            try (InputStream stream = zipFile.getInputStream(entry)) {
-                String content = getJsonStringContentFromInputStream(stream);
-                // Create and set the JSONObject for the datapackage.json that was read from inside the zip file.
-                this.setJson(new JSONObject(content));
 
-                // Validate.
-                this.validate();
-            }
-        }else{
-            // Create and set the JSONObject fpr the String representation of desriptor JSON object.
-            this.setJson(new JSONObject(jsonStringSource)); 
-            
-            // If String representation of desriptor JSON object is provided.
-            this.validate(); 
-        }
-    }
-    
-    /**
-     * Load from String representation of JSON object or from a zip file path.
-     * @param jsonStringSource
-     * @throws DataPackageException
-     * @throws ValidationException
-     * @throws IOException 
-     */
-    public Package(String jsonStringSource) throws DataPackageException, ValidationException, IOException{
-        this(jsonStringSource, false);
-    }
-    
     /**
      * Load from URL (must be in either 'http' or 'https' schemes).
-     * @param urlSource
-     * @param strict
-     * @throws DataPackageException
-     * @throws ValidationException
-     * @throws IOException
-     * @throws FileNotFoundException 
+     *
+     * From the specification: "URLs MUST be fully qualified. MUST be using either
+     * http or https scheme." (https://frictionlessdata.io/specs/data-resource/#url-or-path)
+     *
+     * Security: URL-based Packages can only load Resources as JSON strings or from other URLs,
+     * not from the local file system.
+     *
+     * @param urlSource The URL that points to the DataPackage Descriptor (if it's in
+     *                  a directory on the server) or the ZIP file if it's a ZIP-based
+     *                  package.
+     * @param strict whether to use strict schema parsing
+     *
+     * @throws IOException thrown if I/O operations fail
+     * @throws DataPackageException thrown if constructing the Descriptor fails
      */
-    public Package(URL urlSource, boolean strict) throws DataPackageException, ValidationException, IOException, FileNotFoundException{
+    public Package(URL urlSource, boolean strict) throws Exception {
         this.strictValidation = strict;
+        this.basePath = getParentUrl(urlSource);
 
+        if (!isValidUrl(urlSource.toExternalForm())) {
+            throw new DataPackageException("URL form not valid: "+urlSource.toExternalForm());
+        }
         // Get string content of given remove file.
-        String jsonString = getJsonStringContentFromRemoteFile(urlSource);
+        String jsonString = getFileContentAsString(urlSource);
 
         // Create JSONObject and validate.
         this.setJson(new JSONObject(jsonString));
@@ -139,96 +139,235 @@ public class Package {
     }
 
     /**
-     * Load from URL (must be in either 'http' or 'https' schemes).
-     * No validation by default.
-     * @param urlSource
-     * @throws DataPackageException
-     * @throws IOException
-     * @throws FileNotFoundException 
+     * Load from local file path. The file path to the descriptor can be either absolute
+     * or relative to the working directory. However, to prevent file system traversal attacks,
+     * we explicitly set the basePath here to the parent directory of the Descriptor file.
+     * The basePath is the path that is used as a jail root for Resource creation -
+     * no absolute paths for Resources are allowed, they must all be relative to and
+     * children of the basePath.
+     *
+     * From the specification: "POSIX paths (unix-style with / as separator) are supported
+     * for referencing local files, with the security restraint that they MUST be relative
+     * siblings or children of the descriptor.
+     * Absolute paths (/) and relative parent paths (../) MUST NOT be used, and
+     * implementations SHOULD NOT support these path types."
+     * (https://frictionlessdata.io/specs/data-resource/#url-or-path)
+     *
+     * Security: local file path-based Packages can load Resources as JSON strings, from
+     * local files below the basePath or from URLs
+     *
+     * @param descriptorFile local file path that points to the DataPackage Descriptor (if it's in
+     *                  a local directory) or the ZIP file if it's a ZIP-based
+     *                  package.
+     * @param strict whether to use strict schema parsing
+     * @throws IOException thrown if I/O operations fail
+     * @throws DataPackageException thrown if constructing the Descriptor fails
      */
-    public Package(URL urlSource) throws DataPackageException, IOException, FileNotFoundException{
-        this(urlSource, false);
-    }
-    
-    /**
-     * Load from local file system path.
-     * @param filePath
-     * @param basePath
-     * @param strict
-     * @throws DataPackageException
-     * @throws ValidationException
-     * @throws FileNotFoundException 
-     */
-    public Package(String filePath, String basePath, boolean strict) throws IOException, DataPackageException, ValidationException, FileNotFoundException {
+    public Package(Path descriptorFile, boolean strict) throws Exception {
         this.strictValidation = strict;
-        File sourceFile = null;
-        
-        if(StringUtils.isEmpty(basePath)){
-            // There is no basePath, i.e. it is empty ("") or null.
-            // Hence the source is the absolute path of the file.
-            // In this case we grab the directory of the source path and set it as the basePath.
-            sourceFile = new File(filePath);
-                  
-        }else{
-            // There is a basePath. Construct the absolute path and load it.
-            String absoluteFilePath = basePath + "/" + filePath;
-            sourceFile = new File(absoluteFilePath);  
+        JSONObject sourceJsonObject;
+        if (descriptorFile.toFile().getName().toLowerCase().endsWith(".zip")) {
+            isArchivePackage = true;
+            basePath = descriptorFile;
+            sourceJsonObject = new JSONObject(JSONBase.getFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
+        } else {
+            basePath = descriptorFile.getParent();
+            String sourceJsonString = getFileContentAsString(descriptorFile);
+            sourceJsonObject = new JSONObject(sourceJsonString);
         }
-        
-        if(sourceFile.exists()){
-            // Set base path
-            this.setBasePath(sourceFile.getParent());
+        this.setJson(sourceJsonObject);
+        this.validate();
+    }
 
-            // Read file, it should be a JSON.
-            String sourceJsonString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
-            JSONObject sourceJsonObject = new JSONObject(sourceJsonString);
-            
-            this.setJson(sourceJsonObject);
-            this.validate();
 
-        }else{
-            throw new FileNotFoundException();
+    private FileSystem getTargetFileSystem(File outputDir, boolean zipCompressed) throws IOException {
+        FileSystem outFs = null;
+        if (zipCompressed) {
+            if (outputDir.exists()) {
+                throw new DataPackageException("Cannot save into existing ZIP file: "
+                        +outputDir.getName());
+            }
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "true");
+            outFs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI().toString()), env);
+        } else {
+            if (!(outputDir.isDirectory())) {
+                throw new DataPackageException("Target for save() exists and is a regular file: "
+                        +outputDir.getName());
+            }
+            outFs = outputDir.toPath().getFileSystem();
+        }
+        return outFs;
+    }
+
+    private void writeDescriptor (FileSystem outFs, String parentDirName) throws IOException {
+        Path nf = outFs.getPath(parentDirName+File.separator+DATAPACKAGE_FILENAME);
+        try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
+            writer.write(this.getJson().toString(JSON_INDENT_FACTOR));
         }
     }
-    
+
     /**
-     * Load from local file system path.
-     * No validation by default.
-     * @param filePath
-     * @param basePath
-     * @throws IOException
-     * @throws DataPackageException
-     * @throws FileNotFoundException 
+     * Convert all Resources to CSV files, no matter whether they come from
+     * URLs, JSON Arrays, or files originally. The result is just one JSON
+     * file
+     * @param outputDir the directory or ZIP file to write the "datapackage.json"
+     *                  file to
+     * @param zipCompressed whether we are writing to a ZIP archive
+     * @throws Exception thrown if something goes wrong writing
      */
-    public Package(String filePath, String basePath) throws IOException, DataPackageException, FileNotFoundException {
-        this(filePath, basePath, false); 
-    }
-    
-    public void save(String outputFilePath) throws IOException, DataPackageException{
-        if(outputFilePath.toLowerCase().endsWith(".json")){
-            this.saveJson(outputFilePath);
-            
-        }else if(outputFilePath.toLowerCase().endsWith(".zip")){
-            this.saveZip(outputFilePath);
-            
-        }else{
-            throw new DataPackageException("Unrecognized file format.");
+    void writeFullyInlined (File outputDir, boolean zipCompressed) throws Exception {
+        FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
+        String parentDirName = "";
+        if (!zipCompressed) {
+            parentDirName = outputDir.getPath();
+        }
+        writeDescriptor(outFs, parentDirName);
+
+        for (Resource r : this.resources) {
+            r.writeDataAsCsv(outFs.getPath(parentDirName+File.separator), dialect);
         }
     }
-    
-    private void saveJson(String outputFilePath) throws IOException, DataPackageException{
-        try (FileWriter file = new FileWriter(outputFilePath)) {
+
+    /**
+     * Write this datapackage to an output directory or ZIP file. Creates at least a
+     * datapackage.json file and if this Package object holds file-based
+     * resources, dialect, or schemas, creates them as files.
+     * @param outputDir the directory or ZIP file to write the files to
+     * @param zipCompressed whether we are writing to a ZIP archive
+     * @throws Exception thrown if something goes wrong writing
+     */
+    void write (File outputDir, boolean zipCompressed) throws Exception {
+        FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
+        String parentDirName = "";
+        if (!zipCompressed) {
+            parentDirName = outputDir.getPath();
+        }
+        writeDescriptor(outFs, parentDirName);
+
+        // only file-based Resources need to be written to the DataPackage, URLs stay as
+        // external references and JSONArray-based Resources got serialized as part of the
+        // Descriptor file
+        final List<Resource> resourceList = resources
+                .stream()
+                .filter((r) -> (r instanceof FilebasedResource))
+                .collect(Collectors.toList());
+
+        for (Resource r : resourceList) {
+            r.writeDataAsCsv(outFs.getPath(parentDirName), dialect);
+            String schemaRef = r.getSchemaReference();
+            // write out schema file only if not null or URL
+            if ((null != schemaRef) && (!isValidUrl(schemaRef))) {
+                // URL fragments will not be written to disk either
+                if (!(r instanceof URLbasedResource)) {
+                    Path schemaP = outFs.getPath(parentDirName+File.separator+schemaRef);
+                    writeSchema(schemaP, r.getSchema());
+                }
+            }
+            String dialectRef = r.getDialectReference();
+            // write out schema file only if not null or URL
+            if ((null != dialectRef) && (!isValidUrl(dialectRef))) {
+                // URL fragments will not be written to disk either
+                if (!(r instanceof URLbasedResource)) {
+                    Path dialectP = outFs.getPath(parentDirName+File.separator+dialectRef);
+                    writeDialect(dialectP, r.getDialect());
+                }
+            }
+        }
+        // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
+        // like to get closed...
+        try {
+            outFs.close();
+        } catch (UnsupportedOperationException es) {};
+    }
+
+    // TODO migrate into Schema.java
+    private static void writeSchema(Path parentFilePath, Schema schema) throws IOException {
+        if (!Files.exists(parentFilePath)) {
+            Files.createDirectories(parentFilePath);
+        }
+        Files.deleteIfExists(parentFilePath);
+        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+            wr.write(schema.getJson().toString());
+        }
+    }
+
+
+    // TODO migrate into Dialet.java
+    private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
+        if (!Files.exists(parentFilePath)) {
+            Files.createDirectories(parentFilePath);
+        }
+        Files.deleteIfExists(parentFilePath);
+        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+            wr.write(dialect.getJson().toString());
+        }
+    }
+
+
+    /*void write (File outputDir, boolean zipCompressed) throws Exception {
+        if (zipCompressed) {
+            if (outputDir.exists()) {
+                throw new DataPackageException("Cannot save into existing ZIP file: "
+                        +outputDir.getName());
+            }
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "true");
+            try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI().toString()), env)){
+                Path nf = zipfs.getPath(DATAPACKAGE_FILENAME);
+                try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
+                    writer.write(this.getJson().toString(JSON_INDENT_FACTOR));
+                }
+
+                for (Resource r : this.resources) {
+                    if (r instanceof AbstractReferencebasedResource) {
+                        List<String> paths = new ArrayList<>();
+                        paths.addAll(((AbstractReferencebasedResource)r).getReferencesAsStrings());
+                        int cnt = 0;
+                        List<Table> tables = r.getTables();
+                        for (String path : paths) {
+                            Path file = zipfs.getPath(path);
+                            Table t  = tables.get(cnt++);
+                            r.writeTableAsCsv(t, dialect, file);
+                        }
+                    }
+                }
+            }
+        } else {
+            if (!(outputDir.isDirectory())) {
+                throw new DataPackageException("Target for save() exists and is a regular file: "
+                        +outputDir.getName());
+            }
+            File descriptor = new File (outputDir, DATAPACKAGE_FILENAME);
+            writeJson(descriptor);
+            for (Resource r : this.resources) {
+                if (r instanceof AbstractReferencebasedResource) {
+                    r.writeDataAsCsv(outputDir.toPath(), dialect);
+                }
+            }
+        }
+    }*/
+
+
+    public void writeJson (File outputFile) throws IOException{
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            writeJson(fos);
+        }
+    }
+
+    public void writeJson (OutputStream output) throws IOException{
+        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
             file.write(this.getJson().toString(JSON_INDENT_FACTOR));
         }
     }
     
-    private void saveZip(String outputFilePath) throws IOException, DataPackageException{
+    private void saveZip(File outputFilePath) throws IOException, DataPackageException{
         try(FileOutputStream fos = new FileOutputStream(outputFilePath)){
             try(BufferedOutputStream bos = new BufferedOutputStream(fos)){
                 try(ZipOutputStream zos = new ZipOutputStream(bos)){
                     // File is not on the disk, test.txt indicates
                     // only the file name to be put into the zip.
-                    ZipEntry entry = new ZipEntry("datapackage.json"); 
+                    ZipEntry entry = new ZipEntry(DATAPACKAGE_FILENAME);
 
                     zos.putNextEntry(entry);
                     zos.write(this.getJson().toString(JSON_INDENT_FACTOR).getBytes());
@@ -238,20 +377,9 @@ public class Package {
         }
     }
     
-    
-    public void infer(){
-        this.infer(false);
-    }
-    
-    public void infer(boolean pattern){
-        throw new UnsupportedOperationException();
-    }
-    
-    public Resource getResource(String resourceName){
-        Iterator<Resource> iter = this.resources.iterator();
-        while(iter.hasNext()) {
-            Resource resource = iter.next();
-            if(resource.getName().equalsIgnoreCase(resourceName)){
+    Resource getResource(String resourceName){
+        for (Resource resource : this.resources) {
+            if (resource.getName().equalsIgnoreCase(resourceName)) {
                 return resource;
             }
         }
@@ -261,72 +389,78 @@ public class Package {
     public List<Resource> getResources(){
         return this.resources;
     }
-    
-    public void addResource(Resource resource) throws IOException, ValidationException, DataPackageException{
-        
-        // If a name property isn't given...
-        if(resource.getName() == null){
-            DataPackageException dpe = new DataPackageException("The resource does not have a name property.");
 
-            if(this.strictValidation){
+    private void validate(DataPackageException dpe) throws IOException {
+        if (dpe != null) {
+            if (this.strictValidation) {
                 throw dpe;
-            }else{
+            } else {
                 errors.add(dpe);
-            }
-            
-        }else if(resource.getPath() == null && (resource.getData() == null || resource.getFormat() == null)){
-            DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");
-            
-            if(this.strictValidation){
-                throw dpe;
-            }else{
-                errors.add(dpe);
-            }
-            
-        }else{
-            Iterator<Resource> iter = this.resources.iterator();
-
-            // Check if there is duplication.
-            while(iter.hasNext()){
-                if(iter.next().getName().equalsIgnoreCase(resource.getName())){
-                    DataPackageException dpe = new DataPackageException("A resource with the same name already exists.");
-
-                    if(this.strictValidation){
-                        throw dpe;
-                    }else{
-                        errors.add(dpe);
-                    }
-                }
             }
         }
-        
+
         // Validate.
         this.validate();
-        
+    }
+
+    private DataPackageException checkDuplicates(Resource resource) {
+        DataPackageException dpe = null;
+        // Check if there is duplication.
+        for (Resource value : this.resources) {
+            if (value.getName().equalsIgnoreCase(resource.getName())) {
+                dpe = new DataPackageException(
+                        "A resource with the same name already exists.");
+            }
+        }
+        return dpe;
+    }
+
+    void addResource(Resource resource)
+            throws IOException, ValidationException, DataPackageException{
+        DataPackageException dpe = null;
+        if (resource.getName() == null){
+            dpe = new DataPackageException("Invalid Resource, it does not have a name property.");
+        }
+        if (resource instanceof AbstractDataResource)
+            addResource((AbstractDataResource) resource);
+        else if (resource instanceof AbstractReferencebasedResource)
+            addResource((AbstractReferencebasedResource) resource);
+        validate(dpe);
+    }
+
+    void addResource(AbstractDataResource resource)
+            throws IOException, ValidationException, DataPackageException{
+        DataPackageException dpe = null;
+        // If a name property isn't given...
+        if ((resource).getData() == null || (resource).getFormat() == null) {
+                dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
+        } else {
+            dpe = checkDuplicates(resource);
+        }
+        validate(dpe);
+
         this.resources.add(resource);
     }
-    
-    public void removeResource(String name){
+
+    void addResource(AbstractReferencebasedResource resource)
+            throws IOException, ValidationException, DataPackageException{
+        DataPackageException dpe = null;
+        if (resource.getPaths() == null) {
+                dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
+        } else {
+            dpe = checkDuplicates(resource);
+        }
+        validate(dpe);
+
+        this.resources.add(resource);
+    }
+
+    void removeResource(String name){
         this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
     }
+
     
-    public Object getProperty(String key){
-        return this.getJson().get(key);
-    }
-    
-    public Object getPropertyString(String key){
-        return this.getJson().getString(key);
-    }
-    
-    public Object getPropertyJSONObject(String key){
-        return this.getJson().getJSONObject(key);
-    }
-    
-    public Object getPropertyJSONArray(String key){
-        return this.getJson().getJSONArray(key);
-    }
-    
-    public void addProperty(String key, String value) throws DataPackageException{
+    void addProperty(String key, String value) throws DataPackageException{
         if(this.getJson().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
@@ -356,15 +490,13 @@ public class Package {
     
     /**
      * Validation is strict or unstrict depending on how the package was
-     * instanciated with the strict flag.
+     * instantiated with the strict flag.
      * @throws IOException
      * @throws DataPackageException
-     * @throws ValidationException 
      */
-    public final void validate() throws IOException, DataPackageException, ValidationException{
+    final void validate() throws IOException, DataPackageException{
         try{
             this.validator.validate(this.getJson());
-            
         }catch(ValidationException ve){
             if(this.strictValidation){
                 throw ve;
@@ -374,12 +506,17 @@ public class Package {
         }
     }
     
-    final public String getBasePath(){
-        return this.basePath;
+    final File getBasePath(){
+        if (basePath instanceof File)
+            return (File)this.basePath;
+        return null;
     }
-    
-    final public void setBasePath(String basePath){
-        this.basePath = basePath;
+
+
+    final URL getBaseUrl(){
+        if (basePath instanceof URL)
+            return (URL)basePath;
+        return null;
     }
     
     public JSONObject getJson(){
@@ -398,83 +535,22 @@ public class Package {
         return this.jsonObject;
     }
     
-    public List<Exception> getErrors(){
+    List<Exception> getErrors(){
         return this.errors;
     }
-
-    private static String getJsonStringContentFromInputStream(InputStream stream) {
-        List<String> lines = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
-                .lines()
-                .collect(Collectors.toList());
-        // check whether the JSON texts starts with a BOM, and remove if so
-        if (!lines.isEmpty()) {
-            lines.set(0, lines.get(0).replaceFirst("\\uFEFF", ""));
-        }
-        return String.join("\n", lines);
-    }
     
-    private String getJsonStringContentFromRemoteFile(URL url) throws IOException {
-        return getJsonStringContentFromInputStream(url.openStream());
-    }
-    
-    private String getJsonStringContentFromLocalFile(String absoluteFilePath) throws JSONException{
-        // Read file, it should be a JSON.
-        try{
-            return getJsonStringContentFromInputStream(new FileInputStream(new File(absoluteFilePath)));
-        }catch(IOException ioe){
-            // FIXME: Come up with better exception handling?
-            return null;
-        }
-    }
-    
-    private void setJson(JSONObject jsonObjectSource) throws IOException, MalformedURLException, FileNotFoundException, DataPackageException{
+    private void setJson(JSONObject jsonObjectSource) throws Exception {
         this.jsonObject = jsonObjectSource;
         
-        // Create Resource list, is there are resources.
+        // Create Resource list, if there are resources.
         if(jsonObjectSource.has(JSON_KEY_RESOURCES)){
             JSONArray resourcesJsonArray = jsonObjectSource.getJSONArray(JSON_KEY_RESOURCES);
             for(int i=0; i < resourcesJsonArray.length(); i++){
                 JSONObject resourceJson = resourcesJsonArray.getJSONObject(i);
-
-                //FIXME: Again, could be greatly simplified amd much more
-                // elegant if we use a library like GJSON...
-                String name = resourceJson.has(Resource.JSON_KEY_NAME) ? resourceJson.getString(Resource.JSON_KEY_NAME) : null;
-                Object path = resourceJson.has(Resource.JSON_KEY_PATH) ? resourceJson.get(Resource.JSON_KEY_PATH) : null;
-                Object data = resourceJson.has(Resource.JSON_KEY_DATA) ? resourceJson.get(Resource.JSON_KEY_DATA) : null;
-                String profile = resourceJson.has(Resource.JSON_KEY_PROFILE) ? resourceJson.getString(Resource.JSON_KEY_PROFILE) : null;
-                String title = resourceJson.has(Resource.JSON_KEY_TITLE) ? resourceJson.getString(Resource.JSON_KEY_TITLE) : null;
-                String description = resourceJson.has(Resource.JSON_KEY_DESCRIPTION) ? resourceJson.getString(Resource.JSON_KEY_DESCRIPTION) : null;
-                String format = resourceJson.has(Resource.JSON_KEY_FORMAT) ? resourceJson.getString(Resource.JSON_KEY_FORMAT) : null;
-                String mediaType = resourceJson.has(Resource.JSON_KEY_MEDIA_TYPE) ? resourceJson.getString(Resource.JSON_KEY_MEDIA_TYPE) : null;
-                String encoding = resourceJson.has(Resource.JSON_KEY_ENCODING) ? resourceJson.getString(Resource.JSON_KEY_ENCODING) : null;
-                Integer bytes = resourceJson.has(Resource.JSON_KEY_BYTES) ? resourceJson.getInt(Resource.JSON_KEY_BYTES) : null;
-                String hash = resourceJson.has(Resource.JSON_KEY_HASH) ? resourceJson.getString(Resource.JSON_KEY_HASH) : null;
- 
-                JSONArray sources = resourceJson.has(Resource.JSON_KEY_SOURCES) ? resourceJson.getJSONArray(Resource.JSON_KEY_SOURCES) : null;
-                JSONArray licenses = resourceJson.has(Resource.JSON_KEY_LICENSES) ? resourceJson.getJSONArray(Resource.JSON_KEY_LICENSES) : null;
-                
-                // Get the schema and dereference it. Enables validation against it.
-                Object schemaObj = resourceJson.has(Resource.JSON_KEY_SCHEMA) ? resourceJson.get(Resource.JSON_KEY_SCHEMA) : null;
-                JSONObject dereferencedSchema = this.getDereferencedObject(schemaObj);
-
-                // Now we can build the resource objects
                 Resource resource = null;
-                
-                if(path != null){
-                    // Get the dialect and dereference it. Enables validation against it.
-                    Object dialectObj = resourceJson.has(Resource.JSON_KEY_DIALECT) ? resourceJson.get(Resource.JSON_KEY_DIALECT) : null; 
-                    JSONObject dereferencedDialect = this.getDereferencedObject(dialectObj);
-                
-                    resource = new Resource(name, path, dereferencedSchema.toString(), dereferencedDialect,
-                        profile, title, description, mediaType, encoding, bytes, hash, sources, licenses);
-                    
-                }else if(data != null && format != null){
-                    resource = new Resource(name, data, format, dereferencedSchema,
-                        profile, title, description, mediaType, encoding, bytes, hash, sources, licenses);
-                    
-                }else{
-                    DataPackageException dpe = new DataPackageException("Invalid Resource. The path property or the data and format properties cannot be null.");
-
+                try {
+                    resource = Resource.build(resourceJson, basePath, isArchivePackage);
+                } catch (DataPackageException dpe) {
                     if(this.strictValidation){
                         this.jsonObject = null;
                         this.resources.clear();
@@ -487,53 +563,358 @@ public class Package {
                 }
 
                 if(resource != null){
-                    this.resources.add(resource);
+                    addResource(resource);
                 }
-                
             }         
-        }  
+        } else {
+            DataPackageException dpe = new DataPackageException("Trying to create a DataPackage from JSON, " +
+                    "but no resource entries found");
+            if(this.strictValidation){
+                this.jsonObject = null;
+                this.resources.clear();
+
+                throw dpe;
+
+            }else{
+                this.errors.add(dpe);
+            }
+        }
+        Schema schema = buildSchema (jsonObjectSource, basePath, isArchivePackage);
+        setFromJson(jsonObjectSource, this, schema, isArchivePackage);
+
+        this.setName(jsonObjectSource.has(Package.JSON_KEY_ID)
+                ? jsonObjectSource.getString(Package.JSON_KEY_ID)
+                : null);
+        this.setVersion(jsonObjectSource.has(Package.JSON_KEY_VERSION)
+                ? jsonObjectSource.getString(Package.JSON_KEY_VERSION)
+                : null);
+        this.setHomepage(jsonObjectSource.has(Package.JSON_KEY_HOMEPAGE)
+                ? new URL(jsonObjectSource.getString(Package.JSON_KEY_HOMEPAGE))
+                : null);
+        this.setImage(jsonObjectSource.has(Package.JSON_KEY_IMAGE)
+                ? jsonObjectSource.getString(Package.JSON_KEY_IMAGE)
+                : null);
+        this.setCreated(jsonObjectSource.has(Package.JSON_KEY_CREATED)
+                ? jsonObjectSource.getString(Package.JSON_KEY_CREATED)
+                : null);
+        this.setContributors(jsonObjectSource.has(Package.JSON_KEY_CONTRIBUTORS)
+                ? Contributor.fromJson(jsonObjectSource.getString(Package.JSON_KEY_CONTRIBUTORS))
+                : null);
+        if (jsonObjectSource.has(Package.JSON_KEY_KEYWORDS)) {
+            JSONArray arr = jsonObject.getJSONArray(Package.JSON_KEY_KEYWORDS);
+            for (int i = 0; i < arr.length(); i++) {
+                this.addKeyword(arr.getString(i));
+            }
+        }
+        List<String> wellKnownKeys = Arrays.asList(JSON_KEY_RESOURCES, JSON_KEY_ID, JSON_KEY_VERSION,
+                JSON_KEY_HOMEPAGE, JSON_KEY_IMAGE, JSON_KEY_CREATED, JSON_KEY_CONTRIBUTORS,
+                JSON_KEY_KEYWORDS);
+        jsonObjectSource.keySet().forEach((k) -> {
+            if (wellKnownKeys.contains(k)) {
+                Object obj = jsonObjectSource.get(k);
+                this.otherProperties.put(k, obj);
+            }
+        });
     }
-    
-    private JSONObject getDereferencedObject(Object obj) throws IOException, FileNotFoundException, MalformedURLException{
+    /**
+     * @return the profile
+     */
+    @Override
+    public String getProfile() {
+        if (null == super.getProfile())
+            return Profile.PROFILE_DATA_PACKAGE_DEFAULT;
+        return super.getProfile();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    private void setVersion(String version) {
+        if (StringUtils.isEmpty(version))
+            return;
+        String[] parts = version.split("\\.");
+        if (parts.length != 3)
+            throw new DataPackageException("Version must be MAJOR.MINOR.FIX format");
+        try {
+            for (String part : parts) {
+                Integer.parseInt(part);
+            }
+        } catch (Exception ex) {
+            throw new DataPackageException("Version format parts must be numeric");
+        }
+        this.version = version;
+    }
+
+    public URL getHomepage() {
+        return homepage;
+    }
+
+    private void setHomepage(URL homepage) {
+        if (null == homepage)
+            return;
+        if (!isValidUrl(homepage))
+            throw new DataPackageException("Homepage URL must be fully qualified");
+        this.homepage = homepage;
+    }
+
+
+    public String getImage() {
+        return image;
+    }
+
+    private void setImage(String image) {
+        this.image = image;
+    }
+
+    public ZonedDateTime getCreated() {
+        return created;
+    }
+
+    private void setCreated(ZonedDateTime created) {
+        this.created = created;
+    }
+
+    private void setCreated(String created) {
+        if (null == created)
+            return;
+        ZonedDateTime dt = ZonedDateTime.parse(created);
+        setCreated(dt);
+    }
+
+    public List<Contributor> getContributors() {
+        if (null == contributors)
+            return null;
+        return UnmodifiableList.decorate(contributors);
+    }
+
+    private void setContributors(Collection<Contributor> contributors) {
+        if (null == contributors)
+            return;
+        this.contributors = new ArrayList<>(contributors);
+    }
+
+    public void addContributor (Contributor contributor) {
+        if (null == contributor)
+            return;
+        if (null == contributors)
+            contributors = new ArrayList<>();
+        this.contributors.add(contributor);
+    }
+
+    public void removeContributor (Contributor contributor) {
+        if (null == contributor)
+            return;
+        if (null == contributors)
+            return;
+        if (contributors.contains(contributor)) {
+            this.contributors.remove(contributor);
+        }
+    }
+
+    public Set<String> getKeywords() {
+        if (null == keywords)
+            return null;
+        return UnmodifiableSet.decorate(keywords);
+    }
+
+    public void setKeywords(Set<String> keywords) {
+        if (null == keywords)
+            return;
+        this.keywords = new LinkedHashSet<>(keywords);
+    }
+
+    private void addKeyword(String keyword) {
+        if (null == keyword)
+            return;
+        if (null == keywords)
+            keywords = new LinkedHashSet<>();
+        this.keywords.add(keyword);
+    }
+
+    public void removeKeyword (String keyword) {
+        if (null == keyword)
+            return;
+        if (null == keywords)
+            return;
+        if (keywords.contains(keyword)) {
+            this.keywords.remove(keyword);
+        }
+    }
+
+    public Object getOtherProperty(String key) {
+        return otherProperties.get(key);
+    }
+
+    public void removeOtherProperty(String key) {
+        if (null == key)
+            return;
+        if (null == otherProperties)
+            return;
+        if (otherProperties.keySet().contains(key)) {
+            otherProperties.remove(key);
+        }
+    }
+
+    public void setOtherProperties(String key, Object value) {
+        if (null == key)
+            return;
+        this.otherProperties.put(key, value);
+    }
+
+    /**
+     * Take a string containing either a fully qualified URL or a path-fragment and read the contents
+     * of either the fully qualified URL or the basePath URL+path-fragment. Construct a JSON object
+     * from the URL content
+     * @param url fully qualified URL or path fragment
+     * @param basePath base URL, only used if we are dealing with a path fragment
+     * @return a JSONObject built from the url content
+     * @throws IOException if fetching the contents of the URL goes wrong
+     */
+    /*
+    private static JSONObject dereference(String url, URL basePath) throws IOException {
+        JSONObject dereferencedObj = null;
+
+        if (isValidUrl(url)) {
+            // Create the dereferenced object from the remote file.
+            String jsonContentString = getFileContentAsString(new URL(url));
+            dereferencedObj = new JSONObject(jsonContentString);
+        } else {
+            URL lURL = new URL(basePath.toExternalForm()+url);
+            if (isValidUrl(lURL)) {
+                String jsonContentString = getFileContentAsString(lURL);
+                dereferencedObj = new JSONObject(jsonContentString);
+            } else {
+                throw new DataPackageException("URL not found"+lURL);
+            }
+        }
+        return dereferencedObj;
+    }*/
+/*
+    public static JSONObject dereference(JSONObject obj, Object basePath) throws IOException {
+        if (null == obj)
+            return null;
+        // The JSONObject that will represent the schema.
+        JSONObject dereferencedObj = null;
+
+        // Object is already a dereferences object.
+        // Don't need to do anything, just return.
+        return obj;
+    }
+*/
+/*
+    public static JSONObject dereference(String obj, Object basePath) throws IOException {
+        if (null == obj)
+            return null;
+        // The JSONObject that will represent the schema.
+        JSONObject dereferencedObj = null;
+
+        if (basePath instanceof File)
+            dereferencedObj = dereference(new File(obj), (File)basePath);
+        else if (basePath instanceof URL)
+            dereferencedObj = dereference(new URL(obj), (URL)basePath);
+
+
+        return dereferencedObj;
+    }
+
+    private static JSONObject dereference(URL url, URL basePath) throws IOException {
+        return dereference(url.toExternalForm(), basePath);
+    }
+*/
+/*
+    public static JSONObject dereference(File objString, File basePath) throws IOException {
+        JSONObject dereferencedObj = null;
+*/
+        /* If reference is file path.
+           from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
+           are forbidden to avoid security vulnerabilities when implementing data
+           package software."
+
+           https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
+         */
+ /*       Path securePath = DataSource.toSecure(objString.toPath(), basePath.toPath());
+        if(securePath.toFile().exists()){
+            // Create the dereferenced schema object from the local file.
+            String jsonContentString = getFileContentAsString(securePath.toFile());
+            dereferencedObj = new JSONObject(jsonContentString);
+
+        } else {
+            throw new FileNotFoundException("Local file not found: " + objString);
+        }
+        return dereferencedObj;
+    }*/
+/*
+    public static JSONObject dereference(Object obj, Object basePath) throws IOException {
+        if (null == obj)
+            return null;
         // The JSONObject that will represent the schema.
         JSONObject dereferencedObj = null;
 
         // Object is already a dereferences object.
         if(obj instanceof JSONObject){
-            
             // Don't need to do anything, just cast and return.
             dereferencedObj = (JSONObject)obj;
-
-        }else if(obj instanceof String){
-            
-            // The string value of the given object value.
-            String objStr = (String)obj;
-
-            // If object value is Url.
-            // Grab the JSON string content of that remote file.
-            String[] schemes = {"http", "https"};
-            UrlValidator urlValidator = new UrlValidator(schemes);
-
-            if (urlValidator.isValid(objStr)) {
-
-                // Create the dereferenced object from the remote file.
-                String jsonContentString = this.getJsonStringContentFromRemoteFile(new URL(objStr));
-                dereferencedObj = new JSONObject(jsonContentString);
-
-            }else{
-                // If schema is file path.
-                File sourceFile = new File(objStr);  
-                if(sourceFile.exists()){
-                    // Create the dereferenced schema object from the local file.
-                    String jsonContentString = this.getJsonStringContentFromLocalFile(sourceFile.getAbsolutePath());
-                    dereferencedObj = new JSONObject(jsonContentString);
-
-                }else{
-                    throw new FileNotFoundException("Local file not found: " + sourceFile);
-                }
-            }
+        } else if(obj instanceof String){
+            if (isValidUrl((String)obj))
+                if (basePath instanceof File)
+                    dereferencedObj = dereference(new URL((String)obj), (File)basePath);
+                else
+                    dereferencedObj = dereference(new URL((String)obj), (URL)basePath);
+            else if (basePath instanceof URL) {
+                dereferencedObj = dereference((String) obj, (URL) basePath);
+            } else
+                dereferencedObj = dereference((String) obj, (File) basePath);
         }
-        
+
         return dereferencedObj;
+    }*/
+
+
+    private static URL getParentUrl(URL urlSource) throws URISyntaxException, MalformedURLException {
+        URI uri = urlSource.toURI();
+        return (urlSource.getPath().endsWith("/")
+                ? uri.resolve("..")
+                : uri.resolve(".")).toURL();
+    }
+
+
+    /**
+     * Check whether an input URL is valid according to DataPackage specs.
+     *
+     * From the specification: "URLs MUST be fully qualified. MUST be using either
+     * http or https scheme."
+     *
+     * https://frictionlessdata.io/specs/data-resource/#url-or-path
+     * @param url URL to test
+     * @return true if the String contains a URL starting with HTTP/HTTPS
+     */
+    public static boolean isValidUrl(URL url) {
+        return isValidUrl(url.toExternalForm());
+    }
+
+    /**
+     * Check whether an input string contains a valid URL.
+     *
+     * From the specification: "URLs MUST be fully qualified. MUST be using either
+     * http or https scheme."
+     *
+     * https://frictionlessdata.io/specs/data-resource/#url-or-path
+     * @param objString String to test
+     * @return true if the String contains a URL starting with HTTP/HTTPS
+     */
+    public static boolean isValidUrl(String objString) {
+        String[] schemes = {"http", "https"};
+        UrlValidator urlValidator = new UrlValidator(schemes);
+
+        return urlValidator.isValid(objString);
     }
 }

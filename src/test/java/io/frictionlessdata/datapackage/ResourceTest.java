@@ -1,30 +1,55 @@
 package io.frictionlessdata.datapackage;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.resource.*;
+import io.frictionlessdata.tableschema.Schema;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  *
  * 
  */
 public class ResourceTest {
+    static JSONObject resource1 = new JSONObject("{\"name\": \"first-resource\", \"path\": " +
+            "[\"data/cities.csv\", \"data/cities2.csv\", \"data/cities3.csv\"]}");
+    static JSONObject resource2 = new JSONObject("{\"name\": \"second-resource\", \"path\": " +
+            "[\"data/area.csv\", \"data/population.csv\"]}");
+
+    static JSONArray testResources;
+
+    static {
+        testResources = new JSONArray();
+        testResources.put(resource1);
+        testResources.put(resource2);
+    }
+
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
     
     @Test
     public void testIterateDataFromUrlPath() throws Exception{
        
-        String urlString = "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/population.csv";
-        URL dataSource = new URL(urlString);
-        Resource resource = new Resource("population", dataSource);
+        String urlString = "https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
+                "/master/src/test/resources/fixtures/data/population.csv";
+        List<URL> dataSource = Arrays.asList(new URL(urlString));
+        Resource resource = new URLbasedResource("population", dataSource);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -53,10 +78,7 @@ public class ResourceTest {
             
     @Test
     public void testIterateDataFromFilePath() throws Exception{
-
-        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
-        File file = new File(filePath);
-        Resource resource = new Resource("population", file, file.getParentFile());
+        Resource resource = buildResource("/fixtures/data/population.csv");
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -96,9 +118,16 @@ public class ResourceTest {
         expectedData.add(new String[]{"paris", "48.85,2.30"});
         expectedData.add(new String[]{"rome", "41.89,12.51"});
         
-        JSONArray multipartPathJsonArray = new JSONArray("[\"src/test/resources/fixtures/data/cities.csv\", \"src/test/resources/fixtures/data/cities2.csv\", \"src/test/resources/fixtures/data/cities3.csv\"]");
-        Resource resource = new Resource("coordinates", multipartPathJsonArray);
-        
+        String[] paths = new String[]{
+                "data/cities.csv",
+                "data/cities2.csv",
+                "data/cities3.csv"};
+        List<File> files = new ArrayList<>();
+        for (String file : paths) {
+            files.add(new File (file));
+        }
+        Resource resource = new FilebasedResource("coordinates", files, getBasePath());
+
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
@@ -130,9 +159,18 @@ public class ResourceTest {
         expectedData.add(new String[]{"london", "51.50,-0.11"});
         expectedData.add(new String[]{"paris", "48.85,2.30"});
         expectedData.add(new String[]{"rome", "41.89,12.51"});
-        
-        JSONArray multipartPathJsonArray = new JSONArray("[\"https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities.csv\", \"https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities2.csv\", \"https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities3.csv\"]");
-        Resource resource = new Resource("coordinates", multipartPathJsonArray);
+
+        String[] paths = new String[]{"https://raw.githubusercontent.com" +
+                "/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/cities.csv",
+                "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test" +
+                "/resources/fixtures/data/cities2.csv",
+                "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src" +
+                "/test/resources/fixtures/data/cities3.csv"};
+        List<URL> urls = new ArrayList<>();
+        for (String file : paths) {
+            urls.add(new URL (file));
+        }
+        Resource resource = new URLbasedResource("coordinates", urls);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -155,22 +193,18 @@ public class ResourceTest {
     
     @Test
     public void testIterateDataWithCast() throws Exception{
-        
-        // Get data file.
-        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
-        File file = new File(filePath);
-
         // Get string content version of the schema file.
         String schemaJsonString = getFileContents("/fixtures/schema/population_schema.json");
 
-        // Get JSON Object
-        JSONObject schemaJson = new JSONObject(schemaJsonString);
-        Resource resource = new Resource("population", file, file.getParentFile(), schemaJson);
+        Resource resource = buildResource("/fixtures/data/population.csv");
+
+        //set schema
+        resource.setSchema(new Schema(schemaJsonString, true));
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<Object[]> iter = resource.iter(false, false, true);
+        Iterator<Object[]> iter = resource.iter(false, false, true, false);
         
         // Assert data.
         while(iter.hasNext()){
@@ -185,7 +219,7 @@ public class ResourceTest {
     @Test
     public void testIterateDataFromCsvFormat() throws Exception{
         String dataString = "city,year,population\nlondon,2017,8780000\nparis,2017,2240000\nrome,2017,2860000";
-        Resource resource = new Resource("population", dataString, Resource.FORMAT_CSV);
+        Resource resource = new CSVDataResource("population", dataString);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -209,9 +243,64 @@ public class ResourceTest {
             Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
             
             expectedDataIndex++;
-        }  
+        }
     }
-    
+
+
+    @Test
+    public void testBuildAndIterateDataFromCsvFormat() throws Exception{
+        String dataString = getFileContents("/fixtures/resource/valid_csv_resource.json");
+        Resource resource = Resource.build(new JSONObject(dataString), getBasePath(), false);
+
+        // Expected data.
+        List<String[]> expectedData = this.getExpectedPopulationData();
+
+        // Get Iterator.
+        Iterator<String[]> iter = resource.iter();
+        int expectedDataIndex = 0;
+
+        // Assert data.
+        while(iter.hasNext()){
+            String[] record = iter.next();
+            String city = record[0];
+            String year = record[1];
+            String population = record[2];
+
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+
+            expectedDataIndex++;
+        }
+    }
+
+    @Test
+    public void testBuildAndIterateDataFromTabseparatedCsvFormat() throws Exception{
+        String dataString = getFileContents("/fixtures/resource/valid_csv_resource_tabseparated.json");
+        Resource resource = Resource.build(new JSONObject(dataString), getBasePath(), false);
+
+        // Expected data.
+        List<String[]> expectedData = this.getExpectedPopulationData();
+
+        // Get Iterator.
+        Iterator<String[]> iter = resource.iter();
+        int expectedDataIndex = 0;
+
+        // Assert data.
+        while(iter.hasNext()){
+            String[] record = iter.next();
+            String city = record[0];
+            String year = record[1];
+            String population = record[2];
+
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+
+            expectedDataIndex++;
+        }
+    }
+
     @Test
     public void testIterateDataFromJSONFormat() throws Exception{
         JSONArray jsonData = new JSONArray("[" +
@@ -232,7 +321,7 @@ public class ResourceTest {
             "}" +
         "]");
         
-        Resource resource = new Resource("population", jsonData, Resource.FORMAT_JSON);
+        Resource resource = new JSONDataResource("population", jsonData);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -258,29 +347,77 @@ public class ResourceTest {
             expectedDataIndex++;
         } 
     }
-    
-    @Test
-    public void testRead() throws Exception{  
-        // Get data file.
-        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
-        File file = new File(filePath);
 
-        Resource resource = new Resource("population", file, file.getParentFile());
+    @Test
+    public void testBuildAndIterateDataFromJSONFormat() throws Exception{
+        String dataString = getFileContents("/fixtures/resource/valid_json_array_resource.json");
+        Resource resource = Resource.build(new JSONObject(dataString), getBasePath(), false);
+
+        // Expected data.
+        List<String[]> expectedData = this.getExpectedPopulationData();
+
+        // Get Iterator.
+        Iterator<String[]> iter = resource.iter();
+        int expectedDataIndex = 0;
+
+        // Assert data.
+        while(iter.hasNext()){
+            String[] record = iter.next();
+            String city = record[0];
+            String year = record[1];
+            String population = record[2];
+
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+
+            expectedDataIndex++;
+        }
+    }
+
+
+    /*
+    FIXME: since strongly typed, those don't work anymore
+    @Test
+    public void testCreatingJSONResourceWithInvalidFormatNullValue() throws Exception {
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/" +
+                "datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+        Package dp = new Package(url, true);
+
+        // format property is null but data is not null.
+        Resource resource = new JSONDataResource("resource-name", testResources, (String)null);
+
+        exception.expectMessage("Invalid Resource. The data and format properties cannot be null.");
+        dp.addResource(resource);
+    }
+
+    @Test
+    public void testCreatingResourceWithInvalidFormatDataValue() throws Exception {
+        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+        Package dp = new Package(url, true);
+
+        // data property is null but format is not null.
+        Resource resource = new JSONDataResource("resource-name", (String)null, "csv");
+
+        exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
+        dp.addResource(resource);
+    }
+
+     */
+    @Test
+    public void testRead() throws Exception{
+        Resource resource = buildResource("/fixtures/data/population.csv");
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
         // Assert
-        Assert.assertEquals(3, resource.read().size());
+        Assert.assertEquals(3, resource.read(false).size());
     }
     
     @Test
     public void testHeadings() throws Exception{
-        // Get data file.
-        String filePath = ResourceTest.class.getResource("/fixtures/data/population.csv").getPath();
-        File file = new File(filePath);
-
-        Resource resource = new Resource("population", file, file.getParentFile());
+        Resource resource = buildResource("/fixtures/data/population.csv");
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -291,6 +428,41 @@ public class ResourceTest {
         Assert.assertEquals("population", resource.getHeaders()[2]);
     }
 
+
+    @Test
+    public void readCreateInvalidResourceContainingAbsolutePaths() throws Exception{
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        URI sourceFileAbsPathURI1 = PackageTest.class.getResource("/fixtures/data/cities.csv").toURI();
+        URI sourceFileAbsPathURI2 = PackageTest.class.getResource("/fixtures/data/cities2.csv").toURI();
+        File sourceFileAbsPathU1 = Paths.get(sourceFileAbsPathURI1).toAbsolutePath().toFile();
+        File sourceFileAbsPathU2 = Paths.get(sourceFileAbsPathURI2).toAbsolutePath().toFile();
+        ArrayList<File> files = new ArrayList<>();
+        files.add(sourceFileAbsPathU1);
+        files.add(sourceFileAbsPathU2);
+
+        exception.expect(DataPackageException.class);
+        FilebasedResource r = new FilebasedResource("resource-one", files, getBasePath());
+        Package pkg = new Package("test", tempDirPath.resolve("datapackage.json"), true);
+        pkg.addResource(r);
+        System.out.println(pkg.getBasePath());
+    }
+
+    private static Resource buildResource(String relativeInPath) throws URISyntaxException {
+        URL sourceFileUrl = ResourceTest.class.getResource(relativeInPath);
+        Path path = Paths.get(sourceFileUrl.toURI());
+        Path parent = path.getParent();
+        Path relativePath = parent.relativize(path);
+
+        List<File> files = new ArrayList<>();
+        files.add(relativePath.toFile());
+        return new FilebasedResource("population", files, parent.toFile());
+    }
+
+    private static File getBasePath() throws URISyntaxException {
+        URL sourceFileUrl = ResourceTest.class.getResource("/fixtures/data");
+        Path path = Paths.get(sourceFileUrl.toURI());
+        return path.getParent().toFile();
+    }
 
     private static String getFileContents(String fileName) {
         try {

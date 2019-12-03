@@ -1,0 +1,25 @@
+{
+  "name": "year-type",
+  "resources": [
+    {
+      "path": "data.csv",
+      "name": "year-data",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "year",
+            "type": "year"
+          },
+          {
+            "name": "invalid year",
+            "type": "year"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

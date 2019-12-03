@@ -1,0 +1,25 @@
+{
+  "name": "yearmonth-type",
+  "resources": [
+    {
+      "path": "data.csv",
+      "name": "yearmonth-data",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "yearmonth",
+            "type": "yearmonth"
+          },
+          {
+            "name": "invalid yearmonth",
+            "type": "yearmonth"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

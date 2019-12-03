@@ -1,0 +1,11 @@
+{
+  "name":"population",
+  "data":"city\tyear\tpopulation\nlondon\t2017\t8780000\nparis\t2017\t2240000\nrome\t2017\t2860000",
+  "profile":"tabular-data-resource",
+  "format":"csv",
+  "dialect": {
+    "delimiter": "\t",
+    "header": "true",
+    "encoding": "UTF-8"
+  }
+}

@@ -25,6 +25,7 @@
         <apache-commons-lang3.version>3.9</apache-commons-lang3.version>
         <apache-commons-csv.version>1.5</apache-commons-csv.version>
         <everit-json-schema.version>1.5.1</everit-json-schema.version>
+        <joda-time.version>2.9.9</joda-time.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
@@ -207,9 +208,9 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -235,6 +236,14 @@
             <version>${everit-json-schema.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>${joda-time.version}</version>
+        </dependency>
+
+
         <!-- https://commons.apache.org/proper/commons-csv/ -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -250,13 +259,13 @@
         </dependency>
 
         <!-- tableschema-java -->
+
         <dependency>
-            <groupId>io.frictionlessdata</groupId>
+            <groupId>com.github.frictionlessdata</groupId>
             <artifactId>tableschema-java</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/tableschema-java-1.0-SNAPSHOT.jar</systemPath>
+            <version>02dcea1e51</version>
         </dependency>
+
 
     </dependencies>
 </project>
