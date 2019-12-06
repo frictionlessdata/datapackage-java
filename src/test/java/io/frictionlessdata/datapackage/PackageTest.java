@@ -76,7 +76,7 @@ public class PackageTest {
     public void testLoadFromValidJsonObject() throws Exception {
         // Create JSON Object for testing
         JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
-        
+
         List resourceArrayList = new ArrayList();
         resourceArrayList.add(resource1);
         resourceArrayList.add(resource2);
@@ -118,7 +118,7 @@ public class PackageTest {
         exception.expect(FileNotFoundException.class);
         List<Table> tables = dp.getResource("first-resource").getTables();
     }
-    
+
     @Test
     public void testLoadInvalidJsonObject() throws Exception {
         // Create JSON Object for testing

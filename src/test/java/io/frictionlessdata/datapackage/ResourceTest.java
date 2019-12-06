@@ -43,7 +43,7 @@ public class ResourceTest {
 
     @Rule
     public final ExpectedException exception = ExpectedException.none();
-    
+
     @Test
     public void testIterateDataFromUrlPath() throws Exception{
        
@@ -227,22 +227,22 @@ public class ResourceTest {
         
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
-        
+
         // Get Iterator.
         Iterator<String[]> iter = resource.iter();
         int expectedDataIndex = 0;
-        
+
         // Assert data.
         while(iter.hasNext()){
             String[] record = iter.next();
             String city = record[0];
             String year = record[1];
             String population = record[2];
-            
+
             Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
             Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
             Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
-            
+
             expectedDataIndex++;
         }
     }
@@ -476,7 +476,7 @@ public class ResourceTest {
             throw new RuntimeException(ex);
         }
     }
-    
+
     private List<String[]> getExpectedPopulationData(){
         List<String[]> expectedData  = new ArrayList();
         //expectedData.add(new String[]{"city", "year", "population"});

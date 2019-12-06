@@ -568,7 +568,7 @@ public class Package extends JSONBase{
                 if(resource != null){
                     addResource(resource);
                 }
-            }         
+            }
         } else {
             DataPackageException dpe = new DataPackageException("Trying to create a DataPackage from JSON, " +
                     "but no resource entries found");
