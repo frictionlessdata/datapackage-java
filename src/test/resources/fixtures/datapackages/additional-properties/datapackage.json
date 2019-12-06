@@ -1,0 +1,40 @@
+{
+  "name": "basic-csv",
+  "creator": "Horst",
+  "classification": "Strictly Confidential",
+  "testprop": {
+    "key": "value"
+  },
+  "testarray": [
+    1,2,3
+  ],
+  "resources": [
+    {
+      "path": "comma.csv",
+      "name": "comma-separated",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "number",
+            "type": "integer",
+            "format": "default"
+          },
+          {
+            "name": "string",
+            "type": "string",
+            "format": "default"
+          },
+          {
+            "name": "boolean",
+            "type": "boolean",
+            "format": "default"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}
