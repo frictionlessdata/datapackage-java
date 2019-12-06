@@ -612,7 +612,31 @@ public class PackageTest {
         // Compare.
         Assert.assertEquals(Dialect.fromJson(dialectJson), resource.getDialect());
     }
-    
+
+    @Test
+    public void testAdditionalProperties() throws Exception {
+        String fName = "/fixtures/datapackages/additional-properties/datapackage.json";
+        String sourceFileAbsPath = PackageTest.class.getResource(fName).getPath();
+        Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
+
+        Object creator = dp.getOtherProperty("creator");
+        Assert.assertNotNull(creator);
+        Assert.assertEquals(String.class, creator.getClass());
+        Assert.assertEquals("Horst", creator);
+
+        Object testprop = dp.getOtherProperty("testprop");
+        Assert.assertNotNull(testprop);
+        Assert.assertTrue(testprop instanceof JSONObject);
+
+        Object testarray = dp.getOtherProperty("testarray");
+        Assert.assertNotNull(testarray);
+        Assert.assertTrue(testarray instanceof JSONArray);
+
+        Object resObj = dp.getOtherProperty("resources");
+        Assert.assertNull(resObj);
+    }
+
+
     private Package getDataPackageFromFilePath(String datapackageFilePath, boolean strict) throws Exception {
         // Get string content version of source file.
         String jsonString = getFileContents(datapackageFilePath);

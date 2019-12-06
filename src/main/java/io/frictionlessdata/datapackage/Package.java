@@ -614,7 +614,7 @@ public class Package extends JSONBase{
                 JSON_KEY_HOMEPAGE, JSON_KEY_IMAGE, JSON_KEY_CREATED, JSON_KEY_CONTRIBUTORS,
                 JSON_KEY_KEYWORDS);
         jsonObjectSource.keySet().forEach((k) -> {
-            if (wellKnownKeys.contains(k)) {
+            if (!wellKnownKeys.contains(k)) {
                 Object obj = jsonObjectSource.get(k);
                 this.otherProperties.put(k, obj);
             }
