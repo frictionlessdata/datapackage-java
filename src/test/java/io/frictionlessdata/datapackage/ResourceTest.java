@@ -59,7 +59,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
         
         // Get iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -88,7 +88,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
         
         // Get iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -132,7 +132,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -176,7 +176,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -205,7 +205,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<Object[]> iter = resource.iter(false, false, true, false);
+        Iterator<Object[]> iter = resource.iterator(false, false, true, false);
         
         // Assert data.
         while(iter.hasNext()){
@@ -229,7 +229,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
 
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
 
         // Assert data.
@@ -257,7 +257,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
 
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
 
         // Assert data.
@@ -284,7 +284,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
 
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
 
         // Assert data.
@@ -331,7 +331,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
         
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -358,7 +358,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
 
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
 
         // Assert data.

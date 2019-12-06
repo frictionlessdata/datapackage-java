@@ -3,7 +3,6 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
@@ -11,9 +10,7 @@ import org.apache.commons.collections.iterators.IteratorChain;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.Writer;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,17 +57,33 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     }
 
     @Override
-    public Iterator<Object[]> iter() throws Exception{
-        return this.iter(false, false, true, false);
+    public Iterator<Object[]> iterator() throws Exception{
+        return this.iterator(false, false, true, false);
     }
 
     @Override
-    public Iterator<Object[]> iter(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
+    public Iterator<Object[]> iterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
         ensureDataLoaded();
-        Iterator[] tableIteratorArray = new TableIterator[tables.size()];
+        Iterator<Object[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
             tableIteratorArray[cnt++] = table.iterator(keyed, extended, cast, relations);
+        }
+        return new IteratorChain(tableIteratorArray);
+    }
+
+    @Override
+    public Iterator<String[]> stringArrayIterator() throws Exception{
+        return this.stringArrayIterator(false, false);
+    }
+
+    @Override
+    public Iterator<String[]> stringArrayIterator(boolean extended, boolean cast) throws Exception{
+        ensureDataLoaded();
+        Iterator<String[]>[] tableIteratorArray = new TableIterator[tables.size()];
+        int cnt = 0;
+        for (Table table : tables) {
+            tableIteratorArray[cnt++] = table.stringArrayIterator(extended, cast);
         }
         return new IteratorChain(tableIteratorArray);
     }
@@ -82,7 +95,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     public List<Object[]> read (boolean cast) throws Exception{
         List<Object[]> retVal = new ArrayList<>();
         ensureDataLoaded();
-        Iterator<Object[]> iter = iter(false, false, cast, false);
+        Iterator<Object[]> iter = iterator(false, false, cast, false);
         while (iter.hasNext()) {
             retVal.add(iter.next());
         }

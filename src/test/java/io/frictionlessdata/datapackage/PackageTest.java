@@ -17,7 +17,6 @@ import io.frictionlessdata.datapackage.resource.FilebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.Schema;
 import io.frictionlessdata.tableschema.Table;
-import org.everit.json.schema.ValidationException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -510,7 +509,7 @@ public class PackageTest {
         List<String[]> expectedData = this.getAllCityData();
         
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -538,7 +537,7 @@ public class PackageTest {
         List<String[]> expectedData = this.getAllCityData();
         
         // Get Iterator.
-        Iterator<String[]> iter = resource.iter();
+        Iterator<String[]> iter = resource.iterator();
         int expectedDataIndex = 0;
         
         // Assert data.

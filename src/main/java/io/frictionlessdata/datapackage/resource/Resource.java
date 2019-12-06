@@ -5,6 +5,7 @@ import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Schema;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -57,9 +58,33 @@ public interface Resource<T> {
      */
     void writeTableAsCsv(Table table, Dialect dialect, Path outputFile) throws Exception;
 
-    Iterator<Object[]> iter() throws Exception;
+    /**
+     * Returns an Iterator that returns rows as object-arrays
+     * @return
+     * @throws Exception
+     */
+    Iterator<Object[]> iterator() throws Exception;
 
-    Iterator<Object[]> iter(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
+    /**
+     * Returns an Iterator that returns rows as object-arrays
+     * @return
+     * @throws Exception
+     */
+    Iterator<Object[]> iterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
+
+    /**
+     * Returns an Iterator that returns rows as string-arrays
+     * @return
+     * @throws Exception
+     */
+    public Iterator<String[]> stringArrayIterator() throws Exception;
+
+    /**
+     * Returns an Iterator that returns rows as string-arrays
+     * @return
+     * @throws Exception
+     */
+    public Iterator<String[]> stringArrayIterator(boolean extended, boolean relations) throws Exception;
 
     String[] getHeaders() throws Exception;
 
