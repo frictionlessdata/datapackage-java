@@ -1,6 +1,8 @@
-A Java library for working with Data Packages. Snapshots on [Jitpack](https://jitpack.io/#frictionlessdata/datapackage-java)
 
 # datapackage-java
+
+A Java library for working with Data Packages. Snapshots on [Jitpack](https://jitpack.io/#frictionlessdata/datapackage-java)
+
 [![Build Status](https://travis-ci.org/frictionlessdata/datapackage-java.svg?branch=master)](https://travis-ci.org/frictionlessdata/datapackage-java)
 [![Coverage Status](https://coveralls.io/repos/github/frictionlessdata/datapackage-java/badge.svg?branch=master)](https://coveralls.io/github/frictionlessdata/datapackage-java?branch=master)
 [![License](https://img.shields.io/github/license/frictionlessdata/datapackage-java.svg)](https://github.com/frictionlessdata/datapackage-java/blob/master/LICENSE)
