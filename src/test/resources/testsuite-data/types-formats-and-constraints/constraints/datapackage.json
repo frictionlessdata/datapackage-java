@@ -1,0 +1,73 @@
+{
+  "name": "constraints",
+  "resources": [
+    {
+      "path": "data.csv",
+      "name": "constraints-data",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "required",
+            "type": "any",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "unique",
+            "type": "any",
+            "constraints": {
+              "unique": true
+            }
+          },
+          {
+            "name": "minLength",
+            "type": "string",
+            "constraints": {
+              "minLength": 3
+            }
+          },
+          {
+            "name": "maxLength",
+            "type": "string",
+            "constraints": {
+              "maxLength": 3
+            }
+          },
+          {
+            "name": "minimum",
+            "type": "date",
+            "constraints": {
+              "minimum": "2018-01-01"
+            }
+          },
+          {
+            "name": "maximum",
+            "type": "date",
+            "constraints": {
+              "maximum": "2018-01-31"
+            }
+          },
+          {
+            "name": "pattern",
+            "type": "string",
+            "constraints": {
+              "pattern": "[abc]+"
+            }
+          },
+          {
+            "name": "enum",
+            "type": "any",
+            "constraints": {
+              "enum": ["a", "b"]
+            }
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

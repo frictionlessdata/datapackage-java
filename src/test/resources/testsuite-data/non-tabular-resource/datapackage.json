@@ -1,0 +1,14 @@
+{
+  "name": "non-tabular-resource",
+  "title": "Non-tabular resource",
+  "resources": [
+    {
+      "path": "sample.pdf",
+      "pathType": "local",
+      "name": "sample",
+      "format": "pdf",
+      "mediatype": "application/pdf",
+      "encoding": "windows-1252"
+    }
+  ]
+}

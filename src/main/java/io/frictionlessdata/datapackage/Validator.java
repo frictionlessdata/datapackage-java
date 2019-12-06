@@ -41,7 +41,7 @@ public class Validator {
             
         }else{
             // If no profile value is provided, use default value.
-            this.validate(jsonObjectToValidate, Profile.PROFILE_DEFAULT);
+            this.validate(jsonObjectToValidate, Profile.PROFILE_DATA_PACKAGE_DEFAULT);
         }   
     }
     

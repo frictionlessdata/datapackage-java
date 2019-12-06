@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import org.everit.json.schema.ValidationException;
 import org.json.JSONObject;
@@ -12,20 +13,25 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
+
 /**
  * Test calls for JSON Validator class.
  * 
  */
 public class ValidatorTest {
-    
+    private static URL url;
+
     @Rule
     public final ExpectedException exception = ExpectedException.none();
     
     private Validator validator = null;
     
     @Before
-    public void setup(){
+    public void setup() throws MalformedURLException {
         validator = new Validator();
+        url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
+                "/master/src/test/resources/fixtures/datapackages/multi-data/datapackage.json");
     }
     
     @Test
@@ -45,8 +51,7 @@ public class ValidatorTest {
     }
     
     @Test
-    public void testValidationWithInvalidProfileId() throws DataPackageException, MalformedURLException, IOException{
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+    public void testValidationWithInvalidProfileId() throws Exception {
         Package dp = new Package(url, true);
         
         String invalidProfileId = "INVALID_PROFILE_ID";
@@ -57,24 +62,24 @@ public class ValidatorTest {
     }
     
     @Test
-    public void testValidationWithValidProfileUrl() throws DataPackageException, MalformedURLException, IOException{
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
-        Package dp = new Package(url, true);
-        dp.addProperty("profile", "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/main/resources/schemas/data-package.json");
+    public void testValidationWithValidProfileUrl() throws Exception {
+        Package dp = new Package(url,  true);
+        dp.setProfile( "https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
+                "/master/src/main/resources/schemas/data-package.json");
         
         dp.validate();
         
         // No exception thrown, test passes.
-        Assert.assertEquals("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/main/resources/schemas/data-package.json", dp.getProperty("profile"));
+        Assert.assertEquals("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/" +
+                "master/src/main/resources/schemas/data-package.json", dp.getProfile());
     }
     
     @Test
-    public void testValidationWithInvalidProfileUrl() throws DataPackageException, MalformedURLException, IOException{
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
+    public void testValidationWithInvalidProfileUrl() throws Exception {
         Package dp = new Package(url, true);
         
-        
-        String invalidProfileUrl = "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/main/resources/schemas/INVALID.json";
+        String invalidProfileUrl = "https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
+                "/master/src/main/resources/schemas/INVALID.json";
         dp.addProperty("profile", invalidProfileUrl);
         
         exception.expectMessage("Invalid profile schema URL: " + invalidProfileUrl);

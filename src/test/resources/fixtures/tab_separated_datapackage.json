@@ -1,0 +1,9 @@
+{
+    "name": "tabseparated",
+    "resources": [{
+        "name": "first-resource",
+        "profile": "tabular-data-resource",
+        "path": ["data/cities-tabseparated.csv", "data/cities2-tabseparated.csv"]
+    }
+  ]
+}

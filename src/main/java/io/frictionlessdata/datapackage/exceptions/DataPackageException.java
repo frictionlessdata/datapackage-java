@@ -4,7 +4,7 @@ package io.frictionlessdata.datapackage.exceptions;
  *
  *
  */
-public class DataPackageException extends Exception {
+public class DataPackageException extends RuntimeException {
 
     /**
      * Creates a new instance of <code>DataPackageException</code> without
@@ -21,5 +21,14 @@ public class DataPackageException extends Exception {
      */
     public DataPackageException(String msg) {
         super(msg);
+    }
+
+    /**
+     * Constructs an instance of <code>DataPackageException</code> by wrapping a Throwable
+     *
+     * @param t the wrapped exception.
+     */
+    public DataPackageException(Throwable t) {
+        super(t);
     }
 }

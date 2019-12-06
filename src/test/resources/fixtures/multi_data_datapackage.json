@@ -2,7 +2,7 @@
     "name": "multi-data",
     "resources": [{
         "name": "first-resource",
-        "path": ["src/test/resources/fixtures/data/cities.csv", "src/test/resources/fixtures/data/cities2.csv", "src/test/resources/fixtures/data/cities3.csv"]
+        "path": ["data/cities.csv", "data/cities2.csv", "data/cities3.csv"]
     },
     {
         "name": "second-resource",
@@ -15,18 +15,18 @@
     {
         "name": "third-resource", 
         "schema": "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/schema/population_schema.json",
-        "path": "src/test/resources/fixtures/data/population.csv"
+        "path": "data/population.csv"
     },
     {
         "name": "fourth-resource", 
-        "schema": "src/test/resources/fixtures/schema/population_schema.json",
+        "schema": "schema/population_schema.json",
         "path": "https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/data/population.csv"
     },
     {
         "name": "fifth-resource", 
-        "schema": "src/test/resources/fixtures/schema/population_schema.json",
-        "path": "src/test/resources/fixtures/data/population.csv",
-        "dialect": "src/test/resources/fixtures/dialect.json"
+        "schema": "schema/population_schema.json",
+        "path": "data/population.csv",
+        "dialect": "dialect.json"
     }
   ]
 }

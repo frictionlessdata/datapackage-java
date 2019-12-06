@@ -1,0 +1,35 @@
+{
+  "name": "string-formats",
+  "resources": [
+    {
+      "path": "data.csv",
+      "name": "string-data",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "default",
+            "type": "string",
+            "format": "default",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "email",
+            "type": "string",
+            "format": "email"
+          },
+          {
+            "name": "uri",
+            "type": "string",
+            "format": "uri"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}
