@@ -63,14 +63,14 @@ public interface Resource<T> {
      * @return
      * @throws Exception
      */
-    Iterator<Object[]> iterator() throws Exception;
+    Iterator<Object[]> objectArrayIterator() throws Exception;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
      * @return
      * @throws Exception
      */
-    Iterator<Object[]> iterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
+    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
 
     /**
      * Returns an Iterator that returns rows as string-arrays

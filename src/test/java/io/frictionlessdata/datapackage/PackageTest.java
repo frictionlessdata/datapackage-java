@@ -509,7 +509,7 @@ public class PackageTest {
         List<String[]> expectedData = this.getAllCityData();
         
         // Get Iterator.
-        Iterator<String[]> iter = resource.iterator();
+        Iterator<String[]> iter = resource.objectArrayIterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -537,7 +537,7 @@ public class PackageTest {
         List<String[]> expectedData = this.getAllCityData();
         
         // Get Iterator.
-        Iterator<String[]> iter = resource.iterator();
+        Iterator<String[]> iter = resource.objectArrayIterator();
         int expectedDataIndex = 0;
         
         // Assert data.

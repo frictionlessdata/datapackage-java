@@ -57,12 +57,12 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     }
 
     @Override
-    public Iterator<Object[]> iterator() throws Exception{
-        return this.iterator(false, false, true, false);
+    public Iterator<Object[]> objectArrayIterator() throws Exception{
+        return this.objectArrayIterator(false, false, true, false);
     }
 
     @Override
-    public Iterator<Object[]> iterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
+    public Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator<Object[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
@@ -95,7 +95,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     public List<Object[]> read (boolean cast) throws Exception{
         List<Object[]> retVal = new ArrayList<>();
         ensureDataLoaded();
-        Iterator<Object[]> iter = iterator(false, false, cast, false);
+        Iterator<Object[]> iter = objectArrayIterator(false, false, cast, false);
         while (iter.hasNext()) {
             retVal.add(iter.next());
         }
