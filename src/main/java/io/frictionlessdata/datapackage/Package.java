@@ -46,6 +46,7 @@ public class Package extends JSONBase{
     private Object basePath = null;
     private String id;
     private String version;
+    private int[] versionParts;
     private URL homepage;
     private Set<String> keywords = new TreeSet<>();
     private String image;
@@ -169,7 +170,7 @@ public class Package extends JSONBase{
         if (descriptorFile.toFile().getName().toLowerCase().endsWith(".zip")) {
             isArchivePackage = true;
             basePath = descriptorFile;
-            sourceJsonObject = new JSONObject(JSONBase.getFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
+            sourceJsonObject = new JSONObject(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
         } else {
             basePath = descriptorFile.getParent();
             String sourceJsonString = getFileContentAsString(descriptorFile);
@@ -583,7 +584,7 @@ public class Package extends JSONBase{
             }
         }
         Schema schema = buildSchema (jsonObjectSource, basePath, isArchivePackage);
-        setFromJson(jsonObjectSource, this, schema, isArchivePackage);
+        setFromJson(jsonObjectSource, this, schema);
 
         this.setName(jsonObjectSource.has(Package.JSON_KEY_ID)
                 ? jsonObjectSource.getString(Package.JSON_KEY_ID)
@@ -638,21 +639,38 @@ public class Package extends JSONBase{
     }
 
     public String getVersion() {
-        return version;
+        if (versionParts != null) {
+            return versionParts[0]+"."+versionParts[1]+"."+versionParts[2];
+        } else
+            return version;
     }
 
+    /**
+     * DataPackage version SHOULD be SemVer, but sloppy versions are acceptable.
+     *
+     * Spec: https://frictionlessdata.io/specs/patterns/index.html#data-package-version
+     * @param version the version of the DataPackage
+     */
     private void setVersion(String version) {
+        this.version = version;
         if (StringUtils.isEmpty(version))
             return;
-        String[] parts = version.split("\\.");
-        if (parts.length != 3)
-            throw new DataPackageException("Version must be MAJOR.MINOR.FIX format");
-        try {
+        String[] parts = version.replaceAll("\\w", "").split("\\.");
+        if (parts.length == 3) {
+            try {
+                for (String part : parts) {
+                    Integer.parseInt(part);
+                }
+                // do nothing if an exception is thrown, it's just
+                // a datapacke with sloppy version.
+            } catch (Exception ex) { }
+            // we have a SemVer version scheme
+            this.versionParts = new int[3];
+            int cnt = 0;
             for (String part : parts) {
-                Integer.parseInt(part);
+                int i = Integer.parseInt(part);
+                versionParts[cnt++] = i;
             }
-        } catch (Exception ex) {
-            throw new DataPackageException("Version format parts must be numeric");
         }
         this.version = version;
     }

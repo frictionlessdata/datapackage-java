@@ -454,6 +454,24 @@ public class PackageTest {
         // json objects are exactly the same. Just compare lengths then.
         Assert.assertEquals(readPackage.getJson().toString().length(), originalPackage.getJson().toString().length());
     }
+
+
+    // the `datapackage.json` is in a folder `countries-and-currencies` on the top
+    // level of the zip file.
+    @Test
+    public void testReadFromZipFileWithDirectoryHierarchy() throws Exception{
+        String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
+        String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
+        String sourceFileAbsPath = ResourceTest.class.getResource("/testsuite-data/zip/countries-and-currencies.zip").getPath();
+
+        Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
+        Resource r = dp.getResource("currencies");
+
+        List<Object[]> data = r.read(false);
+        Assert.assertEquals(2, data.size());
+        Assert.assertArrayEquals(usdTestData, data.get(0));
+        Assert.assertArrayEquals(gbpTestData, data.get(1));
+    }
     
     @Test
     public void testReadFromZipFileWithInvalidDatapackageFilenameInside() throws Exception{

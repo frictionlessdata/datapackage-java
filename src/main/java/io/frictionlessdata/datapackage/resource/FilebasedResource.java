@@ -6,6 +6,7 @@ import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.datasources.DataSource;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import static io.frictionlessdata.datapackage.datareference.DataReference.getFil
 
 public class FilebasedResource extends AbstractReferencebasedResource<File> {
     private File basePath;
+    private boolean isInArchive;
 
     public FilebasedResource(String name, Collection<File> paths, File basePath) {
         super(name, paths);
@@ -55,25 +57,42 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
         return reference.getPath();
     }
 
-
     @Override
     List<Table> readData () throws Exception{
         List<Table> tables = new ArrayList<>();
-        // If the path of a data file has been set.
-        if (super.paths != null){
-            for (File file : paths) {
+        if (this.isInArchive) {
+            tables = readfromZipFile();
+        } else {
+            tables = readfromOrdinaryFile();
+        }
+        return tables;
+    }
+
+    private List<Table> readfromZipFile() throws Exception {
+        List<Table> tables = new ArrayList<>();
+        for (File file : paths) {
+            String fileName = file.getPath().replaceAll("\\\\", "/");
+            String content = getZipFileContentAsString (basePath.toPath(), fileName);
+            Table table = new Table(content);
+            setCsvFormat(table);
+            tables.add(table);
+        }
+        return tables;
+    }
+    private List<Table> readfromOrdinaryFile() throws Exception {
+        List<Table> tables = new ArrayList<>();
+        for (File file : paths) {
                 /* from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
                    are forbidden to avoid security vulnerabilities when implementing data
                    package software."
 
                    https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
                  */
-                Path securePath = DataSource.toSecure(file.toPath(), basePath.toPath());
-                Path relativePath = basePath.toPath().relativize(securePath);
-                Table table = createTable(relativePath.toFile());
-                setCsvFormat(table);
-                tables.add(table);
-            }
+            Path securePath = DataSource.toSecure(file.toPath(), basePath.toPath());
+            Path relativePath = basePath.toPath().relativize(securePath);
+            Table table = createTable(relativePath.toFile());
+            setCsvFormat(table);
+            tables.add(table);
         }
         return tables;
     }
@@ -102,5 +121,9 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
             Files.deleteIfExists(p);
             writeTableAsCsv(t, lDialect, p);
         }
+    }
+    
+    public void setIsInArchive(boolean isInArchive) {
+        this.isInArchive = isInArchive;
     }
 }

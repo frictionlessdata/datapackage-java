@@ -210,6 +210,9 @@ public interface Resource<T> {
         if (path != null){
             Collection paths = fromJSON(path, basePath);
             resource = build(name, paths, basePath);
+            if (resource instanceof FilebasedResource) {
+                ((FilebasedResource)resource).setIsInArchive(isArchivePackage);
+            }
         } else if (data != null && format != null){
             if (format.equals(Resource.FORMAT_JSON))
                 resource = new JSONDataResource(name, (JSONArray) data);
@@ -221,7 +224,7 @@ public interface Resource<T> {
             throw dpe;
         }
         resource.setDialect(dialect);
-        JSONBase.setFromJson(resourceJson, resource, schema, isArchivePackage);
+        JSONBase.setFromJson(resourceJson, resource, schema);
         return resource;
     }
 

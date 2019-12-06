@@ -415,6 +415,17 @@ public class ResourceTest {
         // Assert
         Assert.assertEquals(3, resource.read(false).size());
     }
+
+
+    @Test
+    public void testReadFromZipFile() throws Exception{
+        String sourceFileAbsPath = ResourceTest.class.getResource("/testsuite-data/zip/countries-and-currencies.zip").getPath();
+
+        Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
+        Resource r = dp.getResource("currencies");
+
+        List<Object[]> data = r.read(false);
+    }
     
     @Test
     public void testHeadings() throws Exception{
