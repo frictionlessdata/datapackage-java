@@ -1,16 +1,11 @@
 package io.frictionlessdata.datapackage.datareference;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.datasources.DataSource;
+import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -95,7 +90,7 @@ public interface DataReference<T> {
 
                            https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
                          */
-                        Path securePath = DataSource.toSecure(f.toPath(), ((File)basePath).toPath());
+                        Path securePath = DataSourceFormat.toSecure(f.toPath(), ((File)basePath).toPath());
                         Path relativePath = ((File)basePath).toPath().relativize(securePath);
                         files.add(relativePath.toFile());
                     }

@@ -3,17 +3,14 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasources.DataSource;
+import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static io.frictionlessdata.datapackage.datareference.DataReference.getFileContentAsString;
 
 public class FilebasedResource extends AbstractReferencebasedResource<File> {
     private File basePath;
@@ -88,7 +85,7 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
 
                    https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
                  */
-            Path securePath = DataSource.toSecure(file.toPath(), basePath.toPath());
+            Path securePath = DataSourceFormat.toSecure(file.toPath(), basePath.toPath());
             Path relativePath = basePath.toPath().relativize(securePath);
             Table table = createTable(relativePath.toFile());
             setCsvFormat(table);
