@@ -263,7 +263,7 @@
         <dependency>
             <groupId>com.github.frictionlessdata</groupId>
             <artifactId>tableschema-java</artifactId>
-            <version>02dcea1e51</version>
+            <version>400199c2f4</version>
         </dependency>
 
 

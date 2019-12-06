@@ -506,10 +506,13 @@ public class Package extends JSONBase{
         }
     }
     
-    final File getBasePath(){
+    final Path getBasePath(){
         if (basePath instanceof File)
-            return (File)this.basePath;
-        return null;
+            return ((File)this.basePath).toPath();
+        else if (basePath instanceof Path)
+            return (Path) basePath;
+        else
+            return null;
     }
 
 

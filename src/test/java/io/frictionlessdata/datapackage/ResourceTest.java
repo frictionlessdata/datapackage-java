@@ -1,6 +1,7 @@
 package io.frictionlessdata.datapackage;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -212,7 +213,7 @@ public class ResourceTest {
             
             Assert.assertEquals(String.class, record[0].getClass());
             Assert.assertEquals(Integer.class, record[1].getClass());
-            Assert.assertEquals(Integer.class, record[2].getClass());
+            Assert.assertEquals(BigInteger.class, record[2].getClass());
         }
     }
     

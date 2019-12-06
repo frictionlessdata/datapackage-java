@@ -1,6 +1,7 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.tableschema.Schema;
 import io.frictionlessdata.tableschema.datasources.DataSource;
 import org.json.JSONArray;
@@ -10,6 +11,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -257,6 +259,11 @@ public abstract class JSONBase {
         try (InputStream is = new FileInputStream(file)){
             return getFileContentAsString(is);
         } catch (Exception ex) {
+
+            if ((ex instanceof NoSuchFileException
+                    || (ex instanceof FileNotFoundException))) {
+                throw new DataPackageFileOrUrlNotFoundException(ex);
+            }
             throw new DataPackageException(ex);
         }
     }
@@ -265,6 +272,10 @@ public abstract class JSONBase {
         try (InputStream is = Files.newInputStream(filePath)){
             return getFileContentAsString(is);
         } catch (Exception ex) {
+            if ((ex instanceof NoSuchFileException
+            || (ex instanceof FileNotFoundException))) {
+                throw new DataPackageFileOrUrlNotFoundException(ex);
+            }
             throw new DataPackageException(ex);
         }
     }
@@ -306,7 +317,7 @@ public abstract class JSONBase {
                 // Create the dereferenced schema object from the local file.
                 jsonContentString = getFileContentAsString(securePath.toFile());
             } else {
-                throw new FileNotFoundException("Local file not found: " + fileObj);
+                throw new DataPackageFileOrUrlNotFoundException("Local file not found: " + fileObj);
             }
         }
         return new JSONObject(jsonContentString);
@@ -335,7 +346,7 @@ public abstract class JSONBase {
                 String jsonContentString = getFileContentAsString(lURL);
                 dereferencedObj = new JSONObject(jsonContentString);
             } else {
-                throw new DataPackageException("URL not found"+lURL);
+                throw new DataPackageFileOrUrlNotFoundException("URL not found"+lURL);
             }
         }
         return dereferencedObj;

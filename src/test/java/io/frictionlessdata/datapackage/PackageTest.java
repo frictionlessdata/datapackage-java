@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.JSONDataResource;
 import io.frictionlessdata.datapackage.resource.FilebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
@@ -142,7 +143,7 @@ public class PackageTest {
 
     @Test
     public void testLoadFromFileWhenPathDoesNotExist() throws Exception {
-        exception.expect(FileNotFoundException.class);
+        exception.expect(DataPackageFileOrUrlNotFoundException.class);
         new Package(new File("/this/path/does/not/exist").toPath(), true);
     }
     
@@ -170,10 +171,10 @@ public class PackageTest {
         String pathName = pathSegment + "/" +sourceFileName;
         // Get path of source file:
         Path sourceFileAbsPath = Paths.get(PackageTest.class.getResource(pathName).toURI());
-        File basePath = sourceFileAbsPath.getParent().toFile();
+        Path basePath = sourceFileAbsPath.getParent();
         
         // Build DataPackage instance based on source file path.
-        Package dp = new Package(new File(basePath, sourceFileName).toPath(), true);
+        Package dp = new Package(new File(basePath.toFile(), sourceFileName).toPath(), true);
         Assert.assertNotNull(dp.getJson());
         
         // Check if base path was set properly;
@@ -477,16 +478,7 @@ public class PackageTest {
         File invalidFile = new File ("/invalid/path/does/not/exist/datapackage.zip");
         Package p = new Package(invalidFile.toPath(), false);
     }
-    
-    @Test
-    public void testSaveToFilenameWithInvalidFileType() throws Exception{
-        File createdFile = folder.newFile("test_save_datapackage.txt");
-        
-        Package savedPackage = this.getDataPackageFromFilePath(true);
-        
-        exception.expect(DataPackageException.class);
-        savedPackage.writeJson(createdFile);
-    }
+
     
     @Test
     public void testMultiPathIterationForLocalFiles() throws Exception{
@@ -551,11 +543,15 @@ public class PackageTest {
 
         // Get string content version of the schema file.
         String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
-        
+
+        Schema expectedSchema = new Schema(schemaJsonString, true);
+        Assert.assertEquals(expectedSchema, resource.getSchema());
+
         // Get JSON Object
-        JSONObject schemaJson = new JSONObject(schemaJsonString);
-        // Compare.
-        Assert.assertTrue(schemaJson.similar(resource.getSchema()));
+        JSONObject expectedSchemaJson = new JSONObject(expectedSchema.getJson());
+        JSONObject testSchemaJson = new JSONObject(resource.getSchema().getJson());
+        // Compare JSON objects
+        Assert.assertTrue("Schemas don't match", expectedSchemaJson.similar(testSchemaJson));
     }
     
     @Test
@@ -565,12 +561,15 @@ public class PackageTest {
 
         // Get string content version of the schema file.
         String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
-        
+
+        Schema expectedSchema = new Schema(schemaJsonString, true);
+        Assert.assertEquals(expectedSchema, resource.getSchema());
+
         // Get JSON Object
-        JSONObject schemaJson = new JSONObject(schemaJsonString);
-        
-        // Compare.
-        Assert.assertTrue(schemaJson.similar(resource.getSchema()));
+        JSONObject expectedSchemaJson = new JSONObject(expectedSchema.getJson());
+        JSONObject testSchemaJson = new JSONObject(resource.getSchema().getJson());
+        // Compare JSON objects
+        Assert.assertTrue("Schemas don't match", expectedSchemaJson.similar(testSchemaJson));
     }
     
     /** TODO: Implement more thorough testing.

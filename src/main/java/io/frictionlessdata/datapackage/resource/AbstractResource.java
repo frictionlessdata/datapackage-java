@@ -6,7 +6,7 @@ import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Schema;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.TableIterator;
+import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
 import org.json.JSONArray;
 import org.json.JSONObject;
