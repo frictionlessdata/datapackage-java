@@ -318,7 +318,18 @@
             "propertyOrder": 40,
             "title": "Table Schema",
             "description": "A Table Schema for this resource, compliant with the [Table Schema](/tableschema/) specification.",
-            "type": "object",
+            "oneOf": [
+              {
+                "title": "Schema path",
+                "description": "A fully qualified URL, or a POSIX file path..",
+                "type": "string"
+              },
+              {
+                "title": "Schema as JSON",
+                "description": "A schema encoded as a JSON object",
+                "type": "object"
+              }
+            ],
             "required": [
               "fields"
             ],

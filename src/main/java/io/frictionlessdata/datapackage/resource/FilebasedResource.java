@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+
 public class FilebasedResource extends AbstractReferencebasedResource<File> {
     private File basePath;
     private boolean isInArchive;
@@ -85,7 +86,7 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
 
                    https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
                  */
-            Path securePath = DataSourceFormat.toSecure(file.toPath(), basePath.toPath());
+            Path securePath = Resource.toSecure(file.toPath(), basePath.toPath());
             Path relativePath = basePath.toPath().relativize(securePath);
             Table table = createTable(relativePath.toFile());
             setCsvFormat(table);

@@ -10,9 +10,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +38,8 @@ public interface Resource<T> {
     JSONObject getJson();
 
     List<Object[]> read (boolean cast) throws Exception;
+
+    List<T> read (Class<T> beanClass) throws Exception;
 
     /**
      * Write all the data in this resource as CSV into one or more
@@ -270,6 +274,11 @@ public interface Resource<T> {
             // or relative file paths
             for (String s : strings) {
                 if (basePath instanceof URL) {
+                    /*
+                     * We have a URL fragment, that is not valid on its own.
+                     * According to https://github.com/frictionlessdata/specs/issues/652 ,
+                     * URL fragments should be resolved relative to the base URL
+                     */
                     URL f = new URL(((URL)basePath), s);
                     urls.add(f);
                 } else if (isValidUrl(s)) {
@@ -359,5 +368,32 @@ public interface Resource<T> {
         }
         return dereferencedObj;
     }
+    //https://docs.oracle.com/javase/tutorial/essential/io/pathOps.html
+    static Path toSecure(Path testPath, Path referencePath) throws IOException {
+        // catch paths starting with "/" but on Windows where they get rewritten
+        // to start with "\"
+        if (testPath.startsWith(File.separator))
+            throw new IllegalArgumentException("Input path must be relative");
+        if (testPath.isAbsolute()){
+            throw new IllegalArgumentException("Input path must be relative");
+        }
+        if (!referencePath.isAbsolute()) {
+            throw new IllegalArgumentException("Reference path must be absolute");
+        }
+        if (testPath.toFile().isDirectory()){
+            throw new IllegalArgumentException("Input path cannot be a directory");
+        }
+        //Path canonicalPath = testPath.toRealPath(null);
+        final Path resolvedPath = referencePath.resolve(testPath).normalize();
+        if (!Files.exists(resolvedPath))
+            throw new FileNotFoundException("File "+resolvedPath.toString()+" does not exist");
+        if (!resolvedPath.toFile().isFile()){
+            throw new IllegalArgumentException("Input must be a file");
+        }
+        if (!resolvedPath.startsWith(referencePath)) {
+            throw new IllegalArgumentException("Input path escapes the base path");
+        }
 
+        return resolvedPath;
+    }
 }

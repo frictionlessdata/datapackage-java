@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
+import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
@@ -11,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,6 +96,21 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         Iterator<Object[]> iter = objectArrayIterator(false, false, cast, false);
         while (iter.hasNext()) {
             retVal.add(iter.next());
+        }
+        return retVal;
+    }
+
+    @Override
+    public List<T> read(Class<T> beanClass) throws Exception {
+        Type T = beanClass.getGenericSuperclass();
+        String typeName = beanClass.getTypeName();
+        List<T> retVal = new ArrayList<T>();
+        ensureDataLoaded();
+        for (Table t : tables) {
+            final BeanIterator<T> iter = new BeanIterator<T>(t, beanClass);
+            while (iter.hasNext()) {
+                retVal.add(iter.next());
+            }
         }
         return retVal;
     }

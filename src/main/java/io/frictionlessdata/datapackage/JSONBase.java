@@ -2,6 +2,7 @@ package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
+import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
 import org.json.JSONArray;
@@ -339,7 +340,7 @@ public abstract class JSONBase {
 
                https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
              */
-            Path securePath = DataSourceFormat.toSecure(fileObj.toPath(), basePath);
+            Path securePath = Resource.toSecure(fileObj.toPath(), basePath);
             if (securePath.toFile().exists()) {
                 // Create the dereferenced schema object from the local file.
                 jsonContentString = getFileContentAsString(securePath.toFile());

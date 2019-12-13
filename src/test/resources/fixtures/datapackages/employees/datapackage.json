@@ -1,0 +1,11 @@
+{
+    "name": "employees",
+    "profile": "tabular-data-package",
+    "resources": [{
+        "name": "employee-data",
+        "path": "data/employees.csv",
+        "schema": "employee_schema.json",
+        "profile": "tabular-data-resource"
+    }
+  ]
+}

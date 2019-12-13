@@ -1,5 +1,6 @@
 package io.frictionlessdata.datapackage;
 
+import io.frictionlessdata.datapackage.beans.EmployeeBean;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -635,6 +636,13 @@ public class PackageTest {
         Assert.assertNull(resObj);
     }
 
+    @Test
+    public void testBeanResource1() throws Exception {
+        Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
+
+        Resource resource = pkg.getResource("employee-data");
+        final List<EmployeeBean> read = resource.read(EmployeeBean.class);
+    }
 
     private Package getDataPackageFromFilePath(String datapackageFilePath, boolean strict) throws Exception {
         // Get string content version of source file.
