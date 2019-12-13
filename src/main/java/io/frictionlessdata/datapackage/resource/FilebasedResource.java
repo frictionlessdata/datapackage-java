@@ -71,7 +71,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         for (File file : paths) {
             String fileName = file.getPath().replaceAll("\\\\", "/");
             String content = getZipFileContentAsString (basePath.toPath(), fileName);
-            Table table = new Table(content);
+            Table table = new Table(content, schema);
             setCsvFormat(table);
             tables.add(table);
         }
