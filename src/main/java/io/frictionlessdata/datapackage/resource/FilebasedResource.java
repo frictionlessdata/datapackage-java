@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class FilebasedResource extends AbstractReferencebasedResource<File> {
+public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C> {
     private File basePath;
     private boolean isInArchive;
 

@@ -28,7 +28,7 @@ import static io.frictionlessdata.datapackage.Package.isValidUrl;
  * Interface for a Resource.
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
-public interface Resource<T> {
+public interface Resource<T,C> {
 
     String FORMAT_CSV = "csv";
     String FORMAT_JSON = "json";
@@ -39,7 +39,7 @@ public interface Resource<T> {
 
     List<Object[]> read (boolean cast) throws Exception;
 
-    List<T> read (Class<T> beanClass) throws Exception;
+    List<C> read (Class<C> beanClass) throws Exception;
 
     /**
      * Write all the data in this resource as CSV into one or more

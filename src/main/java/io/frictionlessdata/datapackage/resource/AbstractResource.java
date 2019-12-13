@@ -22,7 +22,7 @@ import java.util.*;
  * Abstract base implementation of a Resource.
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
-public abstract class AbstractResource<T> extends JSONBase implements Resource<T> {
+public abstract class AbstractResource<T,C> extends JSONBase implements Resource<T,C> {
 
     // Data properties.
     private List<Table> tables;
@@ -101,13 +101,11 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     }
 
     @Override
-    public List<T> read(Class<T> beanClass) throws Exception {
-        Type T = beanClass.getGenericSuperclass();
-        String typeName = beanClass.getTypeName();
-        List<T> retVal = new ArrayList<T>();
+    public List<C> read (Class<C> beanClass)  throws Exception {
+        List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
-            final BeanIterator<T> iter = new BeanIterator<T>(t, beanClass);
+            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass);
             while (iter.hasNext()) {
                 retVal.add(iter.next());
             }

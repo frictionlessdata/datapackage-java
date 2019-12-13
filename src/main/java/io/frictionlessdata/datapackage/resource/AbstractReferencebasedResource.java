@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class AbstractReferencebasedResource<T> extends AbstractResource<T> {
+public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T,C> {
     Collection<T> paths;
 
     AbstractReferencebasedResource(String name, Collection<T> paths) {

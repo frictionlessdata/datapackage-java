@@ -16,6 +16,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundEx
 import io.frictionlessdata.datapackage.resource.JSONDataResource;
 import io.frictionlessdata.datapackage.resource.FilebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import org.json.JSONArray;
@@ -641,7 +642,15 @@ public class PackageTest {
         Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
 
         Resource resource = pkg.getResource("employee-data");
-        final List<EmployeeBean> read = resource.read(EmployeeBean.class);
+        final List<EmployeeBean> employees = resource.read(EmployeeBean.class);
+        Assert.assertEquals(3, employees.size());
+        EmployeeBean frank = employees.get(1);
+        Assert.assertEquals("Frank McKrank", frank.getName());
+        Assert.assertEquals("1992-02-14", new DateField("date").formatValue(frank.getDateOfBirth(), null, null));
+        Assert.assertFalse(frank.getAdmin());
+        Assert.assertEquals("(90.0, 45.0, NaN)", frank.getAddressCoordinates().toString());
+        Assert.assertEquals("PT15M", frank.getContractLength().toString());
+        Assert.assertEquals("{\"pin\":45,\"rate\":83.23,\"ssn\":90}", frank.getInfo().toString());
     }
 
     private Package getDataPackageFromFilePath(String datapackageFilePath, boolean strict) throws Exception {

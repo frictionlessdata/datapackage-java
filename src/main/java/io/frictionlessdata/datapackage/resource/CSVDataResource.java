@@ -1,6 +1,6 @@
 package io.frictionlessdata.datapackage.resource;
 
-public class CSVDataResource extends AbstractDataResource<String> {
+public class CSVDataResource<C> extends AbstractDataResource<String,C> {
 
     public CSVDataResource(String name, String data) {
         super(name, data);
