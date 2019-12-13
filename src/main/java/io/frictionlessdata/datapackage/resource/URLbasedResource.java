@@ -12,7 +12,7 @@ import java.util.List;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
-public class URLbasedResource extends AbstractReferencebasedResource<URL> {
+public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> {
 
     public URLbasedResource(String name, Collection<URL> paths) {
         super(name, paths);

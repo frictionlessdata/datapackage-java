@@ -3,7 +3,8 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.iterator.BeanIterator;
+import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
@@ -11,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +22,7 @@ import java.util.*;
  * Abstract base implementation of a Resource.
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
-public abstract class AbstractResource<T> extends JSONBase implements Resource<T> {
+public abstract class AbstractResource<T,C> extends JSONBase implements Resource<T,C> {
 
     // Data properties.
     private List<Table> tables;
@@ -74,19 +76,15 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
 
     @Override
     public Iterator<String[]> stringArrayIterator() throws Exception{
-        return this.stringArrayIterator(false, false);
-    }
-
-    @Override
-    public Iterator<String[]> stringArrayIterator(boolean extended, boolean cast) throws Exception{
         ensureDataLoaded();
         Iterator<String[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.stringArrayIterator(extended, cast);
+            tableIteratorArray[cnt++] = table.stringArrayIterator(false);
         }
         return new IteratorChain(tableIteratorArray);
     }
+
 
     public List<Object[]> read() throws Exception{
         return this.read(false);
@@ -98,6 +96,19 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         Iterator<Object[]> iter = objectArrayIterator(false, false, cast, false);
         while (iter.hasNext()) {
             retVal.add(iter.next());
+        }
+        return retVal;
+    }
+
+    @Override
+    public List<C> read (Class<C> beanClass)  throws Exception {
+        List<C> retVal = new ArrayList<C>();
+        ensureDataLoaded();
+        for (Table t : tables) {
+            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass);
+            while (iter.hasNext()) {
+                retVal.add(iter.next());
+            }
         }
         return retVal;
     }

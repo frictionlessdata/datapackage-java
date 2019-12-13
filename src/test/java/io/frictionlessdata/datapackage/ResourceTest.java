@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.resource.*;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.schema.Schema;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -200,7 +201,7 @@ public class ResourceTest {
         Resource resource = buildResource("/fixtures/data/population.csv");
 
         //set schema
-        resource.setSchema(new Schema(schemaJsonString, true));
+        resource.setSchema(Schema.fromJson(schemaJsonString, true));
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -212,7 +213,7 @@ public class ResourceTest {
             Object[] record = iter.next();
             
             Assert.assertEquals(String.class, record[0].getClass());
-            Assert.assertEquals(Integer.class, record[1].getClass());
+            Assert.assertEquals(Year.class, record[1].getClass());
             Assert.assertEquals(BigInteger.class, record[2].getClass());
         }
     }
@@ -419,7 +420,7 @@ public class ResourceTest {
 
     @Test
     public void testReadFromZipFile() throws Exception{
-        String sourceFileAbsPath = ResourceTest.class.getResource("/testsuite-data/zip/countries-and-currencies.zip").getPath();
+        String sourceFileAbsPath = ResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zip").getPath();
 
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");

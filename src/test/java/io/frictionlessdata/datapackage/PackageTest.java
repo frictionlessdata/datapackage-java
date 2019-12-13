@@ -1,5 +1,6 @@
 package io.frictionlessdata.datapackage;
 
+import io.frictionlessdata.datapackage.beans.EmployeeBean;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,7 +16,8 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundEx
 import io.frictionlessdata.datapackage.resource.JSONDataResource;
 import io.frictionlessdata.datapackage.resource.FilebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.field.DateField;
+import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -461,7 +463,7 @@ public class PackageTest {
     public void testReadFromZipFileWithDirectoryHierarchy() throws Exception{
         String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
         String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
-        String sourceFileAbsPath = ResourceTest.class.getResource("/testsuite-data/zip/countries-and-currencies.zip").getPath();
+        String sourceFileAbsPath = ResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zip").getPath();
 
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
@@ -561,7 +563,7 @@ public class PackageTest {
         // Get string content version of the schema file.
         String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
 
-        Schema expectedSchema = new Schema(schemaJsonString, true);
+        Schema expectedSchema = Schema.fromJson(schemaJsonString, true);
         Assert.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
@@ -579,7 +581,7 @@ public class PackageTest {
         // Get string content version of the schema file.
         String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
 
-        Schema expectedSchema = new Schema(schemaJsonString, true);
+        Schema expectedSchema = Schema.fromJson(schemaJsonString, true);
         Assert.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
@@ -635,6 +637,21 @@ public class PackageTest {
         Assert.assertNull(resObj);
     }
 
+    @Test
+    public void testBeanResource1() throws Exception {
+        Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
+
+        Resource resource = pkg.getResource("employee-data");
+        final List<EmployeeBean> employees = resource.read(EmployeeBean.class);
+        Assert.assertEquals(3, employees.size());
+        EmployeeBean frank = employees.get(1);
+        Assert.assertEquals("Frank McKrank", frank.getName());
+        Assert.assertEquals("1992-02-14", new DateField("date").formatValue(frank.getDateOfBirth(), null, null));
+        Assert.assertFalse(frank.getAdmin());
+        Assert.assertEquals("(90.0, 45.0, NaN)", frank.getAddressCoordinates().toString());
+        Assert.assertEquals("PT15M", frank.getContractLength().toString());
+        Assert.assertEquals("{\"pin\":45,\"rate\":83.23,\"ssn\":90}", frank.getInfo().toString());
+    }
 
     private Package getDataPackageFromFilePath(String datapackageFilePath, boolean strict) throws Exception {
         // Get string content version of source file.

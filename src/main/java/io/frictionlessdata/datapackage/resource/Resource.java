@@ -3,16 +3,18 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +28,7 @@ import static io.frictionlessdata.datapackage.Package.isValidUrl;
  * Interface for a Resource.
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
-public interface Resource<T> {
+public interface Resource<T,C> {
 
     String FORMAT_CSV = "csv";
     String FORMAT_JSON = "json";
@@ -36,6 +38,8 @@ public interface Resource<T> {
     JSONObject getJson();
 
     List<Object[]> read (boolean cast) throws Exception;
+
+    List<C> read (Class<C> beanClass) throws Exception;
 
     /**
      * Write all the data in this resource as CSV into one or more
@@ -78,13 +82,6 @@ public interface Resource<T> {
      * @throws Exception
      */
     public Iterator<String[]> stringArrayIterator() throws Exception;
-
-    /**
-     * Returns an Iterator that returns rows as string-arrays
-     * @return
-     * @throws Exception
-     */
-    public Iterator<String[]> stringArrayIterator(boolean extended, boolean relations) throws Exception;
 
     String[] getHeaders() throws Exception;
 
@@ -277,6 +274,11 @@ public interface Resource<T> {
             // or relative file paths
             for (String s : strings) {
                 if (basePath instanceof URL) {
+                    /*
+                     * We have a URL fragment, that is not valid on its own.
+                     * According to https://github.com/frictionlessdata/specs/issues/652 ,
+                     * URL fragments should be resolved relative to the base URL
+                     */
                     URL f = new URL(((URL)basePath), s);
                     urls.add(f);
                 } else if (isValidUrl(s)) {
@@ -366,5 +368,32 @@ public interface Resource<T> {
         }
         return dereferencedObj;
     }
+    //https://docs.oracle.com/javase/tutorial/essential/io/pathOps.html
+    static Path toSecure(Path testPath, Path referencePath) throws IOException {
+        // catch paths starting with "/" but on Windows where they get rewritten
+        // to start with "\"
+        if (testPath.startsWith(File.separator))
+            throw new IllegalArgumentException("Input path must be relative");
+        if (testPath.isAbsolute()){
+            throw new IllegalArgumentException("Input path must be relative");
+        }
+        if (!referencePath.isAbsolute()) {
+            throw new IllegalArgumentException("Reference path must be absolute");
+        }
+        if (testPath.toFile().isDirectory()){
+            throw new IllegalArgumentException("Input path cannot be a directory");
+        }
+        //Path canonicalPath = testPath.toRealPath(null);
+        final Path resolvedPath = referencePath.resolve(testPath).normalize();
+        if (!Files.exists(resolvedPath))
+            throw new FileNotFoundException("File "+resolvedPath.toString()+" does not exist");
+        if (!resolvedPath.toFile().isFile()){
+            throw new IllegalArgumentException("Input must be a file");
+        }
+        if (!resolvedPath.startsWith(referencePath)) {
+            throw new IllegalArgumentException("Input path escapes the base path");
+        }
 
+        return resolvedPath;
+    }
 }
