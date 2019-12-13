@@ -1,0 +1,59 @@
+{
+  "name": "basic-csv",
+  "resources": [
+    {
+      "path": "missing-column.csv",
+      "name": "missing-column",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "number",
+            "type": "integer",
+            "format": "default"
+          },
+          {
+            "name": "string",
+            "type": "string",
+            "format": "default"
+          },
+          {
+            "name": "boolean",
+            "type": "boolean",
+            "format": "default"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    },
+    {
+      "path": "extra-column.csv",
+      "name": "extra-column",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "number",
+            "type": "integer",
+            "format": "default"
+          },
+          {
+            "name": "string",
+            "type": "string",
+            "format": "default"
+          },
+          {
+            "name": "boolean",
+            "type": "boolean",
+            "format": "default"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

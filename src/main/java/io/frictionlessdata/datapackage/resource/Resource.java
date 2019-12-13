@@ -3,7 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.json.JSONArray;
@@ -78,13 +78,6 @@ public interface Resource<T> {
      * @throws Exception
      */
     public Iterator<String[]> stringArrayIterator() throws Exception;
-
-    /**
-     * Returns an Iterator that returns rows as string-arrays
-     * @return
-     * @throws Exception
-     */
-    public Iterator<String[]> stringArrayIterator(boolean extended, boolean relations) throws Exception;
 
     String[] getHeaders() throws Exception;
 

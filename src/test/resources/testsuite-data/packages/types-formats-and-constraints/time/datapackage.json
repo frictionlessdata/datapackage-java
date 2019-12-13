@@ -1,0 +1,32 @@
+{
+  "name": "time-formats",
+  "resources": [
+    {
+      "path": "data.csv",
+      "name": "time-data",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "default",
+            "type": "time",
+            "format": "default"
+          },
+          {
+            "name": "any",
+            "type": "time",
+            "format": "any"
+          },
+          {
+            "name": "pattern",
+            "type": "time",
+            "format": "%H/%M"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

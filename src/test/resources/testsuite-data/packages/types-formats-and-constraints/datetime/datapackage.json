@@ -1,0 +1,32 @@
+{
+  "name": "datetime-formats",
+  "resources": [
+    {
+      "path": "data.csv",
+      "name": "datetime-data",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "default",
+            "type": "datetime",
+            "format": "default"
+          },
+          {
+            "name": "any",
+            "type": "datetime",
+            "format": "any"
+          },
+          {
+            "name": "pattern",
+            "type": "datetime",
+            "format": "%d/%m/%y-%H:%M"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

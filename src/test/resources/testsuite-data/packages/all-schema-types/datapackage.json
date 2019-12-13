@@ -1,0 +1,89 @@
+{
+  "name": "all-schema-types",
+  "resources": [
+    {
+      "path": "all-schema-types.csv",
+      "pathType": "local",
+      "name": "all-schema-types",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "ISO-8859-1",
+      "dialect": {
+        "delimiter": ",",
+        "quote": "\""
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "number",
+            "type": "number",
+            "format": "default"
+          },
+          {
+            "name": "integer",
+            "type": "integer",
+            "format": "default"
+          },
+          {
+            "name": "string",
+            "type": "string",
+            "format": "default"
+          },
+          {
+            "name": "boolean",
+            "type": "boolean",
+            "format": "default"
+          },
+          {
+            "name": "object",
+            "type": "object",
+            "format": "default"
+          },
+          {
+            "name": "array",
+            "type": "array",
+            "format": "default"
+          },
+          {
+            "name": "date",
+            "type": "date",
+            "format": "default"
+          },
+          {
+            "name": "time",
+            "type": "time",
+            "format": "default"
+          },
+          {
+            "name": "datetime",
+            "type": "datetime",
+            "format": "default"
+          },
+          {
+            "name": "year",
+            "type": "year",
+            "format": "default"
+          },
+          {
+            "name": "yearmonth",
+            "type": "yearmonth",
+            "format": "default"
+          },
+          {
+            "name": "duration",
+            "type": "duration",
+            "format": "default"
+          },
+          {
+            "name": "geopoint",
+            "type": "geopoint",
+            "format": "default"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

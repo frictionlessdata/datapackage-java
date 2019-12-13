@@ -15,7 +15,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundEx
 import io.frictionlessdata.datapackage.resource.JSONDataResource;
 import io.frictionlessdata.datapackage.resource.FilebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -461,7 +461,7 @@ public class PackageTest {
     public void testReadFromZipFileWithDirectoryHierarchy() throws Exception{
         String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
         String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
-        String sourceFileAbsPath = ResourceTest.class.getResource("/testsuite-data/zip/countries-and-currencies.zip").getPath();
+        String sourceFileAbsPath = ResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zip").getPath();
 
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
@@ -561,7 +561,7 @@ public class PackageTest {
         // Get string content version of the schema file.
         String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
 
-        Schema expectedSchema = new Schema(schemaJsonString, true);
+        Schema expectedSchema = Schema.fromJson(schemaJsonString, true);
         Assert.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
@@ -579,7 +579,7 @@ public class PackageTest {
         // Get string content version of the schema file.
         String schemaJsonString =getFileContents("/fixtures/schema/population_schema.json");
 
-        Schema expectedSchema = new Schema(schemaJsonString, true);
+        Schema expectedSchema = Schema.fromJson(schemaJsonString, true);
         Assert.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object

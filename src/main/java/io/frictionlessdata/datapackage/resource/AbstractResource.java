@@ -3,7 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
-import io.frictionlessdata.tableschema.Schema;
+import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
@@ -74,19 +74,15 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
 
     @Override
     public Iterator<String[]> stringArrayIterator() throws Exception{
-        return this.stringArrayIterator(false, false);
-    }
-
-    @Override
-    public Iterator<String[]> stringArrayIterator(boolean extended, boolean cast) throws Exception{
         ensureDataLoaded();
         Iterator<String[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.stringArrayIterator(extended, cast);
+            tableIteratorArray[cnt++] = table.stringArrayIterator(false);
         }
         return new IteratorChain(tableIteratorArray);
     }
+
 
     public List<Object[]> read() throws Exception{
         return this.read(false);
