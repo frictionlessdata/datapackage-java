@@ -137,7 +137,9 @@ public class Dialect {
         dialect.setCommentChar(format.getCommentMarker());
         dialect.setHasHeaderRow(!format.getSkipHeaderRecord());
         dialect.setQuoteChar(format.getQuoteCharacter());
-        dialect.setDoubleQuote(format.getQuoteMode().equals(QuoteMode.MINIMAL));
+        if (null != format.getQuoteMode()) {
+            dialect.setDoubleQuote(format.getQuoteMode().equals(QuoteMode.MINIMAL));
+        }
         return dialect;
     }
 
