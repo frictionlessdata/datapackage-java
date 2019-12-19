@@ -4,8 +4,8 @@ import org.json.JSONArray;
 
 public class JSONDataResource<C> extends AbstractDataResource<JSONArray,C> {
 
-    public JSONDataResource(String name, JSONArray data) {
-        super(name, data);
+    public JSONDataResource(String name, String json) {
+        super(name, new JSONArray(json));
         super.format = getResourceFormat();
     }
 

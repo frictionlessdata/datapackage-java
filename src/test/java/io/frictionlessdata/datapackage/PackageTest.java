@@ -370,7 +370,7 @@ public class PackageTest {
     @Test
     public void testAddInvalidJSONResourceWithStrictValidation() throws Exception {
         Package dp = this.getDataPackageFromFilePath(true);
-        Resource res = new JSONDataResource((String)null, testResources);
+        Resource res = new JSONDataResource((String)null, testResources.toString());
 
         exception.expectMessage("Invalid Resource, it does not have a name property.");
         dp.addResource(res);
@@ -379,7 +379,7 @@ public class PackageTest {
     @Test
     public void testAddInvalidJSONResourceWithoutStrictValidation() throws Exception {
         Package dp = this.getDataPackageFromFilePath(false);
-        Resource res = new JSONDataResource((String)null, testResources);
+        Resource res = new JSONDataResource((String)null, testResources.toString());
         dp.addResource(res);
 
         Assert.assertTrue( dp.getErrors().size() > 0);

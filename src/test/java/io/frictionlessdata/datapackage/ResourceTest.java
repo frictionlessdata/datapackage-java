@@ -305,7 +305,7 @@ public class ResourceTest {
 
     @Test
     public void testIterateDataFromJSONFormat() throws Exception{
-        JSONArray jsonData = new JSONArray("[" +
+        String jsonData = "[" +
             "{" +
               "\"city\": \"london\"," +
               "\"year\": 2017," +
@@ -321,7 +321,7 @@ public class ResourceTest {
               "\"year\": 2017," +
               "\"population\": 2860000" +
             "}" +
-        "]");
+        "]";
         
         Resource resource = new JSONDataResource("population", jsonData);
         

@@ -237,7 +237,7 @@ public interface Resource<T,C> {
             }
         } else if (data != null && format != null){
             if (format.equals(Resource.FORMAT_JSON))
-                resource = new JSONDataResource(name, (JSONArray) data);
+                resource = new JSONDataResource(name, ((JSONArray) data).toString());
             else if (format.equals(Resource.FORMAT_CSV))
                 resource = new CSVDataResource(name, (String)data);
         } else {
