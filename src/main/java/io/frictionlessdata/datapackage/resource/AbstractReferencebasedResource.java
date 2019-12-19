@@ -1,12 +1,8 @@
 package io.frictionlessdata.datapackage.resource;
 
-import io.frictionlessdata.datapackage.Dialect;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 import org.json.JSONArray;
 
-import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

@@ -3,6 +3,8 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
+import org.apache.commons.csv.CSVFormat;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -20,9 +22,7 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
 
     @Override
     Table createTable(URL reference) throws Exception {
-        return (schema != null)
-                ? new Table(reference, schema)
-                : new Table(reference);
+        return new Table(reference, schema, getCsvFormat());
     }
 
     @Override
@@ -37,7 +37,6 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
         if (super.paths != null){
             for (URL url : paths) {
                 Table table = createTable(url);
-                setCsvFormat(table);
                 tables.add(table);
             }
         }

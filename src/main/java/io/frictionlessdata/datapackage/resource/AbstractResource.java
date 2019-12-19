@@ -8,6 +8,7 @@ import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
+import org.apache.commons.csv.CSVFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -123,13 +124,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     public List<Table> getTables() throws Exception {
         ensureDataLoaded();
         return tables;
-    }
-
-    void setCsvFormat(Table table) {
-        Dialect dia = (dialect != null)
-                ? dialect
-                : Dialect.DEFAULT;
-        table.setCsvFormat(dia.toCsvFormat());
     }
 
     /**
@@ -346,6 +340,12 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             return null;
         return originalReferences.get(JSONBase.JSON_KEY_DIALECT).toString();
     }
+
+    CSVFormat getCsvFormat() {
+        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
+        return lDialect.toCsvFormat();
+    }
+
     /**
      * @return the sources
      */
@@ -381,7 +381,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     abstract List<Table> readData() throws Exception;
 
     private List<Table> ensureDataLoaded () throws Exception {
-        tables = readData();
+        if (null == tables) {
+            tables = readData();
+        }
         return tables;
     }
 
@@ -392,7 +394,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         }
         Files.deleteIfExists(outputFile);
         try (Writer wr = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8)) {
-            t.writeCsv(wr, null);
+            t.writeCsv(wr, dialect.toCsvFormat());
         }
     }
 }

@@ -4,6 +4,7 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
+import org.apache.commons.csv.CSVFormat;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -43,9 +44,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
 
     @Override
     Table createTable(File reference) throws Exception {
-        return  (schema != null)
-                ? new Table(reference, basePath, schema)
-                : new Table(reference, basePath);
+        return  new Table(reference, basePath, schema, getCsvFormat());
     }
 
     @Override
@@ -71,8 +70,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         for (File file : paths) {
             String fileName = file.getPath().replaceAll("\\\\", "/");
             String content = getZipFileContentAsString (basePath.toPath(), fileName);
-            Table table = new Table(content, schema);
-            setCsvFormat(table);
+            Table table = new Table(content, schema, getCsvFormat());
             tables.add(table);
         }
         return tables;
@@ -89,7 +87,6 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
             Path securePath = Resource.toSecure(file.toPath(), basePath.toPath());
             Path relativePath = basePath.toPath().relativize(securePath);
             Table table = createTable(relativePath.toFile());
-            setCsvFormat(table);
             tables.add(table);
         }
         return tables;
