@@ -282,7 +282,7 @@ public class PackageTest {
                 "/fixtures/tab_separated_datapackage.json", true);
         Resource resource = dp.getResource("first-resource");
         Dialect dialect = new Dialect();
-        dialect.setDelimiter('\t');
+        dialect.setDelimiter("\t");
         resource.setDialect(dialect);
         Assert.assertNotNull(resource);
         List<Object[]>data = resource.read(false);

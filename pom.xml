@@ -19,6 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <tableschema-java-version>f6054d5ba7</tableschema-java-version>
         <google-guava.version>23.6-jre</google-guava.version>
         <hamcrest.version>1.3</hamcrest.version>
         <junit.version>5.4.2</junit.version>
@@ -263,7 +264,7 @@
         <dependency>
             <groupId>com.github.frictionlessdata</groupId>
             <artifactId>tableschema-java</artifactId>
-            <version>6d4bb79386</version>
+            <version>${tableschema-java-version}</version>
         </dependency>
 
 

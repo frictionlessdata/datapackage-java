@@ -39,7 +39,7 @@ public class Dialect {
     /**
      *  specifies the character sequence which should separate fields (aka columns). Default = ,. Example \t.
      */
-    private Character delimiter = ',';
+    private String delimiter = ",";
 
     /**
      * specifies the character sequence which should terminate rows. Default = \r\n
@@ -113,9 +113,10 @@ public class Dialect {
         return retVal;
     }
 
+    // will fail for multi-character delimiters. Oh my...
     public CSVFormat toCsvFormat() {
         CSVFormat format = CSVFormat.DEFAULT
-                .withDelimiter(delimiter)
+                .withDelimiter(delimiter.charAt(0))
                 .withEscape(escapeChar)
                 .withIgnoreSurroundingSpaces(skipInitialSpace)
                 .withNullString(nullSequence)
@@ -130,7 +131,7 @@ public class Dialect {
 
     public static Dialect fromCsvFormat(CSVFormat format) {
         Dialect dialect = new Dialect();
-        dialect.setDelimiter(format.getDelimiter());
+        dialect.setDelimiter(format.getDelimiter()+"");
         dialect.setEscapeChar(format.getEscapeCharacter());
         dialect.setSkipInitialSpace(format.getIgnoreSurroundingSpaces());
         dialect.setNullSequence(format.getNullString());
@@ -153,14 +154,7 @@ public class Dialect {
             return null;
         Dialect dialect = new Dialect();
         if (jsonObj.has("delimiter")) {
-            Character delim;
-            String delimiter = jsonObj.getString("delimiter");
-            if (delimiter.equalsIgnoreCase("tab")) {
-                delim = '\t';
-            } else {
-                delim = jsonObj.getString("delimiter").charAt(0);
-            }
-            dialect.setDelimiter(delim);
+            dialect.setDelimiter(jsonObj.getString("delimiter"));
         }
         if (jsonObj.has("escapeChar"))
             dialect.setEscapeChar(jsonObj.getString("escapeChar").charAt(0));
@@ -213,7 +207,7 @@ public class Dialect {
     }
 
 
-    public Character getDelimiter() {
+    public String getDelimiter() {
         return delimiter;
     }
 
@@ -256,7 +250,7 @@ public class Dialect {
         return csvddfVersion;
     }
 
-    public void setDelimiter(Character delimiter) {
+    public void setDelimiter(String delimiter) {
         this.delimiter = delimiter;
     }
 
