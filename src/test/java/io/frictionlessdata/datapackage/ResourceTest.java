@@ -322,8 +322,12 @@ public class ResourceTest {
               "\"population\": 2860000" +
             "}" +
         "]";
-        
-        Resource resource = new JSONDataResource("population", jsonData);
+
+        JSONDataResource<String[]> resource = new JSONDataResource<>("population", jsonData);
+
+        //set a schema to guarantee the ordering of properties
+        Schema schema = Schema.fromJson(new File(getBasePath(), "/schema/population_schema.json"), true);
+        resource.setSchema(schema);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
@@ -332,7 +336,7 @@ public class ResourceTest {
         List<String[]> expectedData = this.getExpectedPopulationData();
         
         // Get Iterator.
-        Iterator<String[]> iter = resource.objectArrayIterator();
+        Iterator<String[]> iter = resource.stringArrayIterator();
         int expectedDataIndex = 0;
         
         // Assert data.
@@ -350,6 +354,58 @@ public class ResourceTest {
         } 
     }
 
+    @Test
+    public void testIterateDataFromJSONFormatAlternateSchema() throws Exception{
+        String jsonData = "[" +
+                "{" +
+                "\"city\": \"london\"," +
+                "\"year\": 2017," +
+                "\"population\": 8780000" +
+                "}," +
+                "{" +
+                "\"city\": \"paris\"," +
+                "\"year\": 2017," +
+                "\"population\": 2240000" +
+                "}," +
+                "{" +
+                "\"city\": \"rome\"," +
+                "\"year\": 2017," +
+                "\"population\": 2860000" +
+                "}" +
+                "]";
+
+        JSONDataResource<String[]> resource = new JSONDataResource<>("population", jsonData);
+
+        //set a schema to guarantee the ordering of properties
+        Schema schema = Schema.fromJson(new File(getBasePath(), "/schema/population_schema_alternate.json"), true);
+        resource.setSchema(schema);
+
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+
+        // Expected data.
+        List<String[]> expectedData = this.getExpectedAlternatePopulationData();
+
+        // Get Iterator.
+        Iterator<String[]> iter = resource.stringArrayIterator();
+        int expectedDataIndex = 0;
+
+        // Assert data.
+        while(iter.hasNext()){
+            String[] record = iter.next();
+            String city = record[0];
+            String year = record[1];
+            String population = record[2];
+
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+
+            expectedDataIndex++;
+        }
+    }
+
+    // Test is invalid as the order of properties in a JSON object is not guaranteed (see spec)
     @Test
     public void testBuildAndIterateDataFromJSONFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_json_array_resource.json");
@@ -496,6 +552,15 @@ public class ResourceTest {
         expectedData.add(new String[]{"paris", "2017", "2240000"});
         expectedData.add(new String[]{"rome", "2017", "2860000"});
         
+        return expectedData;
+    }
+
+    private List<String[]> getExpectedAlternatePopulationData(){
+        List<String[]> expectedData  = new ArrayList();
+        expectedData.add(new String[]{"2017", "london", "8780000"});
+        expectedData.add(new String[]{"2017", "paris", "2240000"});
+        expectedData.add(new String[]{"2017", "rome", "2860000"});
+
         return expectedData;
     }
 }
