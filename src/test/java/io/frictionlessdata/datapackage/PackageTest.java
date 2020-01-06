@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
@@ -650,7 +651,10 @@ public class PackageTest {
         Assert.assertFalse(frank.getAdmin());
         Assert.assertEquals("(90.0, 45.0, NaN)", frank.getAddressCoordinates().toString());
         Assert.assertEquals("PT15M", frank.getContractLength().toString());
-        Assert.assertEquals("{\"pin\":45,\"rate\":83.23,\"ssn\":90}", frank.getInfo().toString());
+        Map info = frank.getInfo();
+        Assertions.assertEquals(45, info.get("pin"));
+        Assertions.assertEquals(83.23, info.get("rate"));
+        Assertions.assertEquals(90, info.get("ssn"));
     }
 
     private Package getDataPackageFromFilePath(String datapackageFilePath, boolean strict) throws Exception {
