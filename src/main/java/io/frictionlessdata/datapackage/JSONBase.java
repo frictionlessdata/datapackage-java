@@ -198,7 +198,7 @@ public abstract class JSONBase {
         Object dialectObj = resourceJson.has(JSONBase.JSON_KEY_DIALECT) ? resourceJson.get(JSONBase.JSON_KEY_DIALECT) : null;
         JSONObject dereferencedDialect = dereference(dialectObj, basePath, isArchivePackage);
         if (null != dereferencedDialect) {
-            return Dialect.fromJson(dereferencedDialect);
+            return Dialect.fromJson(dereferencedDialect.toString());
         }
         return null;
     }

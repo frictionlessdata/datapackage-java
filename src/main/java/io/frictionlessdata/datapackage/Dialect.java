@@ -19,7 +19,7 @@ import org.json.JSONObject;
 public class Dialect {
     // we construct one instance that will always keep the default values
     public static Dialect DEFAULT = new Dialect(){
-        public JSONObject getJson() {
+        public String getJson() {
             Dialect newDialect = new Dialect();
             JSONObject retVal = new JSONObject();
             retVal.put("delimiter", newDialect.delimiter);
@@ -33,7 +33,7 @@ public class Dialect {
             retVal.put("doubleQuote", newDialect.doubleQuote);
             retVal.put("caseSensitiveHeader", newDialect.caseSensitiveHeader);
             retVal.put("csvddfVersion", newDialect.csvddfVersion);
-            return retVal;
+            return retVal.toString();
         }
     };
     /**
@@ -146,12 +146,13 @@ public class Dialect {
 
     /**
      * Create a new Dialect object from a JSON representation
-     * @param jsonObj JSON representation, eg. from Resource definition
+     * @param json JSON as String representation, eg. from Resource definition
      * @return new Dialect object with values from JSONObject
      */
-    public static Dialect fromJson(JSONObject jsonObj) {
-        if (null == jsonObj)
+    public static Dialect fromJson(String json) {
+        if (null == json)
             return null;
+        JSONObject jsonObj = new JSONObject(json);
         Dialect dialect = new Dialect();
         if (jsonObj.has("delimiter")) {
             dialect.setDelimiter(jsonObj.getString("delimiter"));
@@ -181,9 +182,13 @@ public class Dialect {
 
     /**
      * Get JSON representation of the object.
-     * @return a JSONObject representing the properties of this object
+     * @return a String representing the properties of this object encoded as JSON
      */
-    public JSONObject getJson() {
+    public String getJson() {
+        return getJsonObject().toString();
+    }
+
+    private JSONObject getJsonObject() {
         JSONObject retVal = new JSONObject();
         retVal = setProperty(retVal, "delimiter", delimiter);
         retVal = setProperty(retVal, "escapeChar", escapeChar);
@@ -199,13 +204,17 @@ public class Dialect {
         return retVal;
     }
 
+    Object get(String key) {
+        JSONObject obj = getJsonObject();
+        return obj.get(key);
+    }
+
     JSONObject setProperty(JSONObject obj, String key, Object value) {
-        if ((value != null) && (value != DEFAULT.getJson().get(key))) {
+        if ((value != null) && (value != DEFAULT.get(key))) {
             obj.put(key, value);
         }
         return obj;
     }
-
 
     public String getDelimiter() {
         return delimiter;
@@ -246,6 +255,7 @@ public class Dialect {
     public boolean isCaseSensitiveHeader() {
         return caseSensitiveHeader;
     }
+
     public Double getCsvddfVersion() {
         return csvddfVersion;
     }
@@ -285,10 +295,10 @@ public class Dialect {
     public void setCommentChar(Character commentChar) {
         this.commentChar = commentChar;
     }
+
     public void setCaseSensitiveHeader(boolean caseSensitiveHeader) {
         this.caseSensitiveHeader = caseSensitiveHeader;
     }
-
 
     public void setCsvddfVersion(Double csvddfVersion) {
         this.csvddfVersion = csvddfVersion;

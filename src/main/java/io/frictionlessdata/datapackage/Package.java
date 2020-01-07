@@ -378,7 +378,7 @@ public class Package extends JSONBase{
         }
     }
     
-    Resource getResource(String resourceName){
+    public Resource getResource(String resourceName){
         for (Resource resource : this.resources) {
             if (resource.getName().equalsIgnoreCase(resourceName)) {
                 return resource;

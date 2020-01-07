@@ -608,11 +608,8 @@ public class PackageTest {
         // Get string content version of the dialect file.
         String dialectJsonString =getFileContents("/fixtures/dialect.json");
         
-        // Get JSON Object
-        JSONObject dialectJson = new JSONObject(dialectJsonString);
-        
         // Compare.
-        Assert.assertEquals(Dialect.fromJson(dialectJson), resource.getDialect());
+        Assert.assertEquals(Dialect.fromJson(dialectJsonString), resource.getDialect());
     }
 
     @Test
