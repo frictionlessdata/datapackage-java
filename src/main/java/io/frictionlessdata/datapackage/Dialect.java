@@ -19,21 +19,23 @@ import org.json.JSONObject;
 public class Dialect {
     // we construct one instance that will always keep the default values
     public static Dialect DEFAULT = new Dialect(){
+        private JSONObject jsonObject;
+
         public String getJson() {
-            Dialect newDialect = new Dialect();
-            JSONObject retVal = new JSONObject();
-            retVal.put("delimiter", newDialect.delimiter);
-            retVal.put("escapeChar", newDialect.escapeChar);
-            retVal.put("skipInitialSpace", newDialect.skipInitialSpace);
-            retVal.put("nullSequence", newDialect.nullSequence);
-            retVal.put("commentChar", newDialect.commentChar);
-            retVal.put("header", newDialect.hasHeaderRow);
-            retVal.put("lineTerminator", newDialect.lineTerminator);
-            retVal.put("quoteChar", newDialect.quoteChar);
-            retVal.put("doubleQuote", newDialect.doubleQuote);
-            retVal.put("caseSensitiveHeader", newDialect.caseSensitiveHeader);
-            retVal.put("csvddfVersion", newDialect.csvddfVersion);
-            return retVal.toString();
+            lazyCreate();
+            return jsonObject.toString();
+        }
+
+        Object get(String key) {
+            lazyCreate();
+            return jsonObject.get(key);
+        }
+
+        private void lazyCreate() {
+            if (null == jsonObject) {
+                Dialect newDialect = new Dialect();
+                jsonObject = newDialect.getJsonObject(false);
+            }
         }
     };
     /**
@@ -185,32 +187,36 @@ public class Dialect {
      * @return a String representing the properties of this object encoded as JSON
      */
     public String getJson() {
-        return getJsonObject().toString();
+        return getJsonObject(true).toString();
     }
 
-    private JSONObject getJsonObject() {
+    private JSONObject getJsonObject(boolean checkDefault) {
         JSONObject retVal = new JSONObject();
-        retVal = setProperty(retVal, "delimiter", delimiter);
-        retVal = setProperty(retVal, "escapeChar", escapeChar);
-        retVal = setProperty(retVal, "skipInitialSpace", skipInitialSpace);
-        retVal = setProperty(retVal, "nullSequence", nullSequence);
-        retVal = setProperty(retVal, "commentChar", commentChar);
-        retVal = setProperty(retVal, "header", hasHeaderRow);
-        retVal = setProperty(retVal, "lineTerminator", lineTerminator);
-        retVal = setProperty(retVal, "quoteChar", quoteChar);
-        retVal = setProperty(retVal, "doubleQuote", doubleQuote);
-        retVal = setProperty(retVal, "caseSensitiveHeader", caseSensitiveHeader);
-        retVal = setProperty(retVal, "csvddfVersion", csvddfVersion);
+        retVal = setProperty(retVal, "delimiter", delimiter, checkDefault);
+        retVal = setProperty(retVal, "escapeChar", escapeChar, checkDefault);
+        retVal = setProperty(retVal, "skipInitialSpace", skipInitialSpace, checkDefault);
+        retVal = setProperty(retVal, "nullSequence", nullSequence, checkDefault);
+        retVal = setProperty(retVal, "commentChar", commentChar, checkDefault);
+        retVal = setProperty(retVal, "header", hasHeaderRow, checkDefault);
+        retVal = setProperty(retVal, "lineTerminator", lineTerminator, checkDefault);
+        retVal = setProperty(retVal, "quoteChar", quoteChar, checkDefault);
+        retVal = setProperty(retVal, "doubleQuote", doubleQuote, checkDefault);
+        retVal = setProperty(retVal, "caseSensitiveHeader", caseSensitiveHeader, checkDefault);
+        retVal = setProperty(retVal, "csvddfVersion", csvddfVersion, checkDefault);
         return retVal;
     }
 
     Object get(String key) {
-        JSONObject obj = getJsonObject();
+        JSONObject obj = getJsonObject(true);
         return obj.get(key);
     }
 
-    JSONObject setProperty(JSONObject obj, String key, Object value) {
-        if ((value != null) && (value != DEFAULT.get(key))) {
+    JSONObject setProperty(JSONObject obj, String key, Object value, boolean checkDefault) {
+        if (checkDefault) {
+            if ((value != null) && (value != DEFAULT.get(key))) {
+                obj.put(key, value);
+            }
+        } else {
             obj.put(key, value);
         }
         return obj;

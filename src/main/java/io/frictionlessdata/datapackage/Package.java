@@ -289,7 +289,7 @@ public class Package extends JSONBase{
         }
         Files.deleteIfExists(parentFilePath);
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(schema.getJson().toString());
+            wr.write(schema.getJson());
         }
     }
 
@@ -301,7 +301,7 @@ public class Package extends JSONBase{
         }
         Files.deleteIfExists(parentFilePath);
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(dialect.getJson().toString());
+            wr.write(dialect.getJson());
         }
     }
 
