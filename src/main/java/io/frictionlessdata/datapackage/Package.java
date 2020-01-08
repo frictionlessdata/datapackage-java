@@ -417,7 +417,7 @@ public class Package extends JSONBase{
         return dpe;
     }
 
-    void addResource(Resource resource)
+    public void addResource(Resource resource)
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getName() == null){
