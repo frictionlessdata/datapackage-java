@@ -22,7 +22,7 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
 
     @Override
     Table createTable(URL reference) throws Exception {
-        return new Table(reference, schema, getCsvFormat());
+        return Table.fromSource(reference, schema, getCsvFormat());
     }
 
     @Override

@@ -44,7 +44,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
         List<Table> tables = new ArrayList<>();
         if (data != null){
             if (format.equalsIgnoreCase(getResourceFormat())){
-                Table table = new Table(data.toString(), schema, getCsvFormat());
+                Table table = Table.fromSource(data.toString(), schema, getCsvFormat());
                 tables.add(table);
             } else {
                 // Data is in unexpected format. Throw exception.

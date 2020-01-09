@@ -44,7 +44,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
 
     @Override
     Table createTable(File reference) throws Exception {
-        return  new Table(reference, basePath, schema, getCsvFormat());
+        return Table.fromSource(reference, basePath, schema, getCsvFormat());
     }
 
     @Override
@@ -70,7 +70,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         for (File file : paths) {
             String fileName = file.getPath().replaceAll("\\\\", "/");
             String content = getZipFileContentAsString (basePath.toPath(), fileName);
-            Table table = new Table(content, schema, getCsvFormat());
+            Table table = Table.fromSource(content, schema, getCsvFormat());
             tables.add(table);
         }
         return tables;
