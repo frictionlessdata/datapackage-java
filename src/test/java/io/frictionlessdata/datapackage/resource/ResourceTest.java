@@ -1,4 +1,4 @@
-package io.frictionlessdata.datapackage;
+package io.frictionlessdata.datapackage.resource;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -14,8 +14,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import io.frictionlessdata.datapackage.Package;
+import io.frictionlessdata.datapackage.PackageTest;
+import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.datapackage.resource.*;
 import io.frictionlessdata.tableschema.schema.Schema;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -513,7 +515,6 @@ public class ResourceTest {
         FilebasedResource r = new FilebasedResource("resource-one", files, getBasePath());
         Package pkg = new Package("test", tempDirPath.resolve("datapackage.json"), true);
         pkg.addResource(r);
-        System.out.println(pkg.getBasePath());
     }
 
     private static Resource buildResource(String relativeInPath) throws URISyntaxException {

@@ -4,6 +4,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.QuoteMode;
 import org.json.JSONObject;
 
+import java.io.*;
+
 /**
  * CSV Dialect defines a simple format to describe the various dialects of CSV files in a language agnostic
  * manner. It aims to deal with a reasonably large subset of the features which differ between dialects,
@@ -206,6 +208,17 @@ public class Dialect {
         return retVal;
     }
 
+    public void writeJson (File outputFile) throws IOException{
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            writeJson(fos);
+        }
+    }
+
+    public void writeJson (OutputStream output) throws IOException{
+        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
+            file.write(this.getJson());
+        }
+    }
     Object get(String key) {
         JSONObject obj = getJsonObject(true);
         return obj.get(key);

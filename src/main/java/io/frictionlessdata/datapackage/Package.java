@@ -204,7 +204,7 @@ public class Package extends JSONBase{
     private void writeDescriptor (FileSystem outFs, String parentDirName) throws IOException {
         Path nf = outFs.getPath(parentDirName+File.separator+DATAPACKAGE_FILENAME);
         try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
-            writer.write(this.getJson().toString(JSON_INDENT_FACTOR));
+            writer.write(this.getJsonObject().toString(JSON_INDENT_FACTOR));
         }
     }
 
@@ -217,7 +217,7 @@ public class Package extends JSONBase{
      * @param zipCompressed whether we are writing to a ZIP archive
      * @throws Exception thrown if something goes wrong writing
      */
-    void writeFullyInlined (File outputDir, boolean zipCompressed) throws Exception {
+    public void writeFullyInlined (File outputDir, boolean zipCompressed) throws Exception {
         FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
         String parentDirName = "";
         if (!zipCompressed) {
@@ -238,7 +238,7 @@ public class Package extends JSONBase{
      * @param zipCompressed whether we are writing to a ZIP archive
      * @throws Exception thrown if something goes wrong writing
      */
-    void write (File outputDir, boolean zipCompressed) throws Exception {
+    public void write (File outputDir, boolean zipCompressed) throws Exception {
         FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
         String parentDirName = "";
         if (!zipCompressed) {
@@ -282,6 +282,34 @@ public class Package extends JSONBase{
         } catch (UnsupportedOperationException es) {};
     }
 
+    public void writeJson (File outputFile) throws IOException{
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            writeJson(fos);
+        }
+    }
+
+    public void writeJson (OutputStream output) throws IOException{
+        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
+            file.write(this.getJsonObject().toString(JSON_INDENT_FACTOR));
+        }
+    }
+
+    private void saveZip(File outputFilePath) throws IOException, DataPackageException{
+        try(FileOutputStream fos = new FileOutputStream(outputFilePath)){
+            try(BufferedOutputStream bos = new BufferedOutputStream(fos)){
+                try(ZipOutputStream zos = new ZipOutputStream(bos)){
+                    // File is not on the disk, test.txt indicates
+                    // only the file name to be put into the zip.
+                    ZipEntry entry = new ZipEntry(DATAPACKAGE_FILENAME);
+
+                    zos.putNextEntry(entry);
+                    zos.write(this.getJsonObject().toString(JSON_INDENT_FACTOR).getBytes());
+                    zos.closeEntry();
+                }
+            }
+        }
+    }
+
     // TODO migrate into Schema.java
     private static void writeSchema(Path parentFilePath, Schema schema) throws IOException {
         if (!Files.exists(parentFilePath)) {
@@ -302,79 +330,6 @@ public class Package extends JSONBase{
         Files.deleteIfExists(parentFilePath);
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
             wr.write(dialect.getJson());
-        }
-    }
-
-
-    /*void write (File outputDir, boolean zipCompressed) throws Exception {
-        if (zipCompressed) {
-            if (outputDir.exists()) {
-                throw new DataPackageException("Cannot save into existing ZIP file: "
-                        +outputDir.getName());
-            }
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "true");
-            try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI().toString()), env)){
-                Path nf = zipfs.getPath(DATAPACKAGE_FILENAME);
-                try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
-                    writer.write(this.getJson().toString(JSON_INDENT_FACTOR));
-                }
-
-                for (Resource r : this.resources) {
-                    if (r instanceof AbstractReferencebasedResource) {
-                        List<String> paths = new ArrayList<>();
-                        paths.addAll(((AbstractReferencebasedResource)r).getReferencesAsStrings());
-                        int cnt = 0;
-                        List<Table> tables = r.getTables();
-                        for (String path : paths) {
-                            Path file = zipfs.getPath(path);
-                            Table t  = tables.get(cnt++);
-                            r.writeTableAsCsv(t, dialect, file);
-                        }
-                    }
-                }
-            }
-        } else {
-            if (!(outputDir.isDirectory())) {
-                throw new DataPackageException("Target for save() exists and is a regular file: "
-                        +outputDir.getName());
-            }
-            File descriptor = new File (outputDir, DATAPACKAGE_FILENAME);
-            writeJson(descriptor);
-            for (Resource r : this.resources) {
-                if (r instanceof AbstractReferencebasedResource) {
-                    r.writeDataAsCsv(outputDir.toPath(), dialect);
-                }
-            }
-        }
-    }*/
-
-
-    public void writeJson (File outputFile) throws IOException{
-        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-            writeJson(fos);
-        }
-    }
-
-    public void writeJson (OutputStream output) throws IOException{
-        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
-            file.write(this.getJson().toString(JSON_INDENT_FACTOR));
-        }
-    }
-    
-    private void saveZip(File outputFilePath) throws IOException, DataPackageException{
-        try(FileOutputStream fos = new FileOutputStream(outputFilePath)){
-            try(BufferedOutputStream bos = new BufferedOutputStream(fos)){
-                try(ZipOutputStream zos = new ZipOutputStream(bos)){
-                    // File is not on the disk, test.txt indicates
-                    // only the file name to be put into the zip.
-                    ZipEntry entry = new ZipEntry(DATAPACKAGE_FILENAME);
-
-                    zos.putNextEntry(entry);
-                    zos.write(this.getJson().toString(JSON_INDENT_FACTOR).getBytes());
-                    zos.closeEntry();
-                }           
-            }
         }
     }
     
@@ -463,31 +418,31 @@ public class Package extends JSONBase{
 
     
     void addProperty(String key, String value) throws DataPackageException{
-        if(this.getJson().has(key)){
+        if(this.getJsonObject().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJson().put(key, value);
+            this.getJsonObject().put(key, value);
         }
     }
     
     public void addProperty(String key, JSONObject value) throws DataPackageException{
-        if(this.getJson().has(key)){
+        if(this.getJsonObject().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJson().put(key, value);
+            this.getJsonObject().put(key, value);
         }
     }
     
     public void addProperty(String key, JSONArray value) throws DataPackageException{
-        if(this.getJson().has(key)){
+        if(this.getJsonObject().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJson().put(key, value);
+            this.getJsonObject().put(key, value);
         }
     }
     
     public void removeProperty(String key){
-        this.getJson().remove(key);
+        this.getJsonObject().remove(key);
     }
     
     /**
@@ -523,8 +478,12 @@ public class Package extends JSONBase{
             return (URL)basePath;
         return null;
     }
-    
-    public JSONObject getJson(){
+
+    /**
+     * Convert both the descriptor and all linked Resources to JSON and return them.
+     * @return
+     */
+    public String getJson(){
         Iterator<Resource> resourceIter = resources.iterator();
         
         JSONArray resourcesJsonArray = new JSONArray();
@@ -537,7 +496,23 @@ public class Package extends JSONBase{
             this.jsonObject.put(JSON_KEY_RESOURCES, resourcesJsonArray);
         }
 
-        return this.jsonObject;
+        return jsonObject.toString();
+    }
+
+    private JSONObject getJsonObject(){
+        Iterator<Resource> resourceIter = resources.iterator();
+
+        JSONArray resourcesJsonArray = new JSONArray();
+        while(resourceIter.hasNext()){
+            Resource resource = resourceIter.next();
+            resourcesJsonArray.put(resource.getJson());
+        }
+
+        if(resourcesJsonArray.length() > 0){
+            this.jsonObject.put(JSON_KEY_RESOURCES, resourcesJsonArray);
+        }
+
+        return jsonObject;
     }
     
     List<Exception> getErrors(){
@@ -791,115 +766,6 @@ public class Package extends JSONBase{
             return;
         this.otherProperties.put(key, value);
     }
-
-    /**
-     * Take a string containing either a fully qualified URL or a path-fragment and read the contents
-     * of either the fully qualified URL or the basePath URL+path-fragment. Construct a JSON object
-     * from the URL content
-     * @param url fully qualified URL or path fragment
-     * @param basePath base URL, only used if we are dealing with a path fragment
-     * @return a JSONObject built from the url content
-     * @throws IOException if fetching the contents of the URL goes wrong
-     */
-    /*
-    private static JSONObject dereference(String url, URL basePath) throws IOException {
-        JSONObject dereferencedObj = null;
-
-        if (isValidUrl(url)) {
-            // Create the dereferenced object from the remote file.
-            String jsonContentString = getFileContentAsString(new URL(url));
-            dereferencedObj = new JSONObject(jsonContentString);
-        } else {
-            URL lURL = new URL(basePath.toExternalForm()+url);
-            if (isValidUrl(lURL)) {
-                String jsonContentString = getFileContentAsString(lURL);
-                dereferencedObj = new JSONObject(jsonContentString);
-            } else {
-                throw new DataPackageException("URL not found"+lURL);
-            }
-        }
-        return dereferencedObj;
-    }*/
-/*
-    public static JSONObject dereference(JSONObject obj, Object basePath) throws IOException {
-        if (null == obj)
-            return null;
-        // The JSONObject that will represent the schema.
-        JSONObject dereferencedObj = null;
-
-        // Object is already a dereferences object.
-        // Don't need to do anything, just return.
-        return obj;
-    }
-*/
-/*
-    public static JSONObject dereference(String obj, Object basePath) throws IOException {
-        if (null == obj)
-            return null;
-        // The JSONObject that will represent the schema.
-        JSONObject dereferencedObj = null;
-
-        if (basePath instanceof File)
-            dereferencedObj = dereference(new File(obj), (File)basePath);
-        else if (basePath instanceof URL)
-            dereferencedObj = dereference(new URL(obj), (URL)basePath);
-
-
-        return dereferencedObj;
-    }
-
-    private static JSONObject dereference(URL url, URL basePath) throws IOException {
-        return dereference(url.toExternalForm(), basePath);
-    }
-*/
-/*
-    public static JSONObject dereference(File objString, File basePath) throws IOException {
-        JSONObject dereferencedObj = null;
-*/
-        /* If reference is file path.
-           from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
-           are forbidden to avoid security vulnerabilities when implementing data
-           package software."
-
-           https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
-         */
- /*       Path securePath = DataSource.toSecure(objString.toPath(), basePath.toPath());
-        if(securePath.toFile().exists()){
-            // Create the dereferenced schema object from the local file.
-            String jsonContentString = getFileContentAsString(securePath.toFile());
-            dereferencedObj = new JSONObject(jsonContentString);
-
-        } else {
-            throw new FileNotFoundException("Local file not found: " + objString);
-        }
-        return dereferencedObj;
-    }*/
-/*
-    public static JSONObject dereference(Object obj, Object basePath) throws IOException {
-        if (null == obj)
-            return null;
-        // The JSONObject that will represent the schema.
-        JSONObject dereferencedObj = null;
-
-        // Object is already a dereferences object.
-        if(obj instanceof JSONObject){
-            // Don't need to do anything, just cast and return.
-            dereferencedObj = (JSONObject)obj;
-        } else if(obj instanceof String){
-            if (isValidUrl((String)obj))
-                if (basePath instanceof File)
-                    dereferencedObj = dereference(new URL((String)obj), (File)basePath);
-                else
-                    dereferencedObj = dereference(new URL((String)obj), (URL)basePath);
-            else if (basePath instanceof URL) {
-                dereferencedObj = dereference((String) obj, (URL) basePath);
-            } else
-                dereferencedObj = dereference((String) obj, (File) basePath);
-        }
-
-        return dereferencedObj;
-    }*/
-
 
     private static URL getParentUrl(URL urlSource) throws URISyntaxException, MalformedURLException {
         URI uri = urlSource.toURI();

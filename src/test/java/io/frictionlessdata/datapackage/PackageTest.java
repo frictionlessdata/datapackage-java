@@ -16,6 +16,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundEx
 import io.frictionlessdata.datapackage.resource.JSONDataResource;
 import io.frictionlessdata.datapackage.resource.FilebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.datapackage.resource.ResourceTest;
 import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
@@ -29,6 +30,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
+
+import javax.json.JsonObject;
 
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
@@ -163,7 +166,8 @@ public class PackageTest {
 
         // We're not asserting the String value since the order of the JSONObject elements is not guaranteed.
         // Just compare the length of the String, should be enough.
-        Assert.assertEquals(dp.getJson().length(), new JSONObject(jsonString).length());
+        JSONObject obj = new JSONObject(dp.getJson());
+        Assert.assertEquals(obj.length(), new JSONObject(jsonString).length());
     }
     
     @Test
@@ -435,7 +439,9 @@ public class PackageTest {
         savedPackage.write(tempDirPath.toFile(), false);
 
         Package readPackage = new Package(tempDirPath.resolve(Package.DATAPACKAGE_FILENAME),false);
-        Assert.assertTrue(readPackage.getJson().similar(savedPackage.getJson()));
+        JSONObject readPackageJson = new JSONObject(readPackage.getJson()) ;
+        JSONObject savedPackageJson = new JSONObject(savedPackage.getJson()) ;
+        Assert.assertTrue(readPackageJson.similar(savedPackageJson));
     }
     
     @Test
