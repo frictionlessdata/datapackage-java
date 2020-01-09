@@ -19,13 +19,14 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     private File basePath;
     private boolean isInArchive;
 
-    public FilebasedResource(String name, Collection<File> paths, Resource fromResource) throws Exception {
-        super(name, paths);
+    public FilebasedResource(Resource fromResource, Collection<File> paths) throws Exception {
+        super(fromResource.getName(), paths);
         if (null == paths) {
             throw new DataPackageException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
-        Table table = new Table(fromResource.read(false), fromResource.getHeaders(), schema);
+        Table table = new Table(fromResource.read(false), fromResource.getHeaders(), fromResource.getSchema());
+        this.dialect = fromResource.getDialect();
         tables = new ArrayList<>();
         tables.add(table);
     }
