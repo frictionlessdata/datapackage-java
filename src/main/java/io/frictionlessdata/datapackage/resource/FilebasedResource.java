@@ -4,6 +4,7 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
+import io.frictionlessdata.tableschema.schema.Schema;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.File;
@@ -18,7 +19,18 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     private File basePath;
     private boolean isInArchive;
 
-    public FilebasedResource(String name, Collection<File> paths, File basePath) {
+    public FilebasedResource(String name, Collection<File> paths, Resource fromResource) throws Exception {
+        super(name, paths);
+        if (null == paths) {
+            throw new DataPackageException("Invalid Resource. " +
+                    "The path property cannot be null for file-based Resources.");
+        }
+        Table table = new Table(fromResource.read(false), fromResource.getHeaders(), schema);
+        tables = new ArrayList<>();
+        tables.add(table);
+    }
+
+    FilebasedResource(String name, Collection<File> paths, File basePath) {
         super(name, paths);
         if (null == paths) {
             throw new DataPackageException("Invalid Resource. " +
@@ -36,6 +48,10 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                 throw new DataPackageException("Path entries for file-based Resources cannot be absolute");
             }
         }
+    }
+
+    public static FilebasedResource fromSource(String name, Collection<File> paths, File basePath) {
+        return new FilebasedResource(name, paths, basePath);
     }
 
     public File getBasePath() {
@@ -56,7 +72,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
 
     @Override
     List<Table> readData () throws Exception{
-        List<Table> tables = new ArrayList<>();
+        List<Table> tables;
         if (this.isInArchive) {
             tables = readfromZipFile();
         } else {

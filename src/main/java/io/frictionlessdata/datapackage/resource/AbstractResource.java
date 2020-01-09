@@ -26,7 +26,7 @@ import java.util.*;
 public abstract class AbstractResource<T,C> extends JSONBase implements Resource<T,C> {
 
     // Data properties.
-    private List<Table> tables;
+    protected List<Table> tables;
 
     // Metadata properties.
     // Required properties.
