@@ -260,7 +260,8 @@ public class PackageTest {
     public void testCreatingResourceWithInvalidPathNullValue() throws Exception {
         exception.expectMessage("Invalid Resource. " +
                 "The path property cannot be null for file-based Resources.");
-        FilebasedResource resource = new FilebasedResource("resource-name", (Collection)null, null);
+        FilebasedResource resource = FilebasedResource.fromSource("resource-name", null, null);
+        Assert.assertNotNull(resource);
     }
 
     
