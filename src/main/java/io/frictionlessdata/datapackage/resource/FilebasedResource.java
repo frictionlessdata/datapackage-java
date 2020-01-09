@@ -27,7 +27,8 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         }
         schema = fromResource.getSchema();
         dialect = fromResource.getDialect();
-        Table table = new Table(fromResource.read(false), fromResource.getHeaders(), fromResource.getSchema());
+        List<String[]> data = fromResource.read(false);
+        Table table = new Table(data, fromResource.getHeaders(), fromResource.getSchema());
         tables = new ArrayList<>();
         tables.add(table);
     }
