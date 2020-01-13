@@ -435,10 +435,12 @@ public class PackageTest {
     @Test
     public void testSaveToJsonFile() throws Exception{
         Path tempDirPath = Files.createTempDirectory("datapackage-");
+        System.out.println(tempDirPath.toString());
         
         Package savedPackage = this.getDataPackageFromFilePath(true);
         savedPackage.write(tempDirPath.toFile(), false);
 
+        System.out.println(tempDirPath.resolve(Package.DATAPACKAGE_FILENAME).toString());
         Package readPackage = new Package(tempDirPath.resolve(Package.DATAPACKAGE_FILENAME),false);
         JSONObject readPackageJson = new JSONObject(readPackage.getJson()) ;
         JSONObject savedPackageJson = new JSONObject(savedPackage.getJson()) ;
