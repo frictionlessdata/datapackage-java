@@ -239,14 +239,11 @@ public class Package extends JSONBase{
      * @throws Exception thrown if something goes wrong writing
      */
     public void write (File outputDir, boolean zipCompressed) throws Exception {
-        System.out.println("#"+outputDir.toString());
         FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
-        System.out.println("##"+outFs.toString());
         String parentDirName = "";
         if (!zipCompressed) {
             parentDirName = outputDir.getPath();
         }
-        System.out.println("###"+parentDirName.toString());
         writeDescriptor(outFs, parentDirName);
 
         // only file-based Resources need to be written to the DataPackage, URLs stay as
@@ -258,14 +255,12 @@ public class Package extends JSONBase{
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {
-            System.out.println("####"+outFs.getPath(parentDirName).toString());
             r.writeDataAsCsv(outFs.getPath(parentDirName), dialect);
             String schemaRef = r.getSchemaReference();
             // write out schema file only if not null or URL
             if ((null != schemaRef) && (!isValidUrl(schemaRef))) {
                 // URL fragments will not be written to disk either
                 if (!(r instanceof URLbasedResource)) {
-                    System.out.println("#####"+outFs.getPath(parentDirName+File.separator+schemaRef).toString());
                     Path schemaP = outFs.getPath(parentDirName+File.separator+schemaRef);
                     writeSchema(schemaP, r.getSchema());
                 }
@@ -275,7 +270,6 @@ public class Package extends JSONBase{
             if ((null != dialectRef) && (!isValidUrl(dialectRef))) {
                 // URL fragments will not be written to disk either
                 if (!(r instanceof URLbasedResource)) {
-                    System.out.println("#6"+outFs.getPath(parentDirName+File.separator+dialectRef).toString());
                     Path dialectP = outFs.getPath(parentDirName+File.separator+dialectRef);
                     writeDialect(dialectP, r.getDialect());
                 }
@@ -284,10 +278,8 @@ public class Package extends JSONBase{
         // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
         // like to get closed...
         try {
-            System.out.println("#7");
             outFs.close();
         } catch (UnsupportedOperationException es) {};
-        System.out.println("#8");
     }
 
     public void writeJson (File outputFile) throws IOException{
