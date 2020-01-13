@@ -265,6 +265,7 @@ public class Package extends JSONBase{
             if ((null != schemaRef) && (!isValidUrl(schemaRef))) {
                 // URL fragments will not be written to disk either
                 if (!(r instanceof URLbasedResource)) {
+                    System.out.println("#####"+outFs.getPath(parentDirName+File.separator+schemaRef).toString());
                     Path schemaP = outFs.getPath(parentDirName+File.separator+schemaRef);
                     writeSchema(schemaP, r.getSchema());
                 }
@@ -274,6 +275,7 @@ public class Package extends JSONBase{
             if ((null != dialectRef) && (!isValidUrl(dialectRef))) {
                 // URL fragments will not be written to disk either
                 if (!(r instanceof URLbasedResource)) {
+                    System.out.println("#6"+outFs.getPath(parentDirName+File.separator+dialectRef).toString());
                     Path dialectP = outFs.getPath(parentDirName+File.separator+dialectRef);
                     writeDialect(dialectP, r.getDialect());
                 }
@@ -282,8 +284,10 @@ public class Package extends JSONBase{
         // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
         // like to get closed...
         try {
+            System.out.println("#7");
             outFs.close();
         } catch (UnsupportedOperationException es) {};
+        System.out.println("#8");
     }
 
     public void writeJson (File outputFile) throws IOException{
