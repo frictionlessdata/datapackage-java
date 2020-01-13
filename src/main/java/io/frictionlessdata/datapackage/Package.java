@@ -251,7 +251,7 @@ public class Package extends JSONBase{
         // Descriptor file
         final List<Resource> resourceList = resources
                 .stream()
-                .filter((r) -> (r instanceof FilebasedResource))
+                .filter(Resource::shouldSerializeToFile)
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {

@@ -52,6 +52,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     // Schema
     Schema schema = null;
+    boolean serializeToFile = true;
 
     AbstractResource(String name){
         this.name = name;
@@ -376,6 +377,17 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     @Override
     public void setLicenses(JSONArray licenses) {
         this.licenses = licenses;
+    }
+
+
+    @Override
+    public boolean shouldSerializeToFile() {
+        return serializeToFile;
+    }
+
+    @Override
+    public void setShouldSerializeToFile(boolean serializeToFile) {
+        this.serializeToFile = serializeToFile;
     }
 
     abstract List<Table> readData() throws Exception;

@@ -21,6 +21,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
         super(name);
         this.data = data;
         super.format = Resource.FORMAT_JSON;
+        serializeToFile = false;
         if (data == null)
             throw new DataPackageException("Invalid Resource. The data property cannot be null for a Data-based Resource.");
     }

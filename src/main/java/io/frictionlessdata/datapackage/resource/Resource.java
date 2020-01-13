@@ -216,6 +216,9 @@ public interface Resource<T,C> {
      */
     void setLicenses(JSONArray licenses);
 
+    boolean shouldSerializeToFile();
+
+    void setShouldSerializeToFile(boolean serializeToFile);
 
 
     static AbstractResource build(JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
