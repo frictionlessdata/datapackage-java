@@ -4,7 +4,6 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

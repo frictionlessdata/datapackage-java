@@ -3,9 +3,6 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
-import io.frictionlessdata.tableschema.schema.Schema;
-import org.apache.commons.csv.CSVFormat;
 
 import java.io.File;
 import java.nio.file.Files;
