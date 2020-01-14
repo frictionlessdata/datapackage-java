@@ -57,4 +57,42 @@ class DialectTest {
         Assertions.assertEquals('#', dia.getCommentChar());
         Assertions.assertFalse(dia.isHasHeaderRow());
     }
+
+    @Test
+    @DisplayName("clone Dialect")
+    void testCloneDialect() {
+        String json = "{ "+
+                " \"delimiter\":\"\t\", "+
+                " \"header\":\"false\", "+
+                " \"quoteChar\":\"\\\"\", " +
+                " \"commentChar\":\"#\" "+
+                "}";
+        Dialect dia = Dialect.fromJson(json);
+        Dialect clone = dia.clone();
+        Assertions.assertEquals(dia, clone);
+    }
+
+    @Test
+    @DisplayName("Hashcode for Dialect")
+    void testDialectHashCode() {
+        String json = "{ "+
+                " \"delimiter\":\"\t\", "+
+                " \"header\":\"false\", "+
+                " \"quoteChar\":\"\\\"\", " +
+                " \"commentChar\":\"#\" "+
+                "}";
+        Dialect dia = Dialect.fromJson(json);
+
+        Assertions.assertEquals(-1754320470, dia.hashCode());
+        Assertions.assertEquals(-745077795, Dialect.DEFAULT.hashCode());
+    }
+
+    @Test
+    @DisplayName("Hashcode for Dialect")
+    void testDefaultDialectJson() {
+        String defaultJson = "{\"caseSensitiveHeader\":false,\"quoteChar\":\"\\\"\",\"doubleQuote\":true," +
+                "\"delimiter\":\",\",\"lineTerminator\":\"\\r\\n\"," +
+                "\"header\":true,\"csvddfVersion\":1.2,\"skipInitialSpace\":true}";
+        Assertions.assertEquals(defaultJson, Dialect.DEFAULT.getJson());
+    }
 }
