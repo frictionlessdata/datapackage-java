@@ -437,30 +437,42 @@ public class Package extends JSONBase{
         this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
     }
 
-    
-    void addProperty(String key, String value) throws DataPackageException{
+    /**
+     * Add a new property and value to the Package. If a value already is defined for the key,
+     * an exception is thrown. The value can be either a plain string or a string holding a JSON-Array or
+     * JSON-object.
+     * @param key the property name
+     * @param value the value to set.
+     * @throws DataPackageException if the property denoted by `key` already exists
+     */
+    public void addProperty(String key, String value) throws DataPackageException{
         if(this.getJsonObject().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJsonObject().put(key, value);
+            setProperty(key, value);
         }
     }
-    
-    public void addProperty(String key, JSONObject value) throws DataPackageException{
-        if(this.getJsonObject().has(key)){
-            throw new DataPackageException("A property with the same key already exists.");
-        }else{
-            this.getJsonObject().put(key, value);
+
+    /**
+     * Set a property to a certain value on the Package. The value can be either a plain string or a string
+     * holding a JSON-Array or JSON-object.
+     * @param key the property name
+     * @param value the value to set.
+     */
+    public void setProperty(String key, String value) {
+        try {
+            JSONArray arr = new JSONArray(value);
+            jsonObject.put(key, arr);
+        } catch (Exception ex) {
+            try {
+                JSONObject arr = new JSONObject(value);
+                jsonObject.put(key, arr);
+            } catch (Exception ex2) {
+                jsonObject.put(key, value);
+            }
         }
     }
-    
-    public void addProperty(String key, JSONArray value) throws DataPackageException{
-        if(this.getJsonObject().has(key)){
-            throw new DataPackageException("A property with the same key already exists.");
-        }else{
-            this.getJsonObject().put(key, value);
-        }
-    }
+
     
     public void removeProperty(String key){
         this.getJsonObject().remove(key);
