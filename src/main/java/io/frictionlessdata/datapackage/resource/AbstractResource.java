@@ -12,6 +12,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -157,9 +158,15 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         json.put(JSON_KEY_LICENSES, this.getLicenses());
 
         Object schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
+        if ((null == schemaObj) && (null != schema)) {
+            schemaObj = JSON_KEY_SCHEMA+ File.separator+ schema.getReference().getFileName();
+        }
         json.put(JSON_KEY_SCHEMA, schemaObj);
 
         Object dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
+        if ((null == dialectObj) && (null != dialect)) {
+            dialectObj = JSON_KEY_DIALECT+ File.separator+ dialect.getReference().getFileName();
+        }
         json.put(JSON_KEY_DIALECT, dialectObj);
         return json;
     }

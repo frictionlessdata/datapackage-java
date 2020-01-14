@@ -1,10 +1,14 @@
 package io.frictionlessdata.datapackage;
 
+import io.frictionlessdata.tableschema.io.FileReference;
+import io.frictionlessdata.tableschema.schema.Schema;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.QuoteMode;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 /**
  * CSV Dialect defines a simple format to describe the various dialects of CSV files in a language agnostic
@@ -19,6 +23,9 @@ import java.io.*;
  */
 
 public class Dialect {
+
+    private FileReference reference;
+
     // we construct one instance that will always keep the default values
     public static Dialect DEFAULT = new Dialect(){
         private JSONObject jsonObject;
@@ -101,6 +108,10 @@ public class Dialect {
      */
     private Double csvddfVersion = 1.2;
 
+    public FileReference getReference() {
+        return reference;
+    }
+
     public Dialect clone() {
         Dialect retVal = new Dialect();
         retVal.delimiter = this.delimiter;
@@ -145,6 +156,24 @@ public class Dialect {
         if (null != format.getQuoteMode()) {
             dialect.setDoubleQuote(format.getQuoteMode().equals(QuoteMode.MINIMAL));
         }
+        return dialect;
+    }
+
+    /**
+     * Read, create, and validate a Dialect from a FileReference.
+     *
+     * @param reference the File or URL to read dialect JSON data from
+     * @throws Exception thrown if reading from the stream or parsing throws an exception
+     */
+    public static Dialect fromJson (FileReference reference) throws Exception {
+        String dialectString = null;
+        try (InputStreamReader ir = new InputStreamReader(reference.getInputStream(), StandardCharsets.UTF_8);
+        BufferedReader br = new BufferedReader(ir)){
+            dialectString = br.lines().collect(Collectors.joining("\n"));
+        }
+        Dialect dialect = fromJson (dialectString);
+        dialect.reference = reference;
+        reference.close();
         return dialect;
     }
 

@@ -16,10 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
@@ -218,6 +215,7 @@ public interface Resource<T,C> {
 
     void setShouldSerializeToFile(boolean serializeToFile);
 
+    Map<String, Object> getOriginalReferences();
 
     static AbstractResource build(JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
         String name = resourceJson.has(JSONBase.JSON_KEY_NAME) ? resourceJson.getString(JSONBase.JSON_KEY_NAME) : null;

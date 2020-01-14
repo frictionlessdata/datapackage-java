@@ -3,6 +3,9 @@ package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.tableschema.io.FileReference;
+import io.frictionlessdata.tableschema.io.LocalFileReference;
+import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -176,24 +179,53 @@ public abstract class JSONBase {
     public void setLicenses(JSONArray licenses){this.licenses = licenses;}
 
 
-    public static Schema buildSchema(JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
-        // Get the schema and dereference it. Enables validation against it.
-        Object schemaObj = resourceJson.has(JSONBase.JSON_KEY_SCHEMA) ? resourceJson.get(JSONBase.JSON_KEY_SCHEMA) : null;
-        JSONObject dereferencedSchema = dereference(schemaObj, basePath, isArchivePackage);
-        if (null != dereferencedSchema) {
-            return Schema.fromJson(dereferencedSchema.toString(), false);
-        }
-        return null;
+    public Map<String, Object> getOriginalReferences() {
+        return originalReferences;
     }
 
-    public static Dialect buildDialect (JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
-        // Get the dialect and dereference it. Enables validation against it.
-        Object dialectObj = resourceJson.has(JSONBase.JSON_KEY_DIALECT) ? resourceJson.get(JSONBase.JSON_KEY_DIALECT) : null;
-        JSONObject dereferencedDialect = dereference(dialectObj, basePath, isArchivePackage);
-        if (null != dereferencedDialect) {
-            return Dialect.fromJson(dereferencedDialect.toString());
+    public static Schema buildSchema(JSONObject resourceJson, Object basePath, boolean isArchivePackage)
+            throws Exception {
+        FileReference ref = referenceFromJson(resourceJson, JSON_KEY_SCHEMA, basePath);
+        if (null != ref) {
+            return Schema.fromJson(ref, true);
         }
-        return null;
+        Object schemaObj = resourceJson.has(JSON_KEY_SCHEMA)
+                ? resourceJson.get(JSON_KEY_SCHEMA)
+                : null;
+        if (null == schemaObj)
+            return null;
+        return Schema.fromJson(dereference(schemaObj, basePath, isArchivePackage).toString(), true);
+    }
+
+    public static Dialect buildDialect (JSONObject resourceJson, Object basePath, boolean isArchivePackage)
+            throws Exception {
+        FileReference ref = referenceFromJson(resourceJson, JSON_KEY_DIALECT, basePath);
+        if (null != ref) {
+            return Dialect.fromJson(ref);
+        }
+        Object dialectObj = resourceJson.has(JSON_KEY_DIALECT)
+                ? resourceJson.get(JSON_KEY_DIALECT)
+                : null;
+        if (null == dialectObj)
+            return null;
+        return Dialect.fromJson(dereference(dialectObj, basePath, isArchivePackage).toString());
+    }
+
+    private static FileReference referenceFromJson(JSONObject resourceJson, String key, Object basePath)
+            throws IOException {
+        Object dialectObj = resourceJson.has(key)
+                ? resourceJson.get(key)
+                : null;
+        if (null == dialectObj)
+            return null;
+        Object refObj = determineType(dialectObj, basePath);
+        FileReference ref = null;
+        if (refObj instanceof URL) {
+            ref = new URLFileReference((URL)refObj);
+        } else if (refObj instanceof File) {
+            ref = new LocalFileReference(((Path)basePath).toFile(), dialectObj.toString());
+        }
+        return ref;
     }
 
     public static void setFromJson(JSONObject resourceJson, JSONBase retVal, Schema schema) {
@@ -395,6 +427,28 @@ public abstract class JSONBase {
                 return dereference(reference, (URL) basePath);
             } else
                 return dereference(new File(reference), (Path)basePath, isArchivePackage);
+        }
+
+        return null;
+    }
+
+    public static Object determineType(Object obj, Object basePath) throws IOException {
+        if (null == obj)
+            return null;
+        // Object is already a dereferenced object.
+        if(obj instanceof JSONObject){
+            // Don't need to do anything, just cast and return.
+            return obj;
+        } else if(obj instanceof String){
+            String reference = (String)obj;
+            if (isValidUrl(reference)){
+                return new URL(reference);
+            }
+            else if (basePath instanceof URL) {
+                return new URL(((URL)basePath), reference);
+            } else {
+                return new File(((Path)basePath).toFile(), reference);
+            }
         }
 
         return null;

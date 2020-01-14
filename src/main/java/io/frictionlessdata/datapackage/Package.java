@@ -25,7 +25,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 
@@ -34,7 +33,7 @@ import java.util.zip.ZipOutputStream;
  * https://github.com/frictionlessdata/specs/blob/master/specs/data-package.md
  */
 public class Package extends JSONBase{
-    public static final String DATAPACKAGE_FILENAME = "datapackage.json";
+    public  static final String DATAPACKAGE_FILENAME = "datapackage.json";
     private static final String JSON_KEY_RESOURCES = "resources";
     private static final String JSON_KEY_ID = "id";
     private static final String JSON_KEY_VERSION = "version";
@@ -71,7 +70,7 @@ public class Package extends JSONBase{
      */
     public Package(Collection<Resource> resources) throws IOException {
         for (Resource r : resources) {
-            addResource(r);
+            addResource(r, false);
                    }
         UUID uuid = UUID.randomUUID();
         id = uuid.toString();
@@ -260,20 +259,33 @@ public class Package extends JSONBase{
             Schema resSchema = r.getSchema();
             // write out schema file only if not null or URL
             if ((null != resSchema) && (!(resSchema.getReference() instanceof URLFileReference))) {
-                // URL fragments will not be written to disk either
-                if (!(r instanceof URLbasedResource)) {
-                    Path schemaP = outFs.getPath(parentDirName+File.separator+resSchema.getReference().getLocator());
-                    writeSchema(schemaP, r.getSchema());
+                Path schemaP = null;
+                if (r.getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
+                    schemaP = outFs.getPath(parentDirName + File.separator +
+                            r.getOriginalReferences().get(JSON_KEY_SCHEMA));
+                } else {
+                    schemaP = outFs.getPath(
+                            parentDirName+File.separator+
+                                    JSON_KEY_SCHEMA+File.separator+
+                                    resSchema.getReference().getFileName());
                 }
+                writeSchema(schemaP, r.getSchema());
             }
-            String dialectRef = r.getDialectReference();
+            //String dialectRef = r.getDialectReference();
+            Dialect resDialect = r.getDialect();
             // write out schema file only if not null or URL
-            if ((null != dialectRef) && (!isValidUrl(dialectRef))) {
-                // URL fragments will not be written to disk either
-                if (!(r instanceof URLbasedResource)) {
-                    Path dialectP = outFs.getPath(parentDirName+File.separator+dialectRef);
-                    writeDialect(dialectP, r.getDialect());
+            if ((null != resDialect) && (!(resDialect.getReference() instanceof URLFileReference))) {
+                Path dialectP = null;
+                if (r.getOriginalReferences().containsKey(JSON_KEY_DIALECT)) {
+                    dialectP = outFs.getPath(parentDirName + File.separator +
+                            r.getOriginalReferences().get(JSON_KEY_DIALECT));
+                } else {
+                    dialectP = outFs.getPath(
+                            parentDirName + File.separator +
+                                    JSON_KEY_DIALECT + File.separator +
+                                    resDialect.getReference().getFileName());
                 }
+                writeDialect(dialectP, r.getDialect());
             }
         }
         // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
@@ -375,40 +387,48 @@ public class Package extends JSONBase{
 
     public void addResource(Resource resource)
             throws IOException, ValidationException, DataPackageException{
+        addResource(resource, true);
+    }
+
+    private void addResource(Resource resource, boolean validate)
+            throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getName() == null){
             dpe = new DataPackageException("Invalid Resource, it does not have a name property.");
         }
         if (resource instanceof AbstractDataResource)
-            addResource((AbstractDataResource) resource);
+            addResource((AbstractDataResource) resource, validate);
         else if (resource instanceof AbstractReferencebasedResource)
-            addResource((AbstractReferencebasedResource) resource);
-        validate(dpe);
+            addResource((AbstractReferencebasedResource) resource, validate);
+        if (validate)
+            validate(dpe);
     }
 
-    void addResource(AbstractDataResource resource)
+    private void addResource(AbstractDataResource resource, boolean validate)
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         // If a name property isn't given...
         if ((resource).getData() == null || (resource).getFormat() == null) {
-                dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
+            dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
         }
-        validate(dpe);
+        if (validate)
+            validate(dpe);
 
         this.resources.add(resource);
     }
 
-    void addResource(AbstractReferencebasedResource resource)
+    private void addResource(AbstractReferencebasedResource resource, boolean validate)
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getPaths() == null) {
-                dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
+            dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
         }
-        validate(dpe);
+        if (validate)
+            validate(dpe);
 
         this.resources.add(resource);
     }
@@ -482,22 +502,10 @@ public class Package extends JSONBase{
 
     /**
      * Convert both the descriptor and all linked Resources to JSON and return them.
-     * @return
+     * @return JSON-String representation of the Package
      */
     public String getJson(){
-        Iterator<Resource> resourceIter = resources.iterator();
-        
-        JSONArray resourcesJsonArray = new JSONArray();
-        while(resourceIter.hasNext()){
-            Resource resource = resourceIter.next();
-            resourcesJsonArray.put(resource.getJson());
-        }
-        
-        if(resourcesJsonArray.length() > 0){
-            this.jsonObject.put(JSON_KEY_RESOURCES, resourcesJsonArray);
-        }
-
-        return jsonObject.toString();
+        return getJsonObject().toString();
     }
 
     private JSONObject getJsonObject(){
@@ -544,7 +552,7 @@ public class Package extends JSONBase{
                 }
 
                 if(resource != null){
-                    addResource(resource);
+                    addResource(resource, false);
                 }
             }
         } else {
@@ -596,6 +604,7 @@ public class Package extends JSONBase{
                 this.otherProperties.put(k, obj);
             }
         });
+        validate();
     }
     /**
      * @return the profile
