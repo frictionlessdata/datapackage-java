@@ -52,7 +52,6 @@ public class Package extends JSONBase{
     private String image;
     private ZonedDateTime created;
     private List<Contributor> contributors = new ArrayList<>();
-    private Map<String, Object> otherProperties = new LinkedHashMap<>();
     
     private JSONObject jsonObject = new JSONObject();
     private boolean strictValidation = false;
@@ -473,8 +472,17 @@ public class Package extends JSONBase{
         }
     }
 
+    public Object getProperty(String key) {
+        if (!jsonObject.has(key)) {
+            return null;
+        }
+        return jsonObject.get(key);
+    }
     
     public void removeProperty(String key){
+        if (!jsonObject.has(key)) {
+            return;
+        }
         this.getJsonObject().remove(key);
     }
     
@@ -613,7 +621,7 @@ public class Package extends JSONBase{
         jsonObjectSource.keySet().forEach((k) -> {
             if (!wellKnownKeys.contains(k)) {
                 Object obj = jsonObjectSource.get(k);
-                this.otherProperties.put(k, obj);
+                this.setProperty(k, obj.toString());
             }
         });
         validate();
@@ -767,26 +775,6 @@ public class Package extends JSONBase{
         if (keywords.contains(keyword)) {
             this.keywords.remove(keyword);
         }
-    }
-
-    public Object getOtherProperty(String key) {
-        return otherProperties.get(key);
-    }
-
-    public void removeOtherProperty(String key) {
-        if (null == key)
-            return;
-        if (null == otherProperties)
-            return;
-        if (otherProperties.keySet().contains(key)) {
-            otherProperties.remove(key);
-        }
-    }
-
-    public void setOtherProperties(String key, Object value) {
-        if (null == key)
-            return;
-        this.otherProperties.put(key, value);
     }
 
     private static URL getParentUrl(URL urlSource) throws URISyntaxException, MalformedURLException {

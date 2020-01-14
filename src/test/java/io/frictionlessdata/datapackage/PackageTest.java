@@ -625,20 +625,20 @@ public class PackageTest {
         String sourceFileAbsPath = PackageTest.class.getResource(fName).getPath();
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
 
-        Object creator = dp.getOtherProperty("creator");
+        Object creator = dp.getProperty("creator");
         Assert.assertNotNull(creator);
         Assert.assertEquals(String.class, creator.getClass());
         Assert.assertEquals("Horst", creator);
 
-        Object testprop = dp.getOtherProperty("testprop");
+        Object testprop = dp.getProperty("testprop");
         Assert.assertNotNull(testprop);
         Assert.assertTrue(testprop instanceof JSONObject);
 
-        Object testarray = dp.getOtherProperty("testarray");
+        Object testarray = dp.getProperty("testarray");
         Assert.assertNotNull(testarray);
         Assert.assertTrue(testarray instanceof JSONArray);
 
-        Object resObj = dp.getOtherProperty("resources");
+        Object resObj = dp.getProperty("something");
         Assert.assertNull(resObj);
     }
 
