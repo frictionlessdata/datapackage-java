@@ -2,6 +2,7 @@ package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.resource.*;
+import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import org.apache.commons.collections.list.UnmodifiableList;
@@ -256,12 +257,12 @@ public class Package extends JSONBase{
 
         for (Resource r : resourceList) {
             r.writeDataAsCsv(outFs.getPath(parentDirName), dialect);
-            String schemaRef = r.getSchemaReference();
+            Schema resSchema = r.getSchema();
             // write out schema file only if not null or URL
-            if ((null != schemaRef) && (!isValidUrl(schemaRef))) {
+            if ((null != resSchema) && (!(resSchema.getReference() instanceof URLFileReference))) {
                 // URL fragments will not be written to disk either
                 if (!(r instanceof URLbasedResource)) {
-                    Path schemaP = outFs.getPath(parentDirName+File.separator+schemaRef);
+                    Path schemaP = outFs.getPath(parentDirName+File.separator+resSchema.getReference().getLocator());
                     writeSchema(schemaP, r.getSchema());
                 }
             }

@@ -331,11 +331,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         this.schema = schema;
     }
 
-    @Override
-    public String getSchemaReference(){
-        return super.getSchemaReference();
-    }
-
     public String getDialectReference() {
         if (null == originalReferences.get(JSONBase.JSON_KEY_DIALECT))
             return null;

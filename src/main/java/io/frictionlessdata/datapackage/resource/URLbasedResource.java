@@ -16,6 +16,7 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
 
     public URLbasedResource(String name, Collection<URL> paths) {
         super(name, paths);
+        serializeToFile = false;
     }
 
     @Override

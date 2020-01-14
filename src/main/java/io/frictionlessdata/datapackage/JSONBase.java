@@ -158,12 +158,6 @@ public abstract class JSONBase {
 
     public void setSchema(Schema schema){this.schema = schema;}
 
-    public String getSchemaReference() {
-        if (null == originalReferences.get(JSONBase.JSON_KEY_SCHEMA))
-            return null;
-        return originalReferences.get(JSONBase.JSON_KEY_SCHEMA).toString();
-    }
-
     public JSONArray getSources(){
         return sources;
     }

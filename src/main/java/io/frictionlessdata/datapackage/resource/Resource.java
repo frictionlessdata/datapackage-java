@@ -188,8 +188,6 @@ public interface Resource<T,C> {
      */
     void setFormat(String format);
 
-    String getSchemaReference();
-
     String getDialectReference();
 
     Schema getSchema();
