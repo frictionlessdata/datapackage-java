@@ -52,7 +52,6 @@ public class Package extends JSONBase{
     private String image;
     private ZonedDateTime created;
     private List<Contributor> contributors = new ArrayList<>();
-    private Map<String, Object> otherProperties = new LinkedHashMap<>();
     
     private JSONObject jsonObject = new JSONObject();
     private boolean strictValidation = false;
@@ -437,32 +436,53 @@ public class Package extends JSONBase{
         this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
     }
 
-    
-    void addProperty(String key, String value) throws DataPackageException{
+    /**
+     * Add a new property and value to the Package. If a value already is defined for the key,
+     * an exception is thrown. The value can be either a plain string or a string holding a JSON-Array or
+     * JSON-object.
+     * @param key the property name
+     * @param value the value to set.
+     * @throws DataPackageException if the property denoted by `key` already exists
+     */
+    public void addProperty(String key, String value) throws DataPackageException{
         if(this.getJsonObject().has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJsonObject().put(key, value);
+            setProperty(key, value);
         }
     }
-    
-    public void addProperty(String key, JSONObject value) throws DataPackageException{
-        if(this.getJsonObject().has(key)){
-            throw new DataPackageException("A property with the same key already exists.");
-        }else{
-            this.getJsonObject().put(key, value);
+
+    /**
+     * Set a property to a certain value on the Package. The value can be either a plain string or a string
+     * holding a JSON-Array or JSON-object.
+     * @param key the property name
+     * @param value the value to set.
+     */
+    public void setProperty(String key, String value) {
+        try {
+            JSONArray arr = new JSONArray(value);
+            jsonObject.put(key, arr);
+        } catch (Exception ex) {
+            try {
+                JSONObject arr = new JSONObject(value);
+                jsonObject.put(key, arr);
+            } catch (Exception ex2) {
+                jsonObject.put(key, value);
+            }
         }
     }
-    
-    public void addProperty(String key, JSONArray value) throws DataPackageException{
-        if(this.getJsonObject().has(key)){
-            throw new DataPackageException("A property with the same key already exists.");
-        }else{
-            this.getJsonObject().put(key, value);
+
+    public Object getProperty(String key) {
+        if (!jsonObject.has(key)) {
+            return null;
         }
+        return jsonObject.get(key);
     }
     
     public void removeProperty(String key){
+        if (!jsonObject.has(key)) {
+            return;
+        }
         this.getJsonObject().remove(key);
     }
     
@@ -601,7 +621,7 @@ public class Package extends JSONBase{
         jsonObjectSource.keySet().forEach((k) -> {
             if (!wellKnownKeys.contains(k)) {
                 Object obj = jsonObjectSource.get(k);
-                this.otherProperties.put(k, obj);
+                this.setProperty(k, obj.toString());
             }
         });
         validate();
@@ -755,26 +775,6 @@ public class Package extends JSONBase{
         if (keywords.contains(keyword)) {
             this.keywords.remove(keyword);
         }
-    }
-
-    public Object getOtherProperty(String key) {
-        return otherProperties.get(key);
-    }
-
-    public void removeOtherProperty(String key) {
-        if (null == key)
-            return;
-        if (null == otherProperties)
-            return;
-        if (otherProperties.keySet().contains(key)) {
-            otherProperties.remove(key);
-        }
-    }
-
-    public void setOtherProperties(String key, Object value) {
-        if (null == key)
-            return;
-        this.otherProperties.put(key, value);
     }
 
     private static URL getParentUrl(URL urlSource) throws URISyntaxException, MalformedURLException {
