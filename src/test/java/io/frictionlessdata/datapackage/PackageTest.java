@@ -688,7 +688,7 @@ public class PackageTest {
     }
     
     private List<String[]> getAllCityData(){
-        List<String[]> expectedData  = new ArrayList();
+        List<String[]> expectedData  = new ArrayList<>();
         expectedData.add(new String[]{"libreville", "0.41,9.29"});
         expectedData.add(new String[]{"dakar", "14.71,-17.53"});
         expectedData.add(new String[]{"ouagadougou", "12.35,-1.67"});
