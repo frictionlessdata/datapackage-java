@@ -57,12 +57,21 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
         return tables;
     }
 
+    /**
+     * write out any resource to a CSV file. It creates a file with a file name taken from
+     * the Resource name. Subclasses might override this to write data differently (eg. to the
+     * same files it was read from.
+     * @param outputDir the directory to write to.
+     * @param dialect the CSV dialect to use for writing
+     * @throws Exception thrown if writing fails.
+     */
     @Override
     public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
         String fileName = super.getName()
                 .toLowerCase()
-                .replaceAll("\\W", "_");
+                .replaceAll("\\W", "_")
+                +".csv";
         List<Table> tables = getTables();
         Path p = outputDir.resolve(fileName);
         writeTableAsCsv(tables.get(0), lDialect, p);

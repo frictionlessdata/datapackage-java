@@ -254,7 +254,7 @@ public class Package extends JSONBase{
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {
-            r.writeDataAsCsv(outFs.getPath(parentDirName), dialect);
+            r.writeDataAsCsv(outFs.getPath(parentDirName+ File.separator + JSON_KEY_DATA), dialect);
             Schema resSchema = r.getSchema();
             // write out schema file only if not null or URL
             if ((null != resSchema) && (!(resSchema.getReference() instanceof URLFileReference))) {
