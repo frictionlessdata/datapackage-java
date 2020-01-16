@@ -11,7 +11,7 @@ class DialectTest {
     private Character quoteChar ='"';
     private Boolean doubleQuote = true;
     private Character escapeChar = null;
-    private String nullSequence = null;
+    private String nullSequence = "";
     private Boolean skipInitialSpace = true;
     private Boolean hasHeaderRow = true;
     private Character commentChar = null;
@@ -83,15 +83,15 @@ class DialectTest {
                 "}";
         Dialect dia = Dialect.fromJson(json);
 
-        Assertions.assertEquals(-1754320470, dia.hashCode());
-        Assertions.assertEquals(-745077795, Dialect.DEFAULT.hashCode());
+        Assertions.assertEquals(2019600303, dia.hashCode());
+        Assertions.assertEquals(-1266124318, Dialect.DEFAULT.hashCode());
     }
 
     @Test
     @DisplayName("Hashcode for Dialect")
     void testDefaultDialectJson() {
         String defaultJson = "{\"caseSensitiveHeader\":false,\"quoteChar\":\"\\\"\",\"doubleQuote\":true," +
-                "\"delimiter\":\",\",\"lineTerminator\":\"\\r\\n\"," +
+                "\"delimiter\":\",\",\"lineTerminator\":\"\\r\\n\",\"nullSequence\":\"\"," +
                 "\"header\":true,\"csvddfVersion\":1.2,\"skipInitialSpace\":true}";
         Assertions.assertEquals(defaultJson, Dialect.DEFAULT.getJson());
     }
