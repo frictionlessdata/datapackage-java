@@ -77,7 +77,7 @@ public class Dialect {
     /**
      * specifies the null sequence (for example \N). Not set by default
      */
-    private String nullSequence = null;
+    private String nullSequence = "";
 
     /**
      * specifies how to interpret whitespace which immediately follows a delimiter;
