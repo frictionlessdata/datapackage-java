@@ -82,6 +82,8 @@ public interface Resource<T,C> {
 
     String[] getHeaders() throws Exception;
 
+    String getPathForWritingSchema();
+
     /**
      * @return the name
      */

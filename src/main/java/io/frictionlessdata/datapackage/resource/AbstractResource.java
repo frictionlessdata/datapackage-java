@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
+import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
@@ -171,6 +172,27 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         }
         json.put(JSON_KEY_DIALECT, dialectObj);
         return json;
+    }
+
+    /**
+     * If there is a Schema in the first place and it is not URL based or freshly created,
+     * construct a relative file path for writing
+     * @return a String containing a relative path for writing or null
+     */
+    @Override
+    public String getPathForWritingSchema() {
+        Schema resSchema = getSchema();
+        if ((null == resSchema)
+            || (null == resSchema.getReference())
+            || (resSchema.getReference() instanceof URLFileReference)){
+            return null;
+        }
+        // write out schema file only if not null or URL
+        if (getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
+            return getOriginalReferences().get(JSON_KEY_SCHEMA).toString();
+        } else {
+            return JSON_KEY_SCHEMA + File.separator + resSchema.getReference().getFileName();
+        }
     }
 
     /**

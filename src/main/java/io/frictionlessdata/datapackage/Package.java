@@ -255,20 +255,10 @@ public class Package extends JSONBase{
 
         for (Resource r : resourceList) {
             r.writeDataAsCsv(outFs.getPath(parentDirName+ File.separator + JSON_KEY_DATA), dialect);
-            Schema resSchema = r.getSchema();
-            // write out schema file only if not null or URL
-            if ((null != resSchema) && (!(resSchema.getReference() instanceof URLFileReference))) {
-                Path schemaP = null;
-                if (r.getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
-                    schemaP = outFs.getPath(parentDirName + File.separator +
-                            r.getOriginalReferences().get(JSON_KEY_SCHEMA));
-                } else {
-                    schemaP = outFs.getPath(
-                            parentDirName+File.separator+
-                                    JSON_KEY_SCHEMA+File.separator+
-                                    resSchema.getReference().getFileName());
-                }
-                writeSchema(schemaP, r.getSchema());
+            String schemaP = r.getPathForWritingSchema();
+            if (null != schemaP) {
+                Path schemaPath = outFs.getPath(parentDirName + File.separator + schemaP);
+                writeSchema(schemaPath, r.getSchema());
             }
             //String dialectRef = r.getDialectReference();
             Dialect resDialect = r.getDialect();
