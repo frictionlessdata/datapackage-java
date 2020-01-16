@@ -260,18 +260,18 @@ public class Package extends JSONBase{
                 Path schemaPath = outFs.getPath(parentDirName + File.separator + schemaP);
                 writeSchema(schemaPath, r.getSchema());
             }
-            //String dialectRef = r.getDialectReference();
+
             Dialect resDialect = r.getDialect();
             // write out schema file only if not null or URL
             if ((null != resDialect) && (!(resDialect.getReference() instanceof URLFileReference))) {
                 Path dialectP = null;
                 if (r.getOriginalReferences().containsKey(JSON_KEY_DIALECT)) {
-                    dialectP = outFs.getPath(parentDirName + File.separator +
+                    dialectP = outFs.getPath(parentDirName + "/" +
                             r.getOriginalReferences().get(JSON_KEY_DIALECT));
                 } else {
                     dialectP = outFs.getPath(
-                            parentDirName + File.separator +
-                                    JSON_KEY_DIALECT + File.separator +
+                            parentDirName + "/" +
+                                    JSON_KEY_DIALECT + "/" +
                                     resDialect.getReference().getFileName());
                 }
                 writeDialect(dialectP, r.getDialect());

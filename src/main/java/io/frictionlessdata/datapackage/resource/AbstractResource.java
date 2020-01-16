@@ -175,24 +175,33 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     /**
+     * If we don't have a Schema, return null (nothing to serialize)
+     * If we have a Schema, but it was read from an URL, return null (DataPackage will just use the URL)
      * If there is a Schema in the first place and it is not URL based or freshly created,
      * construct a relative file path for writing
+     * If we have a Schema, but it is freshly created, and the Resource data should be written to file,
+     * create a file name from the Resource name
+     * If we have a Schema, but it is freshly created, and the Resource data should not be written to file,
+     * return null
      * @return a String containing a relative path for writing or null
      */
     @Override
     public String getPathForWritingSchema() {
         Schema resSchema = getSchema();
-        if ((null == resSchema)
-            || (null == resSchema.getReference())
-            || (resSchema.getReference() instanceof URLFileReference)){
-            return null;
-        }
         // write out schema file only if not null or URL
-        if (getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
+        if (null == resSchema) {
+            return null;
+        } else if ((null != resSchema.getReference())
+            && (resSchema.getReference() instanceof URLFileReference)){
+            return null;
+        } else if (getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
             return getOriginalReferences().get(JSON_KEY_SCHEMA).toString();
-        } else {
+        } else if (null != resSchema.getReference()) {
             return JSON_KEY_SCHEMA + File.separator + resSchema.getReference().getFileName();
-        }
+        } else if (this.shouldSerializeToFile()) {
+            return JSON_KEY_SCHEMA + File.separator + name.toLowerCase().replaceAll("\\W", "")+".json";
+        } else
+            return null;
     }
 
     /**
