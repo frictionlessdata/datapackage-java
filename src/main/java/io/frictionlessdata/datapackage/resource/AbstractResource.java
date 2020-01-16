@@ -197,9 +197,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         } else if (getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
             return getOriginalReferences().get(JSON_KEY_SCHEMA).toString();
         } else if (null != resSchema.getReference()) {
-            return JSON_KEY_SCHEMA + File.separator + resSchema.getReference().getFileName();
+            return JSON_KEY_SCHEMA + "/" + resSchema.getReference().getFileName();
         } else if (this.shouldSerializeToFile()) {
-            return JSON_KEY_SCHEMA + File.separator + name.toLowerCase().replaceAll("\\W", "")+".json";
+            return JSON_KEY_SCHEMA + "/" + name.toLowerCase().replaceAll("\\W", "")+".json";
         } else
             return null;
     }
