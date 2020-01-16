@@ -159,7 +159,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
         Object schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
         if ((null == schemaObj) && (null != schema)) {
-            schemaObj = JSON_KEY_SCHEMA+ File.separator+ schema.getReference().getFileName();
+            if (null != schema.getReference()) {
+                schemaObj = JSON_KEY_SCHEMA + File.separator + schema.getReference().getFileName();
+            }
         }
         json.put(JSON_KEY_SCHEMA, schemaObj);
 
