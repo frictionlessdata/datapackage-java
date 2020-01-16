@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
+import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
@@ -141,11 +142,20 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         // Null values will not actually be "put," as per JSONObject specs.
         json.put(JSON_KEY_NAME, this.getName());
 
-        if (this instanceof AbstractReferencebasedResource) {
-            json.put(JSON_KEY_PATH, ((AbstractReferencebasedResource)this).getPathJson());
-        }
-        if (this instanceof AbstractDataResource) {
-            json.put(JSON_KEY_DATA, ((AbstractDataResource)this).getData());
+        if (this instanceof URLbasedResource) {
+            json.put(JSON_KEY_PATH, ((AbstractReferencebasedResource) this).getPathJson());
+        } else if (this instanceof FilebasedResource) {
+            if (this.shouldSerializeToFile()) {
+                json.put(JSON_KEY_PATH, ((AbstractReferencebasedResource) this).getPathJson());
+            } else {
+                json.put(JSON_KEY_DATA, ((AbstractDataResource)this).getData());
+            }
+        } else if ((this instanceof AbstractDataResource)) {
+            if (this.shouldSerializeToFile()) {
+                //TODO implement storing only the path - and where to get it
+            } else {
+                json.put(JSON_KEY_DATA, ((AbstractDataResource) this).getData());
+            }
         }
         json.put(JSON_KEY_PROFILE, this.profile);
         json.put(JSON_KEY_TITLE, this.title);
@@ -168,38 +178,61 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
         Object dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
         if ((null == dialectObj) && (null != dialect)) {
-            dialectObj = JSON_KEY_DIALECT+ File.separator+ dialect.getReference().getFileName();
+            if (null != dialect.getReference()) {
+                dialectObj = JSON_KEY_DIALECT + File.separator + dialect.getReference().getFileName();
+            }
         }
         json.put(JSON_KEY_DIALECT, dialectObj);
         return json;
     }
 
     /**
-     * If we don't have a Schema, return null (nothing to serialize)
-     * If we have a Schema, but it was read from an URL, return null (DataPackage will just use the URL)
-     * If there is a Schema in the first place and it is not URL based or freshly created,
-     * construct a relative file path for writing
-     * If we have a Schema, but it is freshly created, and the Resource data should be written to file,
-     * create a file name from the Resource name
-     * If we have a Schema, but it is freshly created, and the Resource data should not be written to file,
-     * return null
+     * Construct a path to write out the Schema for this Resource
      * @return a String containing a relative path for writing or null
      */
     @Override
     public String getPathForWritingSchema() {
         Schema resSchema = getSchema();
         // write out schema file only if not null or URL
-        if (null == resSchema) {
+        FileReference ref = (null != resSchema) ? resSchema.getReference() : null;
+        return getPathForWritingSchemaOrDialect(JSON_KEY_SCHEMA, resSchema, ref);
+    }
+
+    /**
+     * Construct a path to write out the Dialect for this Resource
+     * @return a String containing a relative path for writing or null
+     */
+    @Override
+    public String getPathForWritingDialect() {
+        Dialect dialect = getDialect();
+        // write out dialect file only if not null or URL
+        FileReference ref = (null != dialect) ? dialect.getReference() : null;
+        return getPathForWritingSchemaOrDialect(JSON_KEY_DIALECT, dialect, ref);
+    }
+
+    /**
+     * If we don't have a object, return null (nothing to serialize)
+     * If we have a object, but it was read from an URL, return null (DataPackage will just use the URL)
+     * If there is a object in the first place and it is not URL based or freshly created,
+     * construct a relative file path for writing
+     * If we have a object, but it is freshly created, and the Resource data should be written to file,
+     * create a file name from the Resource name
+     * If we have a object, but it is freshly created, and the Resource data should not be written to file,
+     * return null
+     * @return a String containing a relative path for writing or null
+     */
+    private String getPathForWritingSchemaOrDialect(String key, Object objectWithRes, FileReference reference) {
+        // write out schema file only if not null or URL
+        if (null == objectWithRes) {
             return null;
-        } else if ((null != resSchema.getReference())
-            && (resSchema.getReference() instanceof URLFileReference)){
+        } else if ((reference instanceof URLFileReference)){
             return null;
-        } else if (getOriginalReferences().containsKey(JSON_KEY_SCHEMA)) {
-            return getOriginalReferences().get(JSON_KEY_SCHEMA).toString();
-        } else if (null != resSchema.getReference()) {
-            return JSON_KEY_SCHEMA + "/" + resSchema.getReference().getFileName();
+        } else if (getOriginalReferences().containsKey(key)) {
+            return getOriginalReferences().get(key).toString();
+        } else if (null != reference) {
+            return key + "/" + reference.getFileName();
         } else if (this.shouldSerializeToFile()) {
-            return JSON_KEY_SCHEMA + "/" + name.toLowerCase().replaceAll("\\W", "")+".json";
+            return key + "/" + name.toLowerCase().replaceAll("\\W", "")+".json";
         } else
             return null;
     }

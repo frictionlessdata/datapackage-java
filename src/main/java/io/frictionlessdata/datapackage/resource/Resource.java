@@ -82,7 +82,17 @@ public interface Resource<T,C> {
 
     String[] getHeaders() throws Exception;
 
+    /**
+     * Construct a path to write out the Schema for this Resource
+     * @return a String containing a relative path for writing or null
+     */
     String getPathForWritingSchema();
+
+    /**
+     * Construct a path to write out the Dialect for this Resource
+     * @return a String containing a relative path for writing or null
+     */
+    String getPathForWritingDialect();
 
     /**
      * @return the name

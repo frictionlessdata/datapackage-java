@@ -243,7 +243,6 @@ public class Package extends JSONBase{
         if (!zipCompressed) {
             parentDirName = outputDir.getPath();
         }
-        writeDescriptor(outFs, parentDirName);
 
         // only file-based Resources need to be written to the DataPackage, URLs stay as
         // external references and JSONArray-based Resources got serialized as part of the
@@ -255,28 +254,21 @@ public class Package extends JSONBase{
 
         for (Resource r : resourceList) {
             r.writeDataAsCsv(outFs.getPath(parentDirName+ File.separator + JSON_KEY_DATA), dialect);
+
             String schemaP = r.getPathForWritingSchema();
             if (null != schemaP) {
                 Path schemaPath = outFs.getPath(parentDirName + File.separator + schemaP);
                 writeSchema(schemaPath, r.getSchema());
             }
 
-            Dialect resDialect = r.getDialect();
-            // write out schema file only if not null or URL
-            if ((null != resDialect) && (!(resDialect.getReference() instanceof URLFileReference))) {
-                Path dialectP = null;
-                if (r.getOriginalReferences().containsKey(JSON_KEY_DIALECT)) {
-                    dialectP = outFs.getPath(parentDirName + "/" +
-                            r.getOriginalReferences().get(JSON_KEY_DIALECT));
-                } else {
-                    dialectP = outFs.getPath(
-                            parentDirName + "/" +
-                                    JSON_KEY_DIALECT + "/" +
-                                    resDialect.getReference().getFileName());
-                }
-                writeDialect(dialectP, r.getDialect());
+            // write out dialect file only if not null or URL
+            String dialectP = r.getPathForWritingDialect();
+            if (null != dialectP) {
+                Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
+                writeDialect(dialectPath, r.getDialect());
             }
         }
+        writeDescriptor(outFs, parentDirName);
         // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
         // like to get closed...
         try {
