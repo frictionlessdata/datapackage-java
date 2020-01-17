@@ -143,12 +143,22 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         json.put(JSON_KEY_NAME, this.getName());
 
         if (this instanceof URLbasedResource) {
-            json.put(JSON_KEY_PATH, ((AbstractReferencebasedResource) this).getPathJson());
+            json.put(JSON_KEY_PATH, ((URLbasedResource) this).getPathJson());
         } else if (this instanceof FilebasedResource) {
             if (this.shouldSerializeToFile()) {
-                json.put(JSON_KEY_PATH, ((AbstractReferencebasedResource) this).getPathJson());
+                json.put(JSON_KEY_PATH, ((FilebasedResource) this).getPathJson());
             } else {
-                json.put(JSON_KEY_DATA, ((AbstractDataResource)this).getData());
+                try {
+                    JSONArray data = new JSONArray();
+                    List<Table> tables = readData();
+                    for (Table t : tables) {
+                        JSONArray arr = new JSONArray(t.asJson());
+                        arr.toList().forEach(data::put);
+                    }
+                    json.put(JSON_KEY_DATA, data);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         } else if ((this instanceof AbstractDataResource)) {
             if (this.shouldSerializeToFile()) {
