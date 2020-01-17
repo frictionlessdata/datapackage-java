@@ -651,7 +651,7 @@ public class PackageTest {
         Assert.assertEquals(3, employees.size());
         EmployeeBean frank = employees.get(1);
         Assert.assertEquals("Frank McKrank", frank.getName());
-        Assert.assertEquals("1992-02-14", new DateField("date").formatValue(frank.getDateOfBirth(), null, null));
+        Assert.assertEquals("1992-02-14", new DateField("date").formatValueAsString(frank.getDateOfBirth(), null, null));
         Assert.assertFalse(frank.getAdmin());
         Assert.assertEquals("(90.0, 45.0, NaN)", frank.getAddressCoordinates().toString());
         Assert.assertEquals("PT15M", frank.getContractLength().toString());
