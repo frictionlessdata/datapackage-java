@@ -181,7 +181,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         Object schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
         if ((null == schemaObj) && (null != schema)) {
             if (null != schema.getReference()) {
-                schemaObj = JSON_KEY_SCHEMA + File.separator + schema.getReference().getFileName();
+                schemaObj = JSON_KEY_SCHEMA + "/" + schema.getReference().getFileName();
             }
         }
         json.put(JSON_KEY_SCHEMA, schemaObj);
@@ -189,7 +189,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         Object dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
         if ((null == dialectObj) && (null != dialect)) {
             if (null != dialect.getReference()) {
-                dialectObj = JSON_KEY_DIALECT + File.separator + dialect.getReference().getFileName();
+                dialectObj = JSON_KEY_DIALECT + "/" + dialect.getReference().getFileName();
             }
         }
         json.put(JSON_KEY_DIALECT, dialectObj);

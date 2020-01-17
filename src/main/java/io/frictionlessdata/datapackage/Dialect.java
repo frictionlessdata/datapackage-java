@@ -112,6 +112,10 @@ public class Dialect {
         return reference;
     }
 
+    public void setReference (FileReference ref){
+        reference = ref;
+    }
+
     public Dialect clone() {
         Dialect retVal = new Dialect();
         retVal.delimiter = this.delimiter;

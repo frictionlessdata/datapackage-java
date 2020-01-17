@@ -2,6 +2,7 @@ package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.resource.*;
+import io.frictionlessdata.tableschema.io.LocalFileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
@@ -260,12 +261,20 @@ public class Package extends JSONBase{
                 Path schemaPath = outFs.getPath(parentDirName + File.separator + schemaP);
                 writeSchema(schemaPath, r.getSchema());
             }
+            /*Schema schema = r.getSchema();
+            if (null != schema) {
+                schema.se
+            }*/
 
             // write out dialect file only if not null or URL
             String dialectP = r.getPathForWritingDialect();
             if (null != dialectP) {
                 Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
                 writeDialect(dialectPath, r.getDialect());
+            }
+            Dialect dia = r.getDialect();
+            if (null != dia) {
+                dia.setReference(new LocalFileReference(new File(dialectP)));
             }
         }
         writeDescriptor(outFs, parentDirName);
