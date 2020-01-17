@@ -254,7 +254,9 @@ public class Package extends JSONBase{
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {
-            r.writeDataAsCsv(outFs.getPath(parentDirName+ File.separator + JSON_KEY_DATA), dialect);
+            if (r.shouldSerializeToFile()) {
+                r.writeDataAsCsv(outFs.getPath(parentDirName + File.separator + JSON_KEY_DATA), r.getDialect());
+            }
 
             String schemaP = r.getPathForWritingSchema();
             if (null != schemaP) {
