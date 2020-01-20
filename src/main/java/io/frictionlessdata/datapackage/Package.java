@@ -474,7 +474,11 @@ public class Package extends JSONBase{
         for (String key : mapping.keySet()) {
             Object val = mapping.get(key);
             if (val instanceof Map) {
-                JSONObject jObj = new JSONObject(val);
+                JSONObject jObj = new JSONObject();
+                for (Object mapKey : ((Map)val).keySet()) {
+                    Object mapVal = ((Map)val).get(mapKey);
+                    jObj.put((String)mapKey, mapVal);
+                }
                 setProperty(key, jObj.toString());
             } else if (val instanceof Collection) {
                 JSONArray jArr = new JSONArray(val);
