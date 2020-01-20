@@ -465,6 +465,26 @@ public class Package extends JSONBase{
         }
     }
 
+    /**
+     * Set a number of properties at once. The `mapping` holds the properties as
+     * key/value pairs
+     * @param mapping the key/value map holding the properties
+     */
+    public void setProperties(Map<String, Object> mapping) {
+        for (String key : mapping.keySet()) {
+            Object val = mapping.get(key);
+            if (val instanceof Map) {
+                JSONObject jObj = new JSONObject(val);
+                setProperty(key, jObj.toString());
+            } else if (val instanceof Collection) {
+                JSONArray jArr = new JSONArray(val);
+                setProperty(key, jArr.toString());
+            } else {
+                setProperty(key, val.toString());
+            }
+        }
+    }
+
     public Object getProperty(String key) {
         if (!jsonObject.has(key)) {
             return null;
