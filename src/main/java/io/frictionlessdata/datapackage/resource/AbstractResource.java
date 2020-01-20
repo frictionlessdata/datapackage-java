@@ -15,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -194,6 +195,37 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         }
         json.put(JSON_KEY_DIALECT, dialectObj);
         return json;
+    }
+
+
+
+    public void writeSchema(Path parentFilePath) throws IOException{
+        String relPath = getPathForWritingSchema();
+
+        if (null != relPath) {
+            writeSchema(parentFilePath.resolve(relPath), schema);
+        }
+    }
+
+    private static void writeSchema(Path parentFilePath, Schema schema) throws IOException {
+        if (!Files.exists(parentFilePath)) {
+            Files.createDirectories(parentFilePath);
+        }
+        Files.deleteIfExists(parentFilePath);
+        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+            wr.write(schema.getJson());
+        }
+    }
+
+
+    private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
+        if (!Files.exists(parentFilePath)) {
+            Files.createDirectories(parentFilePath);
+        }
+        Files.deleteIfExists(parentFilePath);
+        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+            wr.write(dialect.getJson());
+        }
     }
 
     /**

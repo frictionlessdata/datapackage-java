@@ -257,16 +257,7 @@ public class Package extends JSONBase{
             if (r.shouldSerializeToFile()) {
                 r.writeDataAsCsv(outFs.getPath(parentDirName + File.separator + JSON_KEY_DATA), r.getDialect());
             }
-
-            String schemaP = r.getPathForWritingSchema();
-            if (null != schemaP) {
-                Path schemaPath = outFs.getPath(parentDirName + File.separator + schemaP);
-                writeSchema(schemaPath, r.getSchema());
-            }
-            /*Schema schema = r.getSchema();
-            if (null != schema) {
-                schema.se
-            }*/
+            r.writeSchema(outFs.getPath(parentDirName));
 
             // write out dialect file only if not null or URL
             String dialectP = r.getPathForWritingDialect();
@@ -315,6 +306,7 @@ public class Package extends JSONBase{
         }
     }
 
+    /*
     // TODO migrate into Schema.java
     private static void writeSchema(Path parentFilePath, Schema schema) throws IOException {
         if (!Files.exists(parentFilePath)) {
@@ -326,18 +318,17 @@ public class Package extends JSONBase{
         }
     }
 
-
-    // TODO migrate into Dialet.java
-    private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
-        if (!Files.exists(parentFilePath)) {
-            Files.createDirectories(parentFilePath);
+        */
+        // TODO migrate into Dialet.java
+        private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
+            if (!Files.exists(parentFilePath)) {
+                Files.createDirectories(parentFilePath);
+            }
+            Files.deleteIfExists(parentFilePath);
+            try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+                wr.write(dialect.getJson());
+            }
         }
-        Files.deleteIfExists(parentFilePath);
-        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(dialect.getJson());
-        }
-    }
-    
     public Resource getResource(String resourceName){
         for (Resource resource : this.resources) {
             if (resource.getName().equalsIgnoreCase(resourceName)) {

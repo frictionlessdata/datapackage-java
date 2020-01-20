@@ -59,6 +59,8 @@ public interface Resource<T,C> {
      */
     void writeTableAsCsv(Table table, Dialect dialect, Path outputFile) throws Exception;
 
+    void writeSchema(Path parentFilePath) throws IOException;
+
     /**
      * Returns an Iterator that returns rows as object-arrays
      * @return
