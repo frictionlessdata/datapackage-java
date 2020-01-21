@@ -38,26 +38,18 @@ public interface Resource<T,C> {
 
     List<C> read (Class<C> beanClass) throws Exception;
 
+
     /**
-     * Write all the data in this resource as CSV into one or more
+     * Write all the data in this resource into one or more
      * files inside `outputDir`, depending on how many tables this
      * Resource holds.
      *
      * @param outputDir the directory to write to. Code must create
      *                  files as needed.
-     * @param dialect the CSV dialect to use for writing
      * @throws Exception if something fails while writing
      */
-    void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception;
+    void writeData(Path outputDir) throws Exception;
 
-    /**
-     * Write the Table as CSV into a file inside `outputDir`.
-     *
-     * @param outputFile the file to write to.
-     * @param dialect the CSV dialect to use for writing
-     * @throws Exception if something fails while writing
-     */
-    void writeTableAsCsv(Table table, Dialect dialect, Path outputFile) throws Exception;
 
     void writeSchema(Path parentFilePath) throws IOException;
 
@@ -228,6 +220,12 @@ public interface Resource<T,C> {
     boolean shouldSerializeToFile();
 
     void setShouldSerializeToFile(boolean serializeToFile);
+
+    /**
+     * Sets the format (either CSV or JSON) for serializing the Resource content to File.
+     * @param format either FORMAT_CSV or FORMAT_JSON, other strings will cause an Exception
+     */
+    void setSerializationFormat(String format);
 
     Map<String, Object> getOriginalReferences();
 

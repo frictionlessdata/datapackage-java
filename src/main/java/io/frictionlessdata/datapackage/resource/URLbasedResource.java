@@ -42,7 +42,7 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
         return tables;
     }
 
-
+/*
     @Override
     public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
@@ -63,4 +63,5 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
             writeTableAsCsv(t, lDialect, p);
         }
     }
+    */
 }

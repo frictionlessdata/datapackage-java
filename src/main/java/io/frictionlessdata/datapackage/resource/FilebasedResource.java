@@ -107,7 +107,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         }
         return tables;
     }
-
+/*
     @Override
     public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
@@ -133,7 +133,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
             writeTableAsCsv(t, lDialect, p);
         }
     }
-    
+    */
     public void setIsInArchive(boolean isInArchive) {
         this.isInArchive = isInArchive;
     }

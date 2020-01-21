@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
@@ -22,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base implementation of a Resource.
@@ -56,7 +58,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     // Schema
     Schema schema = null;
+
     boolean serializeToFile = true;
+    private String serializationFormat;
 
     AbstractResource(String name){
         this.name = name;
@@ -500,6 +504,15 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         this.serializeToFile = serializeToFile;
     }
 
+    @Override
+    public void setSerializationFormat(String format) {
+        if ((format.matches(Resource.FORMAT_JSON))
+            || format.matches(Resource.FORMAT_CSV)) {
+            this.serializationFormat = format;
+        }
+        throw new DataPackageException("Serialization format "+format+" is unknown");
+    }
+
     abstract List<Table> readData() throws Exception;
 
     private List<Table> ensureDataLoaded () throws Exception {
@@ -509,8 +522,65 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return tables;
     }
 
+
     @Override
-    public void writeTableAsCsv(Table t, Dialect dialect, Path outputFile) throws Exception {
+    public void writeData(Path outputDir) throws Exception {
+        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
+        List<Table> tables = getTables();
+        List<String> paths = new ArrayList<>();
+        if (this instanceof FilebasedResource) {
+            paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
+            paths = paths.stream().map((p) -> {
+                if (p.toLowerCase().endsWith("."+Resource.FORMAT_CSV)){
+                    int i = p.toLowerCase().indexOf("."+Resource.FORMAT_CSV);
+                    return p.substring(0, i);
+                } else if (p.toLowerCase().endsWith("."+Resource.FORMAT_JSON)){
+                    int i = p.toLowerCase().indexOf("."+Resource.FORMAT_JSON);
+                    return p.substring(0, i);
+                }
+                return p;
+            }).collect(Collectors.toList());
+        } else {
+            for (int i = 0; i < tables.size(); i++) {
+                paths.add("resource-"+i);
+            }
+        }
+        int cnt = 0;
+        for (String fName : paths) {
+            String fileName = fName+"."+this.serializationFormat;
+            Table t  = tables.get(cnt++);
+            Path p;
+            if (outputDir.toString().isEmpty()) {
+                p = outputDir.getFileSystem().getPath(fileName);
+                if (!Files.exists(p)) {
+                    Files.createDirectories(p);
+                }
+            } else {
+                if (!Files.exists(outputDir)) {
+                    Files.createDirectories(outputDir);
+                }
+                p = outputDir.resolve(fileName);
+            }
+
+            Files.deleteIfExists(p);
+            try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
+                if (serializationFormat.equals(Resource.FORMAT_CSV)) {
+                    t.writeCsv(wr, lDialect.toCsvFormat());
+                } else if (serializationFormat.equals(Resource.FORMAT_JSON)) {
+                    wr.write(t.asJson());
+                }
+            }
+        }
+    }
+
+    /**
+     * Write the Table as CSV into a file inside `outputDir`.
+     *
+     * @param outputFile the file to write to.
+     * @param dialect the CSV dialect to use for writing
+     * @throws Exception if something fails while writing
+     */
+    void writeTableAsCsv(Table t, Dialect dialect, Path outputFile) throws Exception {
         if (!Files.exists(outputFile)) {
             Files.createDirectories(outputFile);
         }

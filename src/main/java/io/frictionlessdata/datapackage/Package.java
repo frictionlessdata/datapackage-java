@@ -254,9 +254,7 @@ public class Package extends JSONBase{
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {
-            if (r.shouldSerializeToFile()) {
-                r.writeDataAsCsv(outFs.getPath(parentDirName + File.separator + JSON_KEY_DATA), r.getDialect());
-            }
+            r.writeDataAsCsv(outFs.getPath(parentDirName + File.separator + JSON_KEY_DATA), r.getDialect());
             r.writeSchema(outFs.getPath(parentDirName));
 
             // write out dialect file only if not null or URL
