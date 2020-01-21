@@ -1,17 +1,11 @@
 package io.frictionlessdata.datapackage.resource;
 
-import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 
 public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C> {
@@ -24,6 +18,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
             throw new DataPackageException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
+        this.setSerializationFormat(sniffFormat(paths));
         schema = fromResource.getSchema();
         dialect = fromResource.getDialect();
         List<String[]> data = fromResource.read(false);
@@ -38,6 +33,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
             throw new DataPackageException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
+        this.setSerializationFormat(sniffFormat(paths));
         this.basePath = basePath;
         for (File path : paths) {
             /* from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
@@ -50,6 +46,23 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                 throw new DataPackageException("Path entries for file-based Resources cannot be absolute");
             }
         }
+    }
+
+    private static String sniffFormat(Collection<File> paths) {
+        Set<String> foundFormats = new HashSet<>();
+        paths.forEach((p) -> {
+            if (p.getName().toLowerCase().endsWith(Resource.FORMAT_CSV)) {
+                foundFormats.add(Resource.FORMAT_CSV);
+            } else if (p.getName().toLowerCase().endsWith(Resource.FORMAT_JSON)) {
+                foundFormats.add(Resource.FORMAT_JSON);
+            }
+        });
+        if (foundFormats.size() > 1) {
+            throw new DataPackageException("Resources cannot be mixed JSON/CSV");
+        }
+        if (foundFormats.isEmpty())
+            return Resource.FORMAT_CSV;
+        return foundFormats.iterator().next();
     }
 
     public static FilebasedResource fromSource(String name, Collection<File> paths, File basePath) {

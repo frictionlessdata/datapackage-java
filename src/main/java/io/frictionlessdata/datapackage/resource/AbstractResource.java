@@ -503,14 +503,20 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     @Override
     public void setSerializationFormat(String format) {
-        if ((format.matches(Resource.FORMAT_JSON))
-            || format.matches(Resource.FORMAT_CSV)) {
+        if ((format.equals(Resource.FORMAT_JSON))
+            || format.equals(Resource.FORMAT_CSV)) {
             this.serializationFormat = format;
-        }
-        throw new DataPackageException("Serialization format "+format+" is unknown");
+        } else
+            throw new DataPackageException("Serialization format "+format+" is unknown");
     }
 
+    /**
+     * if an expli
+     * @return
+     */
     public String getSerializationFormat() {
+        if (null != serializationFormat)
+            return serializationFormat;
         return format;
     }
 
@@ -534,21 +540,17 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
         int cnt = 0;
         for (String fName : paths) {
-            String fileName = fName+"."+this.serializationFormat;
+            String fileName = fName+"."+getSerializationFormat();
             Table t  = tables.get(cnt++);
             Path p;
             if (outputDir.toString().isEmpty()) {
                 p = outputDir.getFileSystem().getPath(fileName);
-                if (!Files.exists(p)) {
-                    Files.createDirectories(p);
-                }
             } else {
-                if (!Files.exists(outputDir)) {
-                    Files.createDirectories(outputDir);
-                }
                 p = outputDir.resolve(fileName);
             }
-
+            if (!Files.exists(p)) {
+                Files.createDirectories(p);
+            }
             Files.deleteIfExists(p);
             try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
                 if (serializationFormat.equals(Resource.FORMAT_CSV)) {
