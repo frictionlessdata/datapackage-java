@@ -540,6 +540,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
         int cnt = 0;
         for (String fName : paths) {
+            System.out.println(fName);
             String fileName = fName+"."+getSerializationFormat();
             Table t  = tables.get(cnt++);
             Path p;
