@@ -204,7 +204,13 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         String relPath = getPathForWritingSchema();
 
         if (null != relPath) {
-            writeSchema(parentFilePath.resolve(relPath), schema);
+            Path p;
+            if (parentFilePath.toString().isEmpty()) {
+                p = parentFilePath.getFileSystem().getPath(relPath);
+            } else {
+                p = parentFilePath.resolve(relPath);
+            }
+            writeSchema(p, schema);
         }
     }
 
