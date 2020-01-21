@@ -6,6 +6,8 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T,C> {
     Collection<T> paths;
@@ -43,6 +45,21 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
 
     public Collection<T> getPaths() {
         return paths;
+    }
+
+    @Override
+    Set<String> getDatafileNamesForWriting() {
+        List<String> paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
+        return paths.stream().map((p) -> {
+            if (p.toLowerCase().endsWith("."+Resource.FORMAT_CSV)){
+                int i = p.toLowerCase().indexOf("."+Resource.FORMAT_CSV);
+                return p.substring(0, i);
+            } else if (p.toLowerCase().endsWith("."+Resource.FORMAT_JSON)){
+                int i = p.toLowerCase().indexOf("."+Resource.FORMAT_JSON);
+                return p.substring(0, i);
+            }
+            return p;
+        }).collect(Collectors.toSet());
     }
 
     abstract Table createTable(T reference) throws Exception;

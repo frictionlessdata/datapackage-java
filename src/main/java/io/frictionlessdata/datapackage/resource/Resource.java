@@ -227,6 +227,8 @@ public interface Resource<T,C> {
      */
     void setSerializationFormat(String format);
 
+    String getSerializationFormat();
+
     Map<String, Object> getOriginalReferences();
 
     static AbstractResource build(JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {

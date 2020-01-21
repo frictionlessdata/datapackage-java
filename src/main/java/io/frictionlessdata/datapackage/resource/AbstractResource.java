@@ -15,15 +15,12 @@ import org.apache.commons.csv.CSVFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Abstract base implementation of a Resource.
@@ -513,7 +510,13 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         throw new DataPackageException("Serialization format "+format+" is unknown");
     }
 
+    public String getSerializationFormat() {
+        return format;
+    }
+
     abstract List<Table> readData() throws Exception;
+
+    abstract Set<String> getDatafileNamesForWriting();
 
     private List<Table> ensureDataLoaded () throws Exception {
         if (null == tables) {
@@ -527,24 +530,8 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     public void writeData(Path outputDir) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
         List<Table> tables = getTables();
-        List<String> paths = new ArrayList<>();
-        if (this instanceof FilebasedResource) {
-            paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
-            paths = paths.stream().map((p) -> {
-                if (p.toLowerCase().endsWith("."+Resource.FORMAT_CSV)){
-                    int i = p.toLowerCase().indexOf("."+Resource.FORMAT_CSV);
-                    return p.substring(0, i);
-                } else if (p.toLowerCase().endsWith("."+Resource.FORMAT_JSON)){
-                    int i = p.toLowerCase().indexOf("."+Resource.FORMAT_JSON);
-                    return p.substring(0, i);
-                }
-                return p;
-            }).collect(Collectors.toList());
-        } else {
-            for (int i = 0; i < tables.size(); i++) {
-                paths.add("resource-"+i);
-            }
-        }
+        Set<String> paths = getDatafileNamesForWriting();
+
         int cnt = 0;
         for (String fName : paths) {
             String fileName = fName+"."+this.serializationFormat;

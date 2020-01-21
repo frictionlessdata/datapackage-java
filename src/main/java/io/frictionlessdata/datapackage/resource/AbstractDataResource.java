@@ -6,7 +6,9 @@ import io.frictionlessdata.tableschema.Table;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract base class for all Resources that are based on directly set data, that is not on
@@ -57,6 +59,16 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
         return tables;
     }
 
+    @Override
+    Set<String> getDatafileNamesForWriting() {
+        String name = super.getName()
+                .toLowerCase()
+                .replaceAll("\\W", "_");
+        Set<String> names = new HashSet<>();
+        names.add(name);
+        return names;
+    }
+
     /**
      * write out any resource to a CSV file. It creates a file with a file name taken from
      * the Resource name. Subclasses might override this to write data differently (eg. to the
@@ -65,7 +77,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
      * @param dialect the CSV dialect to use for writing
      * @throws Exception thrown if writing fails.
      */
-    @Override
+
     public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
         String fileName = super.getName()

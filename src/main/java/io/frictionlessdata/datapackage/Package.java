@@ -226,7 +226,7 @@ public class Package extends JSONBase{
         writeDescriptor(outFs, parentDirName);
 
         for (Resource r : this.resources) {
-            r.writeDataAsCsv(outFs.getPath(parentDirName+File.separator), dialect);
+            r.writeData(outFs.getPath(parentDirName+File.separator));
         }
     }
 
@@ -254,7 +254,7 @@ public class Package extends JSONBase{
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {
-            r.writeDataAsCsv(outFs.getPath(parentDirName + File.separator + JSON_KEY_DATA), r.getDialect());
+            r.writeData(outFs.getPath(parentDirName + File.separator + "." + r.getSerializationFormat()));
             r.writeSchema(outFs.getPath(parentDirName));
 
             // write out dialect file only if not null or URL
