@@ -1,6 +1,7 @@
 package io.frictionlessdata.datapackage.resource;
 
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 import org.json.JSONArray;
 
 import java.util.ArrayList;
@@ -51,11 +52,11 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
     Set<String> getDatafileNamesForWriting() {
         List<String> paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
         return paths.stream().map((p) -> {
-            if (p.toLowerCase().endsWith("."+Resource.FORMAT_CSV)){
-                int i = p.toLowerCase().indexOf("."+Resource.FORMAT_CSV);
+            if (p.toLowerCase().endsWith("."+ DataSourceFormat.Format.FORMAT_CSV.getLabel())){
+                int i = p.toLowerCase().indexOf("."+DataSourceFormat.Format.FORMAT_CSV.getLabel());
                 return p.substring(0, i);
-            } else if (p.toLowerCase().endsWith("."+Resource.FORMAT_JSON)){
-                int i = p.toLowerCase().indexOf("."+Resource.FORMAT_JSON);
+            } else if (p.toLowerCase().endsWith("."+DataSourceFormat.Format.FORMAT_JSON.getLabel())){
+                int i = p.toLowerCase().indexOf("."+DataSourceFormat.Format.FORMAT_JSON.getLabel());
                 return p.substring(0, i);
             }
             return p;

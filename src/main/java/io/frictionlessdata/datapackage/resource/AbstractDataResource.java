@@ -65,7 +65,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
                 .toLowerCase()
                 .replaceAll("\\W", "_");
         Set<String> names = new HashSet<>();
-        names.add(name);
+        names.add(JSON_KEY_DATA+"/"+name);
         return names;
     }
 

@@ -4,6 +4,7 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
@@ -509,8 +510,8 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     @Override
     public void setSerializationFormat(String format) {
-        if ((format.equals(Resource.FORMAT_JSON))
-            || format.equals(Resource.FORMAT_CSV)) {
+        if ((format.equals(DataSourceFormat.Format.FORMAT_JSON.getLabel()))
+            || format.equals(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
             this.serializationFormat = format;
         } else
             throw new DataPackageException("Serialization format "+format+" is unknown");
@@ -560,9 +561,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             }
             Files.deleteIfExists(p);
             try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
-                if (serializationFormat.equals(Resource.FORMAT_CSV)) {
+                if (serializationFormat.equals(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
                     t.writeCsv(wr, lDialect.toCsvFormat());
-                } else if (serializationFormat.equals(Resource.FORMAT_JSON)) {
+                } else if (serializationFormat.equals(DataSourceFormat.Format.FORMAT_JSON.getLabel())) {
                     wr.write(t.asJson());
                 }
             }
