@@ -32,7 +32,7 @@ public interface Resource<T,C> {
 
     List<Table> getTables() throws Exception ;
 
-    JSONObject getJson();
+    String getJson();
 
     List<Object[]> read (boolean cast) throws Exception;
 

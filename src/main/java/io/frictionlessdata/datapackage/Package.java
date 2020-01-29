@@ -540,7 +540,7 @@ public class Package extends JSONBase{
         JSONArray resourcesJsonArray = new JSONArray();
         while(resourceIter.hasNext()){
             Resource resource = resourceIter.next();
-            resourcesJsonArray.put(resource.getJson());
+            resourcesJsonArray.put(new JSONObject(resource.getJson()));
         }
 
         if(resourcesJsonArray.length() > 0){

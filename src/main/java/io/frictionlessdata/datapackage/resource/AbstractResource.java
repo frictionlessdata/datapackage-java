@@ -113,7 +113,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
-            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass);
+            final BeanIterator<C> iter = t.iterator(beanClass, false);
             while (iter.hasNext()) {
                 retVal.add(iter.next());
             }
@@ -137,7 +137,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * Get JSON representation of the object.
      * @return a JSONObject representing the properties of this object
      */
-    public JSONObject getJson(){
+    public String getJson(){
         //FIXME: Maybe use something lke GSON so we don't have to explicitly
         //code this...
         JSONObject json = new JSONObject(new LinkedHashMap<String, Object>());
@@ -196,7 +196,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             }
         }
         json.put(JSON_KEY_DIALECT, dialectObj);
-        return json;
+        return json.toString();
     }
 
 
