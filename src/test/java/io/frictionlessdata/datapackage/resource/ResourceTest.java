@@ -472,7 +472,7 @@ public class ResourceTest {
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
         // Assert
-        Assert.assertEquals(3, resource.getData(false, , , ).size());
+        Assert.assertEquals(3, resource.getData(false, false, false, false).size());
     }
 
 
@@ -483,7 +483,7 @@ public class ResourceTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.getData(false, , , );
+        List<Object[]> data = r.getData(false, false, false, false);
     }
     
     @Test

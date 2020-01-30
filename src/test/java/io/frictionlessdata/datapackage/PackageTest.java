@@ -289,7 +289,7 @@ public class PackageTest {
         dialect.setDelimiter("\t");
         resource.setDialect(dialect);
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.getData(false, , , );
+        List<Object[]>data = resource.getData(false, false, false, false);
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -311,7 +311,7 @@ public class PackageTest {
                 "/fixtures/tab_separated_datapackage_with_dialect.json", true);
         Resource resource = dp.getResource("first-resource");
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.getData(false, , , );
+        List<Object[]>data = resource.getData(false, false, false, false);
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -474,7 +474,7 @@ public class PackageTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.getData(false, , , );
+        List<Object[]> data = r.getData(false, false, false, false);
         Assert.assertEquals(2, data.size());
         Assert.assertArrayEquals(usdTestData, data.get(0));
         Assert.assertArrayEquals(gbpTestData, data.get(1));
