@@ -31,8 +31,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 
-import javax.json.JsonObject;
-
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
 /**
@@ -291,7 +289,7 @@ public class PackageTest {
         dialect.setDelimiter("\t");
         resource.setDialect(dialect);
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.read(false);
+        List<Object[]>data = resource.getData(false, , , );
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -313,7 +311,7 @@ public class PackageTest {
                 "/fixtures/tab_separated_datapackage_with_dialect.json", true);
         Resource resource = dp.getResource("first-resource");
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.read(false);
+        List<Object[]>data = resource.getData(false, , , );
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -476,7 +474,7 @@ public class PackageTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.read(false);
+        List<Object[]> data = r.getData(false, , , );
         Assert.assertEquals(2, data.size());
         Assert.assertArrayEquals(usdTestData, data.get(0));
         Assert.assertArrayEquals(gbpTestData, data.get(1));
@@ -647,7 +645,7 @@ public class PackageTest {
         Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
 
         Resource resource = pkg.getResource("employee-data");
-        final List<EmployeeBean> employees = resource.read(EmployeeBean.class);
+        final List<EmployeeBean> employees = resource.getData(EmployeeBean.class);
         Assert.assertEquals(3, employees.size());
         EmployeeBean frank = employees.get(1);
         Assert.assertEquals("Frank McKrank", frank.getName());

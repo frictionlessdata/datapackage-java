@@ -11,7 +11,7 @@ import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
-import org.apache.commons.collections.iterators.IteratorChain;
+import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -90,18 +90,51 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         for (Table table : tables) {
             tableIteratorArray[cnt++] = table.stringArrayIterator(false);
         }
-        return new IteratorChain(tableIteratorArray);
+        return new IteratorChain<>(tableIteratorArray);
     }
 
-
-    public List<Object[]> read() throws Exception{
-        return this.read(false);
+    @Override
+    public Iterator<C> beanIterator(Class<C> beanType, boolean relations) throws Exception {
+        ensureDataLoaded();
+        IteratorChain<C> ic = new IteratorChain<>();
+        for (Table table : tables) {
+            ic.addIterator (table.iterator(beanType, false));
+        }
+        return ic;
     }
 
-    public List<Object[]> read (boolean cast) throws Exception{
+    public List<String[]> getData() throws Exception{
+        List<String[]> retVal = new ArrayList<>();
+        ensureDataLoaded();
+        Iterator<String[]> iter = stringArrayIterator();
+        while (iter.hasNext()) {
+            retVal.add(iter.next());
+        }
+        return retVal;
+    }
+
+    /**
+     * Most customizable method to retrieve all data in a Resource. Parameters match those in
+     * {@link io.frictionlessdata.tableschema.Table#iterator(boolean, boolean, boolean, boolean)}. Data can be
+     * returned as:
+     *
+     * - String arrays,
+     * - as Object arrays (parameter `cast` = true),
+     * - as a Map&lt;key,val&gt; where key is the header name, and val is the data (parameter `keyed` = true),
+     * - or in an "extended" form (parameter `extended` = true) that returns an Object array where the first entry is the
+     *      row number, the second is a String array holding the headers, and the third is an Object array holding
+     *      the row data.
+     * @param keyed returns data as Maps
+     * @param extended returns data in "extended form"
+     * @param cast returns data as Objects, not Strings
+     * @param relations resolves relations
+     * @return List of data objects
+     * @throws Exception if reading data fails
+     */
+    public List<Object[]> getData(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
         List<Object[]> retVal = new ArrayList<>();
         ensureDataLoaded();
-        Iterator<Object[]> iter = objectArrayIterator(false, false, cast, false);
+        Iterator<Object[]> iter = objectArrayIterator(keyed, extended, cast, relations);
         while (iter.hasNext()) {
             retVal.add(iter.next());
         }
@@ -109,7 +142,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     @Override
-    public List<C> read (Class<C> beanClass)  throws Exception {
+    public List<C> getData(Class<C> beanClass)  throws Exception {
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {

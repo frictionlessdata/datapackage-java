@@ -34,10 +34,9 @@ public interface Resource<T,C> {
 
     String getJson();
 
-    List<Object[]> read (boolean cast) throws Exception;
+    List<Object[]> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
 
-    List<C> read (Class<C> beanClass) throws Exception;
-
+    List<C> getData(Class<C> beanClass) throws Exception;
 
     /**
      * Write all the data in this resource into one or more
@@ -67,6 +66,17 @@ public interface Resource<T,C> {
      */
     Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
 
+    /**
+     * Returns an Iterator that returns rows as bean-arrays.
+     * {@link TableIterator} based on a Java Bean class instead of a {@link io.frictionlessdata.tableschema.schema.Schema}.
+     * It therefore disregards the Schema set on the {@link io.frictionlessdata.tableschema.Table} the iterator works
+     * on but creates its own Schema from the supplied `beanType`.
+     *
+     * @return Iterator that returns rows as bean-arrays.
+     * @param beanType the Bean class this BeanIterator expects
+     * @param relations follow relations to other data source
+     */
+    Iterator<C> beanIterator(Class<C> beanType, boolean relations)throws Exception;
     /**
      * Returns an Iterator that returns rows as string-arrays
      * @return
