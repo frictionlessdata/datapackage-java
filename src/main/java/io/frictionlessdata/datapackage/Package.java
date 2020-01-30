@@ -389,7 +389,7 @@ public class Package extends JSONBase{
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         // If a name property isn't given...
-        if ((resource).getData() == null || (resource).getFormat() == null) {
+        if ((resource).getDataPoperty() == null || (resource).getFormat() == null) {
             dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);

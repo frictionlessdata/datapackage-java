@@ -200,7 +200,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             if (this.shouldSerializeToFile()) {
                 //TODO implement storing only the path - and where to get it
             } else {
-                json.put(JSON_KEY_DATA, ((AbstractDataResource) this).getData());
+                json.put(JSON_KEY_DATA, ((AbstractDataResource) this).getDataPoperty());
             }
         }
         json.put(JSON_KEY_PROFILE, this.profile);

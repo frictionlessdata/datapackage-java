@@ -31,14 +31,14 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     /**
      * @return the data
      */
-    public T getData() {
+    public T getDataPoperty() {
         return data;
     }
 
     /**
      * @param data the data to set
      */
-    public void setData(T data) {
+    public void setDataPoperty(T data) {
         this.data = data;
     }
 

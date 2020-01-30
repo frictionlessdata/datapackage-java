@@ -22,7 +22,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         this.setSerializationFormat(sniffFormat(paths));
         schema = fromResource.getSchema();
         dialect = fromResource.getDialect();
-        List<String[]> data = fromResource.getData(false, , , );
+        List<String[]> data = fromResource.getData(false, false, false, false);
         Table table = new Table(data, fromResource.getHeaders(), fromResource.getSchema());
         tables = new ArrayList<>();
         tables.add(table);
