@@ -68,18 +68,28 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     @Override
     public Iterator<Object[]> objectArrayIterator() throws Exception{
-        return this.objectArrayIterator(false, false, true, false);
+        return this.objectArrayIterator(false, false, false);
     }
 
     @Override
-    public Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
+    public Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator<Object[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.iterator(keyed, extended, cast, relations);
+            tableIteratorArray[cnt++] = table.iterator(keyed, extended, true, relations);
         }
         return new IteratorChain(tableIteratorArray);
+    }
+
+    private Iterator stringArrayIterator(boolean relations) throws Exception{
+        ensureDataLoaded();
+        Iterator[] tableIteratorArray = new TableIterator[tables.size()];
+        int cnt = 0;
+        for (Table table : tables) {
+            tableIteratorArray[cnt++] = table.iterator(false, false, false, relations);
+        }
+        return new IteratorChain<>(tableIteratorArray);
     }
 
     @Override
@@ -91,6 +101,17 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             tableIteratorArray[cnt++] = table.stringArrayIterator(false);
         }
         return new IteratorChain<>(tableIteratorArray);
+    }
+
+    @Override
+    public Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception{
+        ensureDataLoaded();
+        Iterator<Map<String, Object>>[] tableIteratorArray = new TableIterator[tables.size()];
+        int cnt = 0;
+        for (Table table : tables) {
+            tableIteratorArray[cnt++] = table.keyedIterator(false, true, relations);
+        }
+        return new IteratorChain(tableIteratorArray);
     }
 
     @Override
@@ -134,12 +155,18 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     public List<Object[]> getData(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
         List<Object[]> retVal = new ArrayList<>();
         ensureDataLoaded();
-        Iterator<Object[]> iter = objectArrayIterator(keyed, extended, cast, relations);
+        Iterator iter;
+        if (cast) {
+            iter = objectArrayIterator(keyed, extended, relations);
+        } else {
+            iter = stringArrayIterator(relations);
+        }
         while (iter.hasNext()) {
-            retVal.add(iter.next());
+            retVal.add((Object[])iter.next());
         }
         return retVal;
     }
+
 
     @Override
     public List<C> getData(Class<C> beanClass)  throws Exception {

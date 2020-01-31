@@ -64,7 +64,9 @@ public interface Resource<T,C> {
      * @return
      * @throws Exception
      */
-    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
+    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
+
+    Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception;
 
     /**
      * Returns an Iterator that returns rows as bean-arrays.
