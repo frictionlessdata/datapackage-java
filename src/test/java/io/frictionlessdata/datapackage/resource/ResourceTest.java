@@ -208,7 +208,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<Object[]> iter = resource.objectArrayIterator(false, false, true, false);
+        Iterator<Object[]> iter = resource.objectArrayIterator(false, false,  false);
         
         // Assert data.
         while(iter.hasNext()){
