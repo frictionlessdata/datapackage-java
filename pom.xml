@@ -238,13 +238,6 @@
             <version>${everit-json-schema.version}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>${joda-time.version}</version>
-        </dependency>
-
         <!-- https://commons.apache.org/proper/commons-csv/ -->
         <dependency>
             <groupId>org.apache.commons</groupId>
