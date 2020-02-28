@@ -62,8 +62,8 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     AbstractResource(String name){
         this.name = name;
-        /*if (null == name)
-            throw new DataPackageException("Invalid Resource, it does not have a name property.");*/
+        if (null == name)
+            throw new DataPackageException("Invalid Resource, it does not have a name property.");
     }
 
     @Override
