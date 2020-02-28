@@ -501,7 +501,7 @@ public class Package extends JSONBase{
     final void validate() throws IOException, DataPackageException{
         try{
             this.validator.validate(this.getJson());
-        }catch(ValidationException ve){
+        } catch(ValidationException | DataPackageException ve){
             if(this.strictValidation){
                 throw ve;
             }else{
