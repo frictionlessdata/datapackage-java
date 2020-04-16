@@ -49,7 +49,7 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
     }
 
     @Override
-    Set<String> getDatafileNamesForWriting() {
+    public Set<String> getDatafileNamesForWriting() {
         List<String> paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
         return paths.stream().map((p) -> {
             if (p.toLowerCase().endsWith("."+ DataSourceFormat.Format.FORMAT_CSV.getLabel())){

@@ -60,7 +60,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     }
 
     @Override
-    Set<String> getDatafileNamesForWriting() {
+    public Set<String> getDatafileNamesForWriting() {
         String name = super.getName()
                 .toLowerCase()
                 .replaceAll("\\W", "_");

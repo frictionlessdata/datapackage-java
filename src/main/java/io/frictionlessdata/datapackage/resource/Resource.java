@@ -101,6 +101,14 @@ public interface Resource<T,C> {
     String getPathForWritingDialect();
 
     /**
+     * Return a set of relative path names we would use if we wanted to write
+     * the resource data to file. For DataResources, this helps with conversion
+     * to FileBasedResources
+     * @return Set of relative path names
+     */
+    Set<String> getDatafileNamesForWriting();
+
+    /**
      * @return the name
      */
     String getName();

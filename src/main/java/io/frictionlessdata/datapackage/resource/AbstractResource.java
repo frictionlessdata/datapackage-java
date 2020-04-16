@@ -16,6 +16,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -589,7 +590,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     abstract List<Table> readData() throws Exception;
 
-    abstract Set<String> getDatafileNamesForWriting();
+    public abstract Set<String> getDatafileNamesForWriting();
 
     private List<Table> ensureDataLoaded () throws Exception {
         if (null == tables) {
@@ -607,7 +608,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
         int cnt = 0;
         for (String fName : paths) {
-            System.out.println(fName);
             String fileName = fName+"."+getSerializationFormat();
             Table t  = tables.get(cnt++);
             Path p;

@@ -26,6 +26,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         Table table = new Table(data, fromResource.getHeaders(), fromResource.getSchema());
         tables = new ArrayList<>();
         tables.add(table);
+        serializeToFile = true;
     }
 
     FilebasedResource(String name, Collection<File> paths, File basePath) {
@@ -47,6 +48,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                 throw new DataPackageException("Path entries for file-based Resources cannot be absolute");
             }
         }
+        serializeToFile = true;
     }
 
     private static String sniffFormat(Collection<File> paths) {
