@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * Ensure datapackages are written in a valid format and can be read back. Compare data to see it matches
  */
 public class RoundtripTest {
     private static CSVFormat csvFormat = DataSourceFormat
