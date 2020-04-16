@@ -549,7 +549,11 @@ public class Package extends JSONBase{
                 JSONObject obj = new JSONObject(resource.getJson());
                 Set<String> datafileNames = resource.getDatafileNamesForWriting();
                 Set<String> outPaths = datafileNames.stream().map((r) -> r+"."+resource.getSerializationFormat()).collect(Collectors.toSet());
-                obj.put("path", outPaths);
+                if (outPaths.size() == 1) {
+                    obj.put("path", outPaths.iterator().next());
+                } else {
+                    obj.put("path", outPaths);
+                }
                 obj.put("format", resource.getSerializationFormat());
                 resourcesJsonArray.put(obj);
             } else {
