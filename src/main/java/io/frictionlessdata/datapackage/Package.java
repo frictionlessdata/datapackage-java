@@ -103,9 +103,6 @@ public class Package extends JSONBase{
 
         // Create and set the JSONObject fpr the String representation of desriptor JSON object.
         this.setJson(new JSONObject(jsonStringSource));
-
-        // If String representation of desriptor JSON object is provided.
-        this.validate();
     }
 
     /**
@@ -137,8 +134,6 @@ public class Package extends JSONBase{
 
         // Create JSONObject and validate.
         this.setJson(new JSONObject(jsonString));
-        this.validate();  
-        
     }
 
     /**
@@ -179,7 +174,6 @@ public class Package extends JSONBase{
             sourceJsonObject = new JSONObject(sourceJsonString);
         }
         this.setJson(sourceJsonObject);
-        this.validate();
     }
 
 
