@@ -264,6 +264,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     public void writeSchema(Path parentFilePath) throws IOException{
         String relPath = getPathForWritingSchema();
+        if (null == originalReferences.get(JSONBase.JSON_KEY_SCHEMA)) {
+            originalReferences.put(JSONBase.JSON_KEY_SCHEMA, relPath);
+        }
 
         if (null != relPath) {
             Path p;
