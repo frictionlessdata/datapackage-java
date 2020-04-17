@@ -44,7 +44,10 @@ public class RoundtripTest {
 
     @Test
     @DisplayName("Roundtrip test - write datapackage, read again and compare data")
+    // this lead to the discovery of https://github.com/frictionlessdata/specs/issues/666, just in case
+    // we see regressions in the specs somehow
     public void dogfoodingTest() throws Exception {
+        // create a new Package, set Schema and data and write out to temp storage
         List<Resource> resources = new ArrayList<>();
         Package pkg = new Package(resources);
 
@@ -62,6 +65,7 @@ public class RoundtripTest {
         File createdFile = new File(tempDirPath.toFile(), "test_save_datapackage.zip");
         pkg.write(createdFile, true);
 
+        // create new Package from the serialized form and check they are equal
         Package testPkg = new Package(createdFile.toPath(), true);
         Assertions.assertEquals(1, testPkg.getResources().size());
 
