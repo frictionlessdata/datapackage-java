@@ -19,10 +19,8 @@ import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.datapackage.resource.ResourceTest;
 import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
 import io.frictionlessdata.tableschema.Table;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,7 +29,9 @@ import org.junit.rules.ExpectedException;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 
-import javax.json.JsonObject;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
@@ -41,18 +41,12 @@ import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
  */
 public class PackageTest {
     private static URL validUrl;
-    static JSONObject resource1 = new JSONObject("{\"name\": \"first-resource\", \"path\": " +
-            "[\"data/cities.csv\", \"data/cities2.csv\", \"data/cities3.csv\"]}");
-    static JSONObject resource2 = new JSONObject("{\"name\": \"second-resource\", \"path\": " +
-            "[\"data/area.csv\", \"data/population.csv\"]}");
+    static String resource1String = "{\"name\": \"first-resource\", \"path\": " +
+            "[\"data/cities.csv\", \"data/cities2.csv\", \"data/cities3.csv\"]}";
+    static String resource2String = "{\"name\": \"second-resource\", \"path\": " +
+            "[\"data/area.csv\", \"data/population.csv\"]}";
 
-    static JSONArray testResources;
-
-    static {
-        testResources = new JSONArray();
-        testResources.put(resource1);
-        testResources.put(resource2);
-    }
+    static ArrayNode testResources = JsonUtil.getInstance().createArrayNode(String.format("[%s,%s]", resource1String, resource2String));
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -78,21 +72,15 @@ public class PackageTest {
     }
     
     @Test
-    public void testLoadFromValidJsonObject() throws Exception {
-        // Create JSON Object for testing
-        JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
-
-        List resourceArrayList = new ArrayList();
-        resourceArrayList.add(resource1);
-        resourceArrayList.add(resource2);
+    public void testLoadFromValidJsonNode() throws Exception {
+        // Create Object for testing
+        Map<String, Object> testMap = createTestMap();
         
-        JSONArray resources = new JSONArray(resourceArrayList);
-
         // Add the resources
-        jsonObject.put("resources", resources);
+        testMap.put("resources", testResources);
         
-        // Build the datapackage
-        Package dp = new Package(jsonObject.toString(), getBasePath(), true);
+        // convert the object to a json string and Build the datapackage
+        Package dp = new Package(asString(testMap), getBasePath(), true);
         
         // Assert
         Assert.assertNotNull(dp);
@@ -100,47 +88,45 @@ public class PackageTest {
 
 
     @Test
-    public void testLoadFromValidJsonObjectWithInvalidResources() throws Exception {
+    public void testLoadFromValidJsonNodeWithInvalidResources() throws Exception {
         // Create JSON Object for testing
-        JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
+        Map<String, Object> testObj = createTestMap();
 
         // Build resources
-        JSONObject res1 = new JSONObject("{\"name\": \"first-resource\", \"path\": [\"foo.txt\", \"bar.txt\", \"baz.txt\"]}");
-        JSONObject res2 = new JSONObject("{\"name\": \"second-resource\", \"path\": [\"bar.txt\", \"baz.txt\"]}");
+        JsonNode res1 = createNode("{\"name\": \"first-resource\", \"path\": [\"foo.txt\", \"bar.txt\", \"baz.txt\"]}");
+        JsonNode res2 = createNode("{\"name\": \"second-resource\", \"path\": [\"bar.txt\", \"baz.txt\"]}");
 
-        List<JSONObject> resourceArrayList = new ArrayList<>();
+        List<JsonNode> resourceArrayList = new ArrayList<>();
         resourceArrayList.add(res1);
         resourceArrayList.add(res2);
 
-        JSONArray resources = new JSONArray(resourceArrayList);
-
         // Add the resources
-        jsonObject.put("resources", resources);
+        testObj.put("resources", resourceArrayList);
 
         // Build the datapackage
-        Package dp = new Package(jsonObject.toString(), getBasePath(), true);
+        Package dp = new Package(asString(testObj), getBasePath(), true);
         // Resolve the Resources -> FileNotFoundException due to non-existing files
         exception.expect(FileNotFoundException.class);
         List<Table> tables = dp.getResource("first-resource").getTables();
     }
 
     @Test
-    public void testLoadInvalidJsonObject() throws Exception {
+    public void testLoadInvalidJsonNode() throws Exception {
         // Create JSON Object for testing
-        JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
+        Map<String, Object> testObj = createTestMap();
         
         // Build the datapackage, it will throw ValidationException because there are no resources.
         exception.expect(DataPackageException.class);
-        Package dp = new Package(jsonObject.toString(), getBasePath(), true);
+        Package dp = new Package(asString(testObj), getBasePath(), true);
     }
     
     @Test
-    public void testLoadInvalidJsonObjectNoStrictValidation() throws Exception {
+    public void testLoadInvalidJsonNodeNoStrictValidation() throws Exception {
         // Create JSON Object for testing
-        JSONObject jsonObject = new JSONObject("{\"name\": \"test\"}");
+        Map<String, Object> testObj = createTestMap();
         
         // Build the datapackage, no strict validation by default
-        Package dp = new Package(jsonObject.toString(), getBasePath(), false);
+        Package dp = new Package(asString(testObj), getBasePath(), false);
         
         // Assert
         Assert.assertNotNull(dp);
@@ -164,10 +150,10 @@ public class PackageTest {
         // Build DataPackage instance based on source file path.
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
 
-        // We're not asserting the String value since the order of the JSONObject elements is not guaranteed.
+        // We're not asserting the String value since the order of the JsonNode elements is not guaranteed.
         // Just compare the length of the String, should be enough.
-        JSONObject obj = new JSONObject(dp.getJson());
-        Assert.assertEquals(obj.length(), new JSONObject(jsonString).length());
+        JsonNode obj = createNode(dp.getJson());
+        Assert.assertEquals(obj.size(), createNode(jsonString).size());
     }
     
     @Test
@@ -193,7 +179,7 @@ public class PackageTest {
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/not_a_json_datapackage.json").getPath();
         
-        exception.expect(JSONException.class);
+        exception.expect(JsonParseException.class);
         Package dp = new Package(sourceFileAbsPath, getBasePath(), true);
     }
    
@@ -439,9 +425,9 @@ public class PackageTest {
         savedPackage.write(tempDirPath.toFile(), false);
 
         Package readPackage = new Package(tempDirPath.resolve(Package.DATAPACKAGE_FILENAME),false);
-        JSONObject readPackageJson = new JSONObject(readPackage.getJson()) ;
-        JSONObject savedPackageJson = new JSONObject(savedPackage.getJson()) ;
-        Assert.assertTrue(readPackageJson.similar(savedPackageJson));
+        JsonNode readPackageJson = createNode(readPackage.getJson()) ;
+        JsonNode savedPackageJson = createNode(savedPackage.getJson()) ;
+        Assert.assertTrue(readPackageJson.equals(savedPackageJson));
     }
     
     @Test
@@ -458,7 +444,7 @@ public class PackageTest {
         Package readPackage = new Package(createdFile.toPath(), false);
         
         // Check if two data packages are have the same key/value pairs.
-        // For some reason JSONObject.similar() is not working even though both
+        // For some reason JsonNode.similar() is not working even though both
         // json objects are exactly the same. Just compare lengths then.
         Assert.assertEquals(readPackage.getJson().toString().length(), originalPackage.getJson().toString().length());
     }
@@ -574,10 +560,10 @@ public class PackageTest {
         Assert.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
-        JSONObject expectedSchemaJson = new JSONObject(expectedSchema.getJson());
-        JSONObject testSchemaJson = new JSONObject(resource.getSchema().getJson());
+        JsonNode expectedSchemaJson = createNode(expectedSchema.getJson());
+        JsonNode testSchemaJson = createNode(resource.getSchema().getJson());
         // Compare JSON objects
-        Assert.assertTrue("Schemas don't match", expectedSchemaJson.similar(testSchemaJson));
+        Assert.assertTrue("Schemas don't match", expectedSchemaJson.equals(testSchemaJson));
     }
     
     @Test
@@ -592,10 +578,10 @@ public class PackageTest {
         Assert.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
-        JSONObject expectedSchemaJson = new JSONObject(expectedSchema.getJson());
-        JSONObject testSchemaJson = new JSONObject(resource.getSchema().getJson());
+        JsonNode expectedSchemaJson = createNode(expectedSchema.getJson());
+        JsonNode testSchemaJson = createNode(resource.getSchema().getJson());
         // Compare JSON objects
-        Assert.assertTrue("Schemas don't match", expectedSchemaJson.similar(testSchemaJson));
+        Assert.assertTrue("Schemas don't match", expectedSchemaJson.equals(testSchemaJson));
     }
     
     /** TODO: Implement more thorough testing.
@@ -631,11 +617,11 @@ public class PackageTest {
 
         Object testprop = dp.getOtherProperty("testprop");
         Assert.assertNotNull(testprop);
-        Assert.assertTrue(testprop instanceof JSONObject);
+        Assert.assertTrue(testprop instanceof JsonNode);
 
         Object testarray = dp.getOtherProperty("testarray");
         Assert.assertNotNull(testarray);
-        Assert.assertTrue(testarray instanceof JSONArray);
+        Assert.assertTrue(testarray instanceof ArrayNode);
 
         Object resObj = dp.getOtherProperty("resources");
         Assert.assertNull(resObj);
@@ -650,7 +636,7 @@ public class PackageTest {
         Assert.assertEquals(3, employees.size());
         EmployeeBean frank = employees.get(1);
         Assert.assertEquals("Frank McKrank", frank.getName());
-        Assert.assertEquals("1992-02-14", new DateField("date").formatValue(frank.getDateOfBirth(), null, null));
+        Assert.assertEquals("1992-02-14", new DateField("date").formatValueAsString(frank.getDateOfBirth(), null, null));
         Assert.assertFalse(frank.getAdmin());
         Assert.assertEquals("(90.0, 45.0, NaN)", frank.getAddressCoordinates().toString());
         Assert.assertEquals("PT15M", frank.getContractLength().toString());
@@ -699,6 +685,20 @@ public class PackageTest {
         expectedData.add(new String[]{"rome", "41.89,12.51"});
         
         return expectedData;
+    }
+    
+    private static JsonNode createNode(String json) {
+    	return JsonUtil.getInstance().createNode(json);
+    }
+    
+    private Map<String, Object> createTestMap(){
+    	HashMap<String, Object> map = new HashMap<>();
+    	map.put("name", "test");
+    	return map;
+    }
+    
+    private String asString(Object object) {
+    	return JsonUtil.getInstance().serialize(object);
     }
     
     //TODO: come up with attribute edit tests:

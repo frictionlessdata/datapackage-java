@@ -1,15 +1,17 @@
 package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.exception.ValidationException;
+import io.frictionlessdata.tableschema.schema.JsonSchema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.everit.json.schema.Schema;
-import org.everit.json.schema.ValidationException;
-import org.everit.json.schema.loader.SchemaLoader;
-import org.json.JSONObject;
-import org.json.JSONTokener;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  *
@@ -24,11 +26,11 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JSONObject jsonObjectToValidate) throws IOException, DataPackageException, ValidationException{
+    public void validate(JsonNode jsonObjectToValidate) throws IOException, DataPackageException, ValidationException{
         
         // If a profile value is provided.
         if(jsonObjectToValidate.has(Package.JSON_KEY_PROFILE)){
-            String profile = jsonObjectToValidate.getString(Package.JSON_KEY_PROFILE);
+            String profile = jsonObjectToValidate.get(Package.JSON_KEY_PROFILE).asText();
             
             String[] schemes = {"http", "https"};
             UrlValidator urlValidator = new UrlValidator(schemes);
@@ -52,12 +54,11 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JSONObject jsonObjectToValidate, String profileId) throws DataPackageException, ValidationException{ 
+    public void validate(JsonNode jsonObjectToValidate, String profileId) throws DataPackageException, ValidationException{ 
 
         InputStream inputStream = Validator.class.getResourceAsStream("/schemas/" + profileId + ".json");
         if(inputStream != null){
-            JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
-            Schema schema = SchemaLoader.load(rawSchema);
+             JsonSchema schema = JsonSchema.fromJson(inputStream, true);
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }else{
@@ -74,11 +75,10 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JSONObject jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
+    public void validate(JsonNode jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
         try{
             InputStream inputStream = schemaUrl.openStream();
-            JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream));
-            Schema schema = SchemaLoader.load(rawSchema);
+            JsonSchema schema = JsonSchema.fromJson(inputStream, true);
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }catch(FileNotFoundException e){
@@ -94,7 +94,7 @@ public class Validator {
      * @throws ValidationException 
      */
     public void validate(String jsonStringToValidate) throws IOException, DataPackageException, ValidationException{
-        JSONObject jsonObject = new JSONObject(jsonStringToValidate);
+        JsonNode jsonObject = JsonUtil.getInstance().createNode(jsonStringToValidate);
         validate(jsonObject);
     }
 }

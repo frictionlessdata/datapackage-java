@@ -5,12 +5,14 @@ import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.Writer;
 import java.lang.reflect.Type;
@@ -47,8 +49,8 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     String hash = null;
 
     Dialect dialect;
-    JSONArray sources = null;
-    JSONArray licenses = null;
+    ArrayNode sources = null;
+    ArrayNode licenses = null;
 
     // Schema
     Schema schema = null;
@@ -106,7 +108,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
-            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass);
+            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass, true);
             while (iter.hasNext()) {
                 retVal.add(iter.next());
             }
@@ -130,19 +132,19 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * Get JSON representation of the object.
      * @return a JSONObject representing the properties of this object
      */
-    public JSONObject getJson(){
+    public ObjectNode getJson(){
         //FIXME: Maybe use something lke GSON so we don't have to explicitly
         //code this...
-        JSONObject json = new JSONObject(new LinkedHashMap<String, Object>());
+        ObjectNode json = JsonUtil.getInstance().createNode();
 
         // Null values will not actually be "put," as per JSONObject specs.
         json.put(JSON_KEY_NAME, this.getName());
 
         if (this instanceof AbstractReferencebasedResource) {
-            json.put(JSON_KEY_PATH, ((AbstractReferencebasedResource)this).getPathJson());
+            json.set(JSON_KEY_PATH, ((AbstractReferencebasedResource)this).getPathJson());
         }
         if (this instanceof AbstractDataResource) {
-            json.put(JSON_KEY_DATA, ((AbstractDataResource)this).getData());
+            json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(((AbstractDataResource)this).getData()));
         }
         json.put(JSON_KEY_PROFILE, this.profile);
         json.put(JSON_KEY_TITLE, this.title);
@@ -152,14 +154,14 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         json.put(JSON_KEY_ENCODING, this.getEncoding());
         json.put(JSON_KEY_BYTES, this.getBytes());
         json.put(JSON_KEY_HASH, this.getHash());
-        json.put(JSON_KEY_SOURCES, this.getSources());
-        json.put(JSON_KEY_LICENSES, this.getLicenses());
+        json.set(JSON_KEY_SOURCES, this.getSources());
+        json.set(JSON_KEY_LICENSES, this.getLicenses());
 
         Object schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
-        json.put(JSON_KEY_SCHEMA, schemaObj);
+        json.set(JSON_KEY_SCHEMA, JsonUtil.getInstance().createNode(schemaObj));
 
         Object dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
-        json.put(JSON_KEY_DIALECT, dialectObj);
+        json.set(JSON_KEY_DIALECT, JsonUtil.getInstance().createNode(dialectObj));
         return json;
     }
 
@@ -350,7 +352,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * @return the sources
      */
     @Override
-    public JSONArray getSources() {
+    public ArrayNode getSources() {
         return sources;
     }
 
@@ -358,7 +360,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * @param sources the sources to set
      */
     @Override
-    public void setSources(JSONArray sources) {
+    public void setSources(ArrayNode sources) {
         this.sources = sources;
     }
 
@@ -366,7 +368,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * @return the licenses
      */
     @Override
-    public JSONArray getLicenses() {
+    public ArrayNode getLicenses() {
         return licenses;
     }
 
@@ -374,7 +376,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * @param licenses the licenses to set
      */
     @Override
-    public void setLicenses(JSONArray licenses) {
+    public void setLicenses(ArrayNode licenses) {
         this.licenses = licenses;
     }
 

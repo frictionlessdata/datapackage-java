@@ -4,9 +4,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import io.frictionlessdata.tableschema.util.JsonUtil;
 
 import java.io.*;
 import java.net.URL;
@@ -21,6 +19,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
@@ -67,8 +68,8 @@ public abstract class JSONBase {
     private String hash = null;
 
     Dialect dialect;
-    private JSONArray sources = null;
-    private JSONArray licenses = null;
+    private ArrayNode sources = null;
+    private ArrayNode licenses = null;
 
     // Schema
     private Schema schema = null;
@@ -165,63 +166,63 @@ public abstract class JSONBase {
         return originalReferences.get(JSONBase.JSON_KEY_SCHEMA).toString();
     }
 
-    public JSONArray getSources(){
+    public ArrayNode getSources(){
         return sources;
     }
 
-    public void setSources(JSONArray sources){
+    public void setSources(ArrayNode sources){
         this.sources = sources;
     }
     /**
      * @return the licenses
      */
-    public JSONArray getLicenses(){return  licenses;}
+    public ArrayNode getLicenses(){return  licenses;}
 
     /**
      * @param licenses the licenses to set
      */
-    public void setLicenses(JSONArray licenses){this.licenses = licenses;}
+    public void setLicenses(ArrayNode licenses){this.licenses = licenses;}
 
 
-    public static Schema buildSchema(JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
+    public static Schema buildSchema(JsonNode resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
         // Get the schema and dereference it. Enables validation against it.
         Object schemaObj = resourceJson.has(JSONBase.JSON_KEY_SCHEMA) ? resourceJson.get(JSONBase.JSON_KEY_SCHEMA) : null;
-        JSONObject dereferencedSchema = dereference(schemaObj, basePath, isArchivePackage);
+        JsonNode dereferencedSchema = dereference(schemaObj, basePath, isArchivePackage);
         if (null != dereferencedSchema) {
             return Schema.fromJson(dereferencedSchema.toString(), false);
         }
         return null;
     }
 
-    public static Dialect buildDialect (JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
+    public static Dialect buildDialect (JsonNode resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
         // Get the dialect and dereference it. Enables validation against it.
         Object dialectObj = resourceJson.has(JSONBase.JSON_KEY_DIALECT) ? resourceJson.get(JSONBase.JSON_KEY_DIALECT) : null;
-        JSONObject dereferencedDialect = dereference(dialectObj, basePath, isArchivePackage);
+        JsonNode dereferencedDialect = dereference(dialectObj, basePath, isArchivePackage);
         if (null != dereferencedDialect) {
             return Dialect.fromJson(dereferencedDialect.toString());
         }
         return null;
     }
 
-    public static void setFromJson(JSONObject resourceJson, JSONBase retVal, Schema schema) {
+    public static void setFromJson(JsonNode resourceJson, JSONBase retVal, Schema schema) {
+    	
         if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA))
             retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA));
         if (resourceJson.has(JSONBase.JSON_KEY_DIALECT))
             retVal.originalReferences.put(JSONBase.JSON_KEY_DIALECT, resourceJson.get(JSONBase.JSON_KEY_DIALECT));
 
-        //FIXME: Again, could be greatly simplified amd much more
-        // elegant if we use a library like GJSON...
-        String name = resourceJson.has(JSONBase.JSON_KEY_NAME) ? resourceJson.getString(JSONBase.JSON_KEY_NAME) : null;
-        String profile = resourceJson.has(JSONBase.JSON_KEY_PROFILE) ? resourceJson.getString(JSONBase.JSON_KEY_PROFILE) : null;
-        String title = resourceJson.has(JSONBase.JSON_KEY_TITLE) ? resourceJson.getString(JSONBase.JSON_KEY_TITLE) : null;
-        String description = resourceJson.has(JSONBase.JSON_KEY_DESCRIPTION) ? resourceJson.getString(JSONBase.JSON_KEY_DESCRIPTION) : null;
-        String mediaType = resourceJson.has(JSONBase.JSON_KEY_MEDIA_TYPE) ? resourceJson.getString(JSONBase.JSON_KEY_MEDIA_TYPE) : null;
-        String encoding = resourceJson.has(JSONBase.JSON_KEY_ENCODING) ? resourceJson.getString(JSONBase.JSON_KEY_ENCODING) : null;
-        Integer bytes = resourceJson.has(JSONBase.JSON_KEY_BYTES) ? resourceJson.getInt(JSONBase.JSON_KEY_BYTES) : null;
-        String hash = resourceJson.has(JSONBase.JSON_KEY_HASH) ? resourceJson.getString(JSONBase.JSON_KEY_HASH) : null;
+        // TODO: A mapper library might be useful, but not required
+        String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
+        String profile = textValueOrNull(resourceJson, JSONBase.JSON_KEY_PROFILE);
+        String title = textValueOrNull(resourceJson, JSONBase.JSON_KEY_TITLE);
+        String description = textValueOrNull(resourceJson, JSONBase.JSON_KEY_DESCRIPTION);
+        String mediaType = textValueOrNull(resourceJson, JSONBase.JSON_KEY_MEDIA_TYPE);
+        String encoding = textValueOrNull(resourceJson, JSONBase.JSON_KEY_ENCODING);
+        Integer bytes = resourceJson.has(JSONBase.JSON_KEY_BYTES) ? resourceJson.get(JSONBase.JSON_KEY_BYTES).asInt() : null;
+        String hash = textValueOrNull(resourceJson, JSONBase.JSON_KEY_HASH);
 
-        JSONArray sources = resourceJson.has(JSONBase.JSON_KEY_SOURCES) ? resourceJson.getJSONArray(JSONBase.JSON_KEY_SOURCES) : null;
-        JSONArray licenses = resourceJson.has(JSONBase.JSON_KEY_LICENSES) ? resourceJson.getJSONArray(JSONBase.JSON_KEY_LICENSES) : null;
+        ArrayNode sources = resourceJson.has(JSONBase.JSON_KEY_SOURCES) ? resourceJson.withArray(JSONBase.JSON_KEY_SOURCES): null;
+        ArrayNode licenses = resourceJson.has(JSONBase.JSON_KEY_LICENSES) ? resourceJson.withArray(JSONBase.JSON_KEY_LICENSES) : null;
 
         retVal.setName(name);
         retVal.setSchema(schema);
@@ -234,6 +235,10 @@ public abstract class JSONBase {
         retVal.setHash(hash);
         retVal.setSources(sources);
         retVal.setLicenses(licenses);
+    }
+    
+    private static String textValueOrNull(JsonNode source, String fieldName) {
+    	return source.has(fieldName) ? source.asText() : null;
     }
 
 
@@ -324,7 +329,7 @@ public abstract class JSONBase {
         }
     }
 
-    public static JSONObject dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {
+    public static JsonNode dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {
         String jsonContentString;
         if (isArchivePackage) {
             String filePath = fileObj.getPath();
@@ -348,7 +353,7 @@ public abstract class JSONBase {
                 throw new DataPackageFileOrUrlNotFoundException("Local file not found: " + fileObj);
             }
         }
-        return new JSONObject(jsonContentString);
+        return createNode(jsonContentString);
     }
 
     /**
@@ -357,22 +362,22 @@ public abstract class JSONBase {
      * from the URL content
      * @param url fully qualified URL or path fragment
      * @param basePath base URL, only used if we are dealing with a path fragment
-     * @return a JSONObject built from the url content
+     * @return a JsonNode built from the url content
      * @throws IOException if fetching the contents of the URL goes wrong
      */
 
-    private static JSONObject dereference(String url, URL basePath) throws IOException {
-        JSONObject dereferencedObj = null;
+    private static JsonNode dereference(String url, URL basePath) throws IOException {
+        JsonNode dereferencedObj = null;
 
         if (isValidUrl(url)) {
             // Create the dereferenced object from the remote file.
             String jsonContentString = getFileContentAsString(new URL(url));
-            dereferencedObj = new JSONObject(jsonContentString);
+            dereferencedObj = createNode(jsonContentString);
         } else {
             URL lURL = new URL(basePath.toExternalForm()+url);
             if (isValidUrl(lURL)) {
                 String jsonContentString = getFileContentAsString(lURL);
-                dereferencedObj = new JSONObject(jsonContentString);
+                dereferencedObj = createNode(jsonContentString);
             } else {
                 throw new DataPackageFileOrUrlNotFoundException("URL not found"+lURL);
             }
@@ -380,23 +385,23 @@ public abstract class JSONBase {
         return dereferencedObj;
     }
 
-    public static JSONObject dereference(Object obj, Object basePath, boolean isArchivePackage) throws IOException {
+    public static JsonNode dereference(Object obj, Object basePath, boolean isArchivePackage) throws IOException {
         if (null == obj)
             return null;
         // Object is already a dereferenced object.
-        if(obj instanceof JSONObject){
+        if(obj instanceof JsonNode){
             // Don't need to do anything, just cast and return.
-            return (JSONObject)obj;
+            return (JsonNode)obj;
         } else if(obj instanceof String){
             String reference = (String)obj;
             if (isValidUrl(reference))
                 if (basePath instanceof File) {
                     String jsonString = getFileContentAsString(new URL(reference));
-                    return new JSONObject(jsonString);
+                    return createNode(jsonString);
                 }
                 else {
                     String jsonString = getFileContentAsString(new URL(reference));
-                    return new JSONObject(jsonString);
+                    return createNode(jsonString);
                 }
             else if (basePath instanceof URL) {
                 return dereference(reference, (URL) basePath);
@@ -405,5 +410,9 @@ public abstract class JSONBase {
         }
 
         return null;
+    }
+    
+    protected static JsonNode createNode(String json) {
+    	return JsonUtil.getInstance().createNode(json);
     }
 }

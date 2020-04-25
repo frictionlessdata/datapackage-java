@@ -1,17 +1,20 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.exception.ValidationException;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import org.everit.json.schema.ValidationException;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
@@ -36,7 +39,7 @@ public class ValidatorTest {
     
     @Test
     public void testValidatingInvalidJsonObject() throws IOException, DataPackageException {
-        JSONObject datapackageJsonObject = new JSONObject("{\"invalid\" : \"json\"}");
+        JsonNode datapackageJsonObject = JsonUtil.getInstance().createNode("{\"invalid\" : \"json\"}");
         
         exception.expect(ValidationException.class);
         validator.validate(datapackageJsonObject);  

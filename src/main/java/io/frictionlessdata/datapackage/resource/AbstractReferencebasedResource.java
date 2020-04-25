@@ -1,7 +1,9 @@
 package io.frictionlessdata.datapackage.resource;
 
 import io.frictionlessdata.tableschema.Table;
-import org.json.JSONArray;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,17 +29,12 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
      if more than one path in our paths object, return a JSON array,
      else just that one object.
      */
-    Object getPathJson() {
+    JsonNode getPathJson() {
         List<String> path = new ArrayList<>(getReferencesAsStrings());
         if (path.size() == 1) {
-            return path.get(0);
+            return JsonUtil.getInstance().createTextNode(path.get(0));
         } else {
-            JSONArray pathNames = new JSONArray();
-            for (Object obj : path) {
-                pathNames.put(obj);
-
-            }
-            return pathNames;
+            return JsonUtil.getInstance().createArrayNode(path);
         }
     }
 
