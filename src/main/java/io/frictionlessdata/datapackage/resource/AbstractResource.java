@@ -11,6 +11,10 @@ import io.frictionlessdata.tableschema.iterator.TableIterator;
 import org.apache.commons.collections.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -20,11 +24,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Abstract base implementation of a Resource.
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
+@JsonInclude(value = Include.NON_ABSENT, content = Include.NON_ABSENT)
 public abstract class AbstractResource<T,C> extends JSONBase implements Resource<T,C> {
 
     // Data properties.
@@ -117,12 +123,14 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     @Override
+	@JsonIgnore
     public String[] getHeaders() throws Exception{
         ensureDataLoaded();
         return tables.get(0).getHeaders();
     }
 
     @Override
+	@JsonIgnore
     public List<Table> getTables() throws Exception {
         ensureDataLoaded();
         return tables;
@@ -132,13 +140,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * Get JSON representation of the object.
      * @return a JSONObject representing the properties of this object
      */
+    @JsonIgnore
     public ObjectNode getJson(){
-        //FIXME: Maybe use something lke GSON so we don't have to explicitly
-        //code this...
-        ObjectNode json = JsonUtil.getInstance().createNode();
-
-        // Null values will not actually be "put," as per JSONObject specs.
-        json.put(JSON_KEY_NAME, this.getName());
+        ObjectNode json = (ObjectNode) JsonUtil.getInstance().createNode(this);
 
         if (this instanceof AbstractReferencebasedResource) {
             json.set(JSON_KEY_PATH, ((AbstractReferencebasedResource)this).getPathJson());
@@ -146,22 +150,16 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         if (this instanceof AbstractDataResource) {
             json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(((AbstractDataResource)this).getData()));
         }
-        json.put(JSON_KEY_PROFILE, this.profile);
-        json.put(JSON_KEY_TITLE, this.title);
-        json.put(JSON_KEY_DESCRIPTION, this.description);
-        json.put(JSON_KEY_FORMAT, this.format);
-        json.put(JSON_KEY_MEDIA_TYPE, this.getMediaType());
-        json.put(JSON_KEY_ENCODING, this.getEncoding());
-        json.put(JSON_KEY_BYTES, this.getBytes());
-        json.put(JSON_KEY_HASH, this.getHash());
-        json.set(JSON_KEY_SOURCES, this.getSources());
-        json.set(JSON_KEY_LICENSES, this.getLicenses());
-
-        Object schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
-        json.set(JSON_KEY_SCHEMA, JsonUtil.getInstance().createNode(schemaObj));
-
-        Object dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
-        json.set(JSON_KEY_DIALECT, JsonUtil.getInstance().createNode(dialectObj));
+        if (Objects.nonNull(originalReferences.get(JSONBase.JSON_KEY_SCHEMA)) && 
+        		originalReferences.get(JSONBase.JSON_KEY_SCHEMA).getClass().isAssignableFrom(ObjectNode.class)) {
+        	Object schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
+            json.set(JSON_KEY_SCHEMA, JsonUtil.getInstance().createNode(schemaObj));
+        }
+        if (Objects.nonNull(originalReferences.get(JSONBase.JSON_KEY_DIALECT)) && 
+        		originalReferences.get(JSONBase.JSON_KEY_DIALECT).getClass().isAssignableFrom(ObjectNode.class)) {
+        	Object dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
+            json.set(JSON_KEY_DIALECT, JsonUtil.getInstance().createNode(dialectObj));
+        }
         return json;
     }
 
@@ -333,10 +331,12 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     @Override
+    @JsonIgnore
     public String getSchemaReference(){
         return super.getSchemaReference();
     }
 
+    @JsonIgnore
     public String getDialectReference() {
         if (null == originalReferences.get(JSONBase.JSON_KEY_DIALECT))
             return null;

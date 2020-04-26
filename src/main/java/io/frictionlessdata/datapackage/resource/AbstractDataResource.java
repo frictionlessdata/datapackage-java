@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Abstract base class for all Resources that are based on directly set data, that is not on
  * data specified as files or URLs.
@@ -28,6 +30,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     /**
      * @return the data
      */
+    @JsonIgnore
     public T getData() {
         return data;
     }

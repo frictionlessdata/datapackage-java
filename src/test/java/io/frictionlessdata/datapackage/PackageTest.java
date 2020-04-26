@@ -21,6 +21,8 @@ import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.exception.JsonParsingException;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,6 +34,7 @@ import org.junit.rules.TemporaryFolder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
@@ -104,7 +107,7 @@ public class PackageTest {
         testObj.put("resources", resourceArrayList);
 
         // Build the datapackage
-        Package dp = new Package(asString(testObj), getBasePath(), true);
+        Package dp = new Package(asString(testObj), getBasePath(), false);
         // Resolve the Resources -> FileNotFoundException due to non-existing files
         exception.expect(FileNotFoundException.class);
         List<Table> tables = dp.getResource("first-resource").getTables();
@@ -179,7 +182,7 @@ public class PackageTest {
         // Get path of source file:
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/not_a_json_datapackage.json").getPath();
         
-        exception.expect(JsonParseException.class);
+        exception.expect(JsonParsingException.class);
         Package dp = new Package(sourceFileAbsPath, getBasePath(), true);
     }
    
@@ -444,9 +447,7 @@ public class PackageTest {
         Package readPackage = new Package(createdFile.toPath(), false);
         
         // Check if two data packages are have the same key/value pairs.
-        // For some reason JsonNode.similar() is not working even though both
-        // json objects are exactly the same. Just compare lengths then.
-        Assert.assertEquals(readPackage.getJson().toString().length(), originalPackage.getJson().toString().length());
+        Assert.assertEquals(readPackage.getJson(), originalPackage.getJson());
     }
 
 
@@ -612,8 +613,8 @@ public class PackageTest {
 
         Object creator = dp.getOtherProperty("creator");
         Assert.assertNotNull(creator);
-        Assert.assertEquals(String.class, creator.getClass());
-        Assert.assertEquals("Horst", creator);
+        Assert.assertEquals(TextNode.class, creator.getClass());
+        Assert.assertEquals("Horst", ((TextNode)creator).asText());
 
         Object testprop = dp.getOtherProperty("testprop");
         Assert.assertNotNull(testprop);

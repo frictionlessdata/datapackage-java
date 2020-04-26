@@ -220,10 +220,10 @@ public interface Resource<T,C> {
 
 
     static AbstractResource build(ObjectNode resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
-        String name = resourceJson.get(JSONBase.JSON_KEY_NAME).asText(null);
+        String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
         Object path = resourceJson.get(JSONBase.JSON_KEY_PATH);
         Object data = resourceJson.get(JSONBase.JSON_KEY_DATA);
-        String format = resourceJson.get(JSONBase.JSON_KEY_FORMAT).asText(null);
+        String format = textValueOrNull(resourceJson, JSONBase.JSON_KEY_FORMAT);
         Dialect dialect = JSONBase.buildDialect (resourceJson, basePath, isArchivePackage);
         Schema schema = JSONBase.buildSchema(resourceJson, basePath, isArchivePackage);
 
@@ -396,5 +396,9 @@ public interface Resource<T,C> {
         }
 
         return resolvedPath;
+    }
+
+    static String textValueOrNull(JsonNode source, String fieldName) {
+    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }
 }

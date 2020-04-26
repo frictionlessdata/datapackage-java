@@ -5,6 +5,8 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 import org.apache.commons.csv.CSVFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +39,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         }
     }
 
+    @JsonIgnore
     public File getBasePath() {
         return basePath;
     }

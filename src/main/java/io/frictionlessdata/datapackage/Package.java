@@ -5,6 +5,9 @@ import io.frictionlessdata.datapackage.resource.*;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.exception.InvalidCastException;
+import io.frictionlessdata.tableschema.exception.JsonSerializingException;
+import io.frictionlessdata.tableschema.exception.TableSchemaException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 
 import org.apache.commons.collections.list.UnmodifiableList;
@@ -12,6 +15,8 @@ import org.apache.commons.collections.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,6 +41,7 @@ import java.util.zip.ZipOutputStream;
  * Load, validate, create, and save a datapackage object according to the specifications at
  * https://github.com/frictionlessdata/specs/blob/master/specs/data-package.md
  */
+@JsonInclude(value = Include.NON_ABSENT)
 public class Package extends JSONBase{
     public static final String DATAPACKAGE_FILENAME = "datapackage.json";
     private static final String JSON_KEY_RESOURCES = "resources";
@@ -103,7 +109,7 @@ public class Package extends JSONBase{
             throw new DataPackageException("basePath cannot be null for JSON-based DataPackages ");
         this.basePath = basePath;
 
-        // Create and set the JsonNode fpr the String representation of desriptor JSON object.
+    	// Create and set the JsonNode for the String representation of descriptor JSON object.
         this.setJson((ObjectNode) JsonUtil.getInstance().createNode(jsonStringSource));
 
         // If String representation of desriptor JSON object is provided.
@@ -138,7 +144,13 @@ public class Package extends JSONBase{
         String jsonString = getFileContentAsString(urlSource);
 
         // Create JsonNode and validate.
-        this.setJson((ObjectNode) createNode(jsonString));
+        try {
+        	this.setJson((ObjectNode) createNode(jsonString));
+        } catch (DataPackageException ex) {
+        	if (strict) {
+        		throw ex;
+        	}
+        }
         this.validate();  
         
     }
@@ -174,7 +186,7 @@ public class Package extends JSONBase{
         if (descriptorFile.toFile().getName().toLowerCase().endsWith(".zip")) {
             isArchivePackage = true;
             basePath = descriptorFile;
-            sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
+        	sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
         } else {
             basePath = descriptorFile.getParent();
             String sourceJsonString = getFileContentAsString(descriptorFile);
@@ -483,7 +495,7 @@ public class Package extends JSONBase{
         return getJsonNode().toPrettyString();
     }
 
-    private ObjectNode getJsonNode(){
+    protected ObjectNode getJsonNode(){
         if(resources.size() > 0){
             this.JsonNode.set(JSON_KEY_RESOURCES, 
             		JsonUtil.getInstance().createArrayNode(resources.stream().map(r->r.getJson()).collect(Collectors.toList())));
@@ -538,13 +550,13 @@ public class Package extends JSONBase{
         Schema schema = buildSchema (JsonNodeSource, basePath, isArchivePackage);
         setFromJson(JsonNodeSource, this, schema);
 
-        this.setName(JsonNodeSource.get(Package.JSON_KEY_ID).asText(null));
-        this.setVersion(JsonNodeSource.get(Package.JSON_KEY_VERSION).asText(null));
+        this.setName(textValueOrNull(JsonNodeSource, Package.JSON_KEY_ID));
+        this.setVersion(textValueOrNull(JsonNodeSource, Package.JSON_KEY_VERSION));
         this.setHomepage(JsonNodeSource.has(Package.JSON_KEY_HOMEPAGE)
                 ? new URL(JsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText())
                 : null);
-        this.setImage(JsonNodeSource.get(Package.JSON_KEY_IMAGE).asText(null));
-        this.setCreated(JsonNodeSource.get(Package.JSON_KEY_CREATED).asText(null));
+        this.setImage(textValueOrNull(JsonNodeSource, Package.JSON_KEY_IMAGE));
+        this.setCreated(textValueOrNull(JsonNodeSource, Package.JSON_KEY_CREATED));
         this.setContributors(JsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS)
                 ? Contributor.fromJson(JsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())
                 : null);
@@ -773,5 +785,8 @@ public class Package extends JSONBase{
 
         return urlValidator.isValid(objString);
     }
-
+    
+    private static String textValueOrNull(JsonNode source, String fieldName) {
+    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
+    }
 }

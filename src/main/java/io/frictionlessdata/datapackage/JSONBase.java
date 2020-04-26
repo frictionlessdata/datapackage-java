@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
@@ -22,6 +23,8 @@ import java.util.zip.ZipFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
@@ -74,7 +77,7 @@ public abstract class JSONBase {
     // Schema
     private Schema schema = null;
 
-    protected Map<String, Object> originalReferences = new HashMap<>();
+    protected Map<String, String> originalReferences = new HashMap<>();
     /**
      * @return the name
      */
@@ -206,10 +209,10 @@ public abstract class JSONBase {
 
     public static void setFromJson(JsonNode resourceJson, JSONBase retVal, Schema schema) {
     	
-        if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA))
-            retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA));
-        if (resourceJson.has(JSONBase.JSON_KEY_DIALECT))
-            retVal.originalReferences.put(JSONBase.JSON_KEY_DIALECT, resourceJson.get(JSONBase.JSON_KEY_DIALECT));
+        if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA) && resourceJson.get(JSONBase.JSON_KEY_SCHEMA).isTextual())
+            retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA).asText());
+        if (resourceJson.has(JSONBase.JSON_KEY_DIALECT) && resourceJson.get(JSONBase.JSON_KEY_DIALECT).isTextual())
+            retVal.originalReferences.put(JSONBase.JSON_KEY_DIALECT, resourceJson.get(JSONBase.JSON_KEY_DIALECT).asText());
 
         // TODO: A mapper library might be useful, but not required
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
@@ -238,7 +241,7 @@ public abstract class JSONBase {
     }
     
     private static String textValueOrNull(JsonNode source, String fieldName) {
-    	return source.has(fieldName) ? source.asText() : null;
+    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }
 
 
@@ -329,7 +332,7 @@ public abstract class JSONBase {
         }
     }
 
-    public static JsonNode dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {
+    public static ObjectNode dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {
         String jsonContentString;
         if (isArchivePackage) {
             String filePath = fileObj.getPath();
@@ -353,7 +356,7 @@ public abstract class JSONBase {
                 throw new DataPackageFileOrUrlNotFoundException("Local file not found: " + fileObj);
             }
         }
-        return createNode(jsonContentString);
+        return (ObjectNode) createNode(jsonContentString);
     }
 
     /**
@@ -366,7 +369,7 @@ public abstract class JSONBase {
      * @throws IOException if fetching the contents of the URL goes wrong
      */
 
-    private static JsonNode dereference(String url, URL basePath) throws IOException {
+    private static ObjectNode dereference(String url, URL basePath) throws IOException {
         JsonNode dereferencedObj = null;
 
         if (isValidUrl(url)) {
@@ -382,26 +385,28 @@ public abstract class JSONBase {
                 throw new DataPackageFileOrUrlNotFoundException("URL not found"+lURL);
             }
         }
-        return dereferencedObj;
+        return (ObjectNode) dereferencedObj;
     }
 
-    public static JsonNode dereference(Object obj, Object basePath, boolean isArchivePackage) throws IOException {
+    public static ObjectNode dereference(Object obj, Object basePath, boolean isArchivePackage) throws IOException {
         if (null == obj)
             return null;
         // Object is already a dereferenced object.
-        if(obj instanceof JsonNode){
+        else if(obj instanceof ObjectNode){
             // Don't need to do anything, just cast and return.
-            return (JsonNode)obj;
+            return (ObjectNode)obj;
+        } else if (obj instanceof TextNode) {
+        	return dereference(((TextNode) obj).asText(), basePath, isArchivePackage);
         } else if(obj instanceof String){
             String reference = (String)obj;
             if (isValidUrl(reference))
                 if (basePath instanceof File) {
                     String jsonString = getFileContentAsString(new URL(reference));
-                    return createNode(jsonString);
+                    return (ObjectNode) createNode(jsonString);
                 }
                 else {
                     String jsonString = getFileContentAsString(new URL(reference));
-                    return createNode(jsonString);
+                    return (ObjectNode) createNode(jsonString);
                 }
             else if (basePath instanceof URL) {
                 return dereference(reference, (URL) basePath);
@@ -413,6 +418,10 @@ public abstract class JSONBase {
     }
     
     protected static JsonNode createNode(String json) {
-    	return JsonUtil.getInstance().createNode(json);
+    	try {
+    		return JsonUtil.getInstance().createNode(json);
+    	} catch (JsonParsingException ex) {
+        	throw new DataPackageException(ex);
+        }
     }
 }

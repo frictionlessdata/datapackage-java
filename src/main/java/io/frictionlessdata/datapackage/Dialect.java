@@ -2,6 +2,9 @@ package io.frictionlessdata.datapackage;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.QuoteMode;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.frictionlessdata.tableschema.util.JsonUtil;
@@ -22,6 +25,7 @@ import java.util.Map;
  * According to specification: https://frictionlessdata.io/specs/csv-dialect/
  */
 
+@JsonInclude(value = Include.NON_ABSENT, content = Include.NON_ABSENT)
 public class Dialect {
     // we construct one instance that will always keep the default values
     public static Dialect DEFAULT = new Dialect(){
