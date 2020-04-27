@@ -4,6 +4,9 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.exception.JsonParsingException;
+import io.frictionlessdata.tableschema.io.FileReference;
+import io.frictionlessdata.tableschema.io.LocalFileReference;
+import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -28,6 +33,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
+@JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public abstract class JSONBase {
     static final int JSON_INDENT_FACTOR = 4;// JSON keys.
     // FIXME: Use somethign like GSON instead so this explicit mapping is not
@@ -163,12 +169,6 @@ public abstract class JSONBase {
 
     public void setSchema(Schema schema){this.schema = schema;}
 
-    public String getSchemaReference() {
-        if (null == originalReferences.get(JSONBase.JSON_KEY_SCHEMA))
-            return null;
-        return originalReferences.get(JSONBase.JSON_KEY_SCHEMA).toString();
-    }
-
     public ArrayNode getSources(){
         return sources;
     }
@@ -187,24 +187,53 @@ public abstract class JSONBase {
     public void setLicenses(ArrayNode licenses){this.licenses = licenses;}
 
 
-    public static Schema buildSchema(JsonNode resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
-        // Get the schema and dereference it. Enables validation against it.
-        Object schemaObj = resourceJson.has(JSONBase.JSON_KEY_SCHEMA) ? resourceJson.get(JSONBase.JSON_KEY_SCHEMA) : null;
-        JsonNode dereferencedSchema = dereference(schemaObj, basePath, isArchivePackage);
-        if (null != dereferencedSchema) {
-            return Schema.fromJson(dereferencedSchema.toString(), false);
-        }
-        return null;
+    public Map<String, String> getOriginalReferences() {
+        return originalReferences;
     }
 
-    public static Dialect buildDialect (JsonNode resourceJson, Object basePath, boolean isArchivePackage) throws Exception {
-        // Get the dialect and dereference it. Enables validation against it.
-        Object dialectObj = resourceJson.has(JSONBase.JSON_KEY_DIALECT) ? resourceJson.get(JSONBase.JSON_KEY_DIALECT) : null;
-        JsonNode dereferencedDialect = dereference(dialectObj, basePath, isArchivePackage);
-        if (null != dereferencedDialect) {
-            return Dialect.fromJson(dereferencedDialect.toString());
+    public static Schema buildSchema(JsonNode resourceJson, Object basePath, boolean isArchivePackage)
+            throws Exception {
+        FileReference ref = referenceFromJson(resourceJson, JSON_KEY_SCHEMA, basePath);
+        if (null != ref) {
+            return Schema.fromJson(ref, true);
         }
-        return null;
+        Object schemaObj = resourceJson.has(JSON_KEY_SCHEMA)
+                ? resourceJson.get(JSON_KEY_SCHEMA)
+                : null;
+        if (null == schemaObj)
+            return null;
+        return Schema.fromJson(dereference(schemaObj, basePath, isArchivePackage).toString(), true);
+    }
+
+    public static Dialect buildDialect (JsonNode resourceJson, Object basePath, boolean isArchivePackage)
+            throws Exception {
+        FileReference ref = referenceFromJson(resourceJson, JSON_KEY_DIALECT, basePath);
+        if (null != ref) {
+            return Dialect.fromJson(ref);
+        }
+        Object dialectObj = resourceJson.has(JSON_KEY_DIALECT)
+                ? resourceJson.get(JSON_KEY_DIALECT)
+                : null;
+        if (null == dialectObj)
+            return null;
+        return Dialect.fromJson(dereference(dialectObj, basePath, isArchivePackage).toString());
+    }
+
+    private static FileReference referenceFromJson(JsonNode resourceJson, String key, Object basePath)
+            throws IOException {
+        Object dialectObj = resourceJson.has(key)
+                ? resourceJson.get(key)
+                : null;
+        if (null == dialectObj)
+            return null;
+        Object refObj = determineType(dialectObj, basePath);
+        FileReference ref = null;
+        if (refObj instanceof URL) {
+            ref = new URLFileReference((URL)refObj);
+        } else if (refObj instanceof File) {
+            ref = new LocalFileReference(((Path)basePath).toFile(), dialectObj.toString());
+        }
+        return ref;
     }
 
     public static void setFromJson(JsonNode resourceJson, JSONBase retVal, Schema schema) {
@@ -224,8 +253,14 @@ public abstract class JSONBase {
         Integer bytes = resourceJson.has(JSONBase.JSON_KEY_BYTES) ? resourceJson.get(JSONBase.JSON_KEY_BYTES).asInt() : null;
         String hash = textValueOrNull(resourceJson, JSONBase.JSON_KEY_HASH);
 
-        ArrayNode sources = resourceJson.has(JSONBase.JSON_KEY_SOURCES) ? resourceJson.withArray(JSONBase.JSON_KEY_SOURCES): null;
-        ArrayNode licenses = resourceJson.has(JSONBase.JSON_KEY_LICENSES) ? resourceJson.withArray(JSONBase.JSON_KEY_LICENSES) : null;
+        ArrayNode sources = null;
+        if(resourceJson.has(JSONBase.JSON_KEY_SOURCES) && resourceJson.get(JSON_KEY_SOURCES).isArray()) {
+        	sources = (ArrayNode) resourceJson.get(JSON_KEY_SOURCES);
+        }
+        ArrayNode licenses = null;
+        if(resourceJson.has(JSONBase.JSON_KEY_LICENSES) && resourceJson.get(JSONBase.JSON_KEY_LICENSES).isArray()){
+        	licenses = (ArrayNode) resourceJson.get(JSONBase.JSON_KEY_LICENSES);
+        }
 
         retVal.setName(name);
         retVal.setSchema(schema);
@@ -423,5 +458,27 @@ public abstract class JSONBase {
     	} catch (JsonParsingException ex) {
         	throw new DataPackageException(ex);
         }
+    }
+    
+    public static Object determineType(Object obj, Object basePath) throws IOException {
+        if (null == obj)
+            return null;
+        // Object is already a dereferenced object.
+        if(obj instanceof JsonNode){
+            // Don't need to do anything, just cast and return.
+            return obj;
+        } else if(obj instanceof String){
+            String reference = (String)obj;
+            if (isValidUrl(reference)){
+                return new URL(reference);
+            }
+            else if (basePath instanceof URL) {
+                return new URL(((URL)basePath), reference);
+            } else {
+                return new File(((Path)basePath).toFile(), reference);
+            }
+        }
+
+        return null;
     }
 }

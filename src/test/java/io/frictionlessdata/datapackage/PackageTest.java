@@ -156,7 +156,9 @@ public class PackageTest {
         // We're not asserting the String value since the order of the JsonNode elements is not guaranteed.
         // Just compare the length of the String, should be enough.
         JsonNode obj = createNode(dp.getJson());
-        Assert.assertEquals(obj.size(), createNode(jsonString).size());
+        // a default 'profile' is being set, so the two packages will differ, unless a profile is added to the fixture data
+        Assert.assertEquals(obj.get("resources").size(), createNode(jsonString).get("resources").size());
+        Assert.assertEquals(obj.get("name"), createNode(jsonString).get("name"));
     }
     
     @Test
@@ -249,7 +251,8 @@ public class PackageTest {
     public void testCreatingResourceWithInvalidPathNullValue() throws Exception {
         exception.expectMessage("Invalid Resource. " +
                 "The path property cannot be null for file-based Resources.");
-        FilebasedResource resource = new FilebasedResource("resource-name", (Collection)null, null);
+        FilebasedResource resource = FilebasedResource.fromSource("resource-name", null, null);
+        Assert.assertNotNull(resource);
     }
 
     
@@ -279,7 +282,7 @@ public class PackageTest {
         dialect.setDelimiter("\t");
         resource.setDialect(dialect);
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.read(false);
+        List<Object[]>data = resource.getData(false, false, false, false);
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -301,7 +304,7 @@ public class PackageTest {
                 "/fixtures/tab_separated_datapackage_with_dialect.json", true);
         Resource resource = dp.getResource("first-resource");
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.read(false);
+        List<Object[]>data = resource.getData(false, false, false, false);
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -362,22 +365,12 @@ public class PackageTest {
     }
     
     @Test
-    public void testAddInvalidJSONResourceWithStrictValidation() throws Exception {
+    public void testCreateInvalidJSONResource() throws Exception {
         Package dp = this.getDataPackageFromFilePath(true);
-        Resource res = new JSONDataResource((String)null, testResources.toString());
 
         exception.expectMessage("Invalid Resource, it does not have a name property.");
+        Resource res = new JSONDataResource(null, testResources.toString());
         dp.addResource(res);
-    }
-
-    @Test
-    public void testAddInvalidJSONResourceWithoutStrictValidation() throws Exception {
-        Package dp = this.getDataPackageFromFilePath(false);
-        Resource res = new JSONDataResource((String)null, testResources.toString());
-        dp.addResource(res);
-
-        Assert.assertTrue( dp.getErrors().size() > 0);
-        Assert.assertEquals("Invalid Resource, it does not have a name property.", dp.getErrors().get(0).getMessage());
     }
 
 
@@ -447,7 +440,9 @@ public class PackageTest {
         Package readPackage = new Package(createdFile.toPath(), false);
         
         // Check if two data packages are have the same key/value pairs.
-        Assert.assertEquals(readPackage.getJson(), originalPackage.getJson());
+        String expected = readPackage.getJson();
+        String actual = originalPackage.getJson();
+        Assert.assertEquals(expected, actual);
     }
 
 
@@ -462,7 +457,7 @@ public class PackageTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.read(false);
+        List<Object[]> data = r.getData(false, false, false, false);
         Assert.assertEquals(2, data.size());
         Assert.assertArrayEquals(usdTestData, data.get(0));
         Assert.assertArrayEquals(gbpTestData, data.get(1));
@@ -611,20 +606,20 @@ public class PackageTest {
         String sourceFileAbsPath = PackageTest.class.getResource(fName).getPath();
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
 
-        Object creator = dp.getOtherProperty("creator");
+        Object creator = dp.getProperty("creator");
         Assert.assertNotNull(creator);
         Assert.assertEquals(TextNode.class, creator.getClass());
         Assert.assertEquals("Horst", ((TextNode)creator).asText());
 
-        Object testprop = dp.getOtherProperty("testprop");
+        Object testprop = dp.getProperty("testprop");
         Assert.assertNotNull(testprop);
         Assert.assertTrue(testprop instanceof JsonNode);
 
-        Object testarray = dp.getOtherProperty("testarray");
+        Object testarray = dp.getProperty("testarray");
         Assert.assertNotNull(testarray);
         Assert.assertTrue(testarray instanceof ArrayNode);
 
-        Object resObj = dp.getOtherProperty("resources");
+        Object resObj = dp.getProperty("something");
         Assert.assertNull(resObj);
     }
 
@@ -633,7 +628,7 @@ public class PackageTest {
         Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
 
         Resource resource = pkg.getResource("employee-data");
-        final List<EmployeeBean> employees = resource.read(EmployeeBean.class);
+        final List<EmployeeBean> employees = resource.getData(EmployeeBean.class);
         Assert.assertEquals(3, employees.size());
         EmployeeBean frank = employees.get(1);
         Assert.assertEquals("Frank McKrank", frank.getName());
@@ -674,7 +669,7 @@ public class PackageTest {
     }
     
     private List<String[]> getAllCityData(){
-        List<String[]> expectedData  = new ArrayList();
+        List<String[]> expectedData  = new ArrayList<>();
         expectedData.add(new String[]{"libreville", "0.41,9.29"});
         expectedData.add(new String[]{"dakar", "14.71,-17.53"});
         expectedData.add(new String[]{"ouagadougou", "12.35,-1.67"});

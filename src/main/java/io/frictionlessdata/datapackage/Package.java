@@ -9,12 +9,14 @@ import io.frictionlessdata.tableschema.exception.InvalidCastException;
 import io.frictionlessdata.tableschema.exception.JsonSerializingException;
 import io.frictionlessdata.tableschema.exception.TableSchemaException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
+import io.frictionlessdata.tableschema.io.LocalFileReference;
 
 import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.collections.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -41,9 +43,9 @@ import java.util.zip.ZipOutputStream;
  * Load, validate, create, and save a datapackage object according to the specifications at
  * https://github.com/frictionlessdata/specs/blob/master/specs/data-package.md
  */
-@JsonInclude(value = Include.NON_ABSENT)
+@JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public class Package extends JSONBase{
-    public static final String DATAPACKAGE_FILENAME = "datapackage.json";
+    public  static final String DATAPACKAGE_FILENAME = "datapackage.json";
     private static final String JSON_KEY_RESOURCES = "resources";
     private static final String JSON_KEY_ID = "id";
     private static final String JSON_KEY_VERSION = "version";
@@ -53,6 +55,7 @@ public class Package extends JSONBase{
     private static final String JSON_KEY_CREATED = "created";
     private static final String JSON_KEY_CONTRIBUTORS = "contributors";
 
+    // Filesystem path pointing to the Package; either ZIP file or directory
     private Object basePath = null;
     private String id;
     private String version;
@@ -62,13 +65,12 @@ public class Package extends JSONBase{
     private String image;
     private ZonedDateTime created;
     private List<Contributor> contributors = new ArrayList<>();
-    private Map<String, Object> otherProperties = new LinkedHashMap<>();
     
-    private ObjectNode JsonNode = JsonUtil.getInstance().createNode();
+    private ObjectNode jsonObject = JsonUtil.getInstance().createNode();
     private boolean strictValidation = false;
-    private List<Resource> resources = new ArrayList<>();
-    private List<Exception> errors = new ArrayList<>();
-    private Validator validator = new Validator();
+    private final List<Resource> resources = new ArrayList<>();
+    private final List<Exception> errors = new ArrayList<>();
+    private final Validator validator = new Validator();
 
     /**
      * Create a new DataPackage and initialize with a number of Resources.
@@ -80,7 +82,7 @@ public class Package extends JSONBase{
      */
     public Package(Collection<Resource> resources) throws IOException {
         for (Resource r : resources) {
-            addResource(r);
+            addResource(r, false);
                    }
         UUID uuid = UUID.randomUUID();
         id = uuid.toString();
@@ -111,9 +113,6 @@ public class Package extends JSONBase{
 
     	// Create and set the JsonNode for the String representation of descriptor JSON object.
         this.setJson((ObjectNode) JsonUtil.getInstance().createNode(jsonStringSource));
-
-        // If String representation of desriptor JSON object is provided.
-        this.validate();
     }
 
     /**
@@ -151,8 +150,6 @@ public class Package extends JSONBase{
         		throw ex;
         	}
         }
-        this.validate();  
-        
     }
 
     /**
@@ -193,7 +190,6 @@ public class Package extends JSONBase{
             sourceJsonNode = createNode(sourceJsonString);
         }
         this.setJson((ObjectNode) sourceJsonNode);
-        this.validate();
     }
 
 
@@ -242,7 +238,7 @@ public class Package extends JSONBase{
         writeDescriptor(outFs, parentDirName);
 
         for (Resource r : this.resources) {
-            r.writeDataAsCsv(outFs.getPath(parentDirName+File.separator), dialect);
+            r.writeData(outFs.getPath(parentDirName+File.separator));
         }
     }
 
@@ -260,37 +256,31 @@ public class Package extends JSONBase{
         if (!zipCompressed) {
             parentDirName = outputDir.getPath();
         }
-        writeDescriptor(outFs, parentDirName);
 
         // only file-based Resources need to be written to the DataPackage, URLs stay as
         // external references and JSONArray-based Resources got serialized as part of the
         // Descriptor file
         final List<Resource> resourceList = resources
                 .stream()
-                .filter((r) -> (r instanceof FilebasedResource))
+                .filter(Resource::shouldSerializeToFile)
                 .collect(Collectors.toList());
 
         for (Resource r : resourceList) {
-            r.writeDataAsCsv(outFs.getPath(parentDirName), dialect);
-            String schemaRef = r.getSchemaReference();
-            // write out schema file only if not null or URL
-            if ((null != schemaRef) && (!isValidUrl(schemaRef))) {
-                // URL fragments will not be written to disk either
-                if (!(r instanceof URLbasedResource)) {
-                    Path schemaP = outFs.getPath(parentDirName+File.separator+schemaRef);
-                    writeSchema(schemaP, r.getSchema());
-                }
+            r.writeData(outFs.getPath(parentDirName ));
+            r.writeSchema(outFs.getPath(parentDirName));
+
+            // write out dialect file only if not null or URL
+            String dialectP = r.getPathForWritingDialect();
+            if (null != dialectP) {
+                Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
+                writeDialect(dialectPath, r.getDialect());
             }
-            String dialectRef = r.getDialectReference();
-            // write out schema file only if not null or URL
-            if ((null != dialectRef) && (!isValidUrl(dialectRef))) {
-                // URL fragments will not be written to disk either
-                if (!(r instanceof URLbasedResource)) {
-                    Path dialectP = outFs.getPath(parentDirName+File.separator+dialectRef);
-                    writeDialect(dialectP, r.getDialect());
-                }
+            Dialect dia = r.getDialect();
+            if (null != dia) {
+                dia.setReference(new LocalFileReference(new File(dialectP)));
             }
         }
+        writeDescriptor(outFs, parentDirName);
         // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
         // like to get closed...
         try {
@@ -326,6 +316,7 @@ public class Package extends JSONBase{
         }
     }
 
+    /*
     // TODO migrate into Schema.java
     private static void writeSchema(Path parentFilePath, Schema schema) throws IOException {
         if (!Files.exists(parentFilePath)) {
@@ -337,18 +328,17 @@ public class Package extends JSONBase{
         }
     }
 
-
-    // TODO migrate into Dialet.java
-    private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
-        if (!Files.exists(parentFilePath)) {
-            Files.createDirectories(parentFilePath);
+        */
+        // TODO migrate into Dialet.java
+        private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
+            if (!Files.exists(parentFilePath)) {
+                Files.createDirectories(parentFilePath);
+            }
+            Files.deleteIfExists(parentFilePath);
+            try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+                wr.write(dialect.getJson());
+            }
         }
-        Files.deleteIfExists(parentFilePath);
-        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(dialect.getJson());
-        }
-    }
-    
     public Resource getResource(String resourceName){
         for (Resource resource : this.resources) {
             if (resource.getName().equalsIgnoreCase(resourceName)) {
@@ -390,40 +380,48 @@ public class Package extends JSONBase{
 
     public void addResource(Resource resource)
             throws IOException, ValidationException, DataPackageException{
+        addResource(resource, true);
+    }
+
+    private void addResource(Resource resource, boolean validate)
+            throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getName() == null){
             dpe = new DataPackageException("Invalid Resource, it does not have a name property.");
         }
         if (resource instanceof AbstractDataResource)
-            addResource((AbstractDataResource) resource);
+            addResource((AbstractDataResource) resource, validate);
         else if (resource instanceof AbstractReferencebasedResource)
-            addResource((AbstractReferencebasedResource) resource);
-        validate(dpe);
+            addResource((AbstractReferencebasedResource) resource, validate);
+        if (validate)
+            validate(dpe);
     }
 
-    void addResource(AbstractDataResource resource)
+    private void addResource(AbstractDataResource resource, boolean validate)
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         // If a name property isn't given...
-        if ((resource).getData() == null || (resource).getFormat() == null) {
-                dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
+        if ((resource).getDataPoperty() == null || (resource).getFormat() == null) {
+            dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
         }
-        validate(dpe);
+        if (validate)
+            validate(dpe);
 
         this.resources.add(resource);
     }
 
-    void addResource(AbstractReferencebasedResource resource)
+    private void addResource(AbstractReferencebasedResource resource, boolean validate)
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getPaths() == null) {
-                dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
+            dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
         }
-        validate(dpe);
+        if (validate)
+            validate(dpe);
 
         this.resources.add(resource);
     }
@@ -432,23 +430,41 @@ public class Package extends JSONBase{
         this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
     }
 
-    
-    void addProperty(String key, String value) throws DataPackageException{
-        if(this.getJsonNode().has(key)){
+    /**
+     * Add a new property and value to the Package. If a value already is defined for the key,
+     * an exception is thrown. The value can be either a plain string or a string holding a JSON-Array or
+     * JSON-object.
+     * @param key the property name
+     * @param value the value to set.
+     * @throws DataPackageException if the property denoted by `key` already exists
+     */
+    public void addProperty(String key, String value) throws DataPackageException{
+        if(this.jsonObject.has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJsonNode().put(key, value);
+        	this.jsonObject.put(key, value);
         }
+    }
+    
+    public void setProperty(String key, JsonNode value) throws DataPackageException{
+    	this.jsonObject.set(key, value);
     }
     
     public void addProperty(String key, JsonNode value) throws DataPackageException{
-        if(this.getJsonNode().has(key)){
+        if(this.jsonObject.has(key)){
             throw new DataPackageException("A property with the same key already exists.");
         }else{
-            this.getJsonNode().set(key, value);
+        	this.jsonObject.set(key, value);
         }
     }
     
+    public Object getProperty(String key) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        return jsonObject.get(key);
+    }
+
     public void removeProperty(String key){
         this.getJsonNode().remove(key);
     }
@@ -462,7 +478,7 @@ public class Package extends JSONBase{
     final void validate() throws IOException, DataPackageException{
         try{
             this.validator.validate(this.getJsonNode());
-        }catch(ValidationException ve){
+        }catch(ValidationException | DataPackageException ve){
             if(this.strictValidation){
                 throw ve;
             }else{
@@ -471,6 +487,7 @@ public class Package extends JSONBase{
         }
     }
     
+    @JsonIgnore
     final Path getBasePath(){
         if (basePath instanceof File)
             return ((File)this.basePath).toPath();
@@ -480,7 +497,7 @@ public class Package extends JSONBase{
             return null;
     }
 
-
+    @JsonIgnore
     final URL getBaseUrl(){
         if (basePath instanceof URL)
             return (URL)basePath;
@@ -489,30 +506,62 @@ public class Package extends JSONBase{
 
     /**
      * Convert both the descriptor and all linked Resources to JSON and return them.
-     * @return
+     * @return JSON-String representation of the Package
      */
+    @JsonIgnore
     public String getJson(){
         return getJsonNode().toPrettyString();
     }
 
+    @JsonIgnore
     protected ObjectNode getJsonNode(){
-        if(resources.size() > 0){
-            this.JsonNode.set(JSON_KEY_RESOURCES, 
-            		JsonUtil.getInstance().createArrayNode(resources.stream().map(r->r.getJson()).collect(Collectors.toList())));
+    	ObjectNode objectNode = (ObjectNode) JsonUtil.getInstance().createNode(this);
+    	// update any manually set properties
+    	this.jsonObject.fields().forEachRemaining(f->{
+    		objectNode.set(f.getKey(), f.getValue());
+    	});
+    	
+    	Iterator<Resource> resourceIter = resources.iterator();
+
+        ArrayNode resourcesJsonArray = JsonUtil.getInstance().createArrayNode();
+        while(resourceIter.hasNext()){
+            Resource resource = resourceIter.next();
+            // this is ugly. If we encounter a DataResource which should be written to a file via
+            // manual setting, do some trickery to not write the DataResource, but a curated version
+            // to the package descriptor.
+            if ((resource instanceof AbstractDataResource) && (resource.shouldSerializeToFile())) {
+                ObjectNode obj = (ObjectNode) JsonUtil.getInstance().createNode(resource.getJson());
+                Set<String> datafileNames = resource.getDatafileNamesForWriting();
+                Set<String> outPaths = datafileNames.stream().map((r) -> r+"."+resource.getSerializationFormat()).collect(Collectors.toSet());
+                if (outPaths.size() == 1) {
+                    obj.put("path", outPaths.iterator().next());
+                } else {
+                    obj.set("path", JsonUtil.getInstance().createArrayNode(outPaths));
+                }
+                obj.put("format", resource.getSerializationFormat());
+                resourcesJsonArray.add(obj);
+            } else {
+                resourcesJsonArray.add(JsonUtil.getInstance().createNode(resource.getJson()));
+            }
         }
-        return JsonNode;
+
+        if(resourcesJsonArray.size() > 0){
+        	objectNode.set(JSON_KEY_RESOURCES, resourcesJsonArray);
+        }
+
+        return objectNode;
     }
     
     List<Exception> getErrors(){
         return this.errors;
     }
     
-    private void setJson(ObjectNode JsonNodeSource) throws Exception {
-        this.JsonNode = JsonNodeSource;
+    private void setJson(ObjectNode jsonNodeSource) throws Exception {
+        this.jsonObject = jsonNodeSource;
         
         // Create Resource list, if there are resources.
-        if(JsonNodeSource.has(JSON_KEY_RESOURCES) && JsonNodeSource.get(JSON_KEY_RESOURCES).isArray()){
-            ArrayNode resourcesJsonArray = (ArrayNode) JsonNodeSource.get(JSON_KEY_RESOURCES);
+        if(jsonNodeSource.has(JSON_KEY_RESOURCES) && jsonNodeSource.get(JSON_KEY_RESOURCES).isArray()){
+            ArrayNode resourcesJsonArray = (ArrayNode) jsonNodeSource.get(JSON_KEY_RESOURCES);
             for(int i=0; i < resourcesJsonArray.size(); i++){
                 ObjectNode resourceJson = (ObjectNode) resourcesJsonArray.get(i);
                 Resource resource = null;
@@ -520,7 +569,7 @@ public class Package extends JSONBase{
                     resource = Resource.build(resourceJson, basePath, isArchivePackage);
                 } catch (DataPackageException dpe) {
                     if(this.strictValidation){
-                        this.JsonNode = null;
+                        this.jsonObject = null;
                         this.resources.clear();
 
                         throw dpe;
@@ -531,14 +580,14 @@ public class Package extends JSONBase{
                 }
 
                 if(resource != null){
-                    addResource(resource);
+                    addResource(resource, false);
                 }
             }
         } else {
             DataPackageException dpe = new DataPackageException("Trying to create a DataPackage from JSON, " +
                     "but no resource entries found");
             if(this.strictValidation){
-                this.JsonNode = null;
+                this.jsonObject = null;
                 this.resources.clear();
 
                 throw dpe;
@@ -547,21 +596,21 @@ public class Package extends JSONBase{
                 this.errors.add(dpe);
             }
         }
-        Schema schema = buildSchema (JsonNodeSource, basePath, isArchivePackage);
-        setFromJson(JsonNodeSource, this, schema);
+        Schema schema = buildSchema (jsonNodeSource, basePath, isArchivePackage);
+        setFromJson(jsonNodeSource, this, schema);
 
-        this.setName(textValueOrNull(JsonNodeSource, Package.JSON_KEY_ID));
-        this.setVersion(textValueOrNull(JsonNodeSource, Package.JSON_KEY_VERSION));
-        this.setHomepage(JsonNodeSource.has(Package.JSON_KEY_HOMEPAGE)
-                ? new URL(JsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText())
+        this.setName(textValueOrNull(jsonNodeSource, Package.JSON_KEY_ID));
+        this.setVersion(textValueOrNull(jsonNodeSource, Package.JSON_KEY_VERSION));
+        this.setHomepage(jsonNodeSource.has(Package.JSON_KEY_HOMEPAGE)
+                ? new URL(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText())
                 : null);
-        this.setImage(textValueOrNull(JsonNodeSource, Package.JSON_KEY_IMAGE));
-        this.setCreated(textValueOrNull(JsonNodeSource, Package.JSON_KEY_CREATED));
-        this.setContributors(JsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS)
-                ? Contributor.fromJson(JsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())
+        this.setImage(textValueOrNull(jsonNodeSource, Package.JSON_KEY_IMAGE));
+        this.setCreated(textValueOrNull(jsonNodeSource, Package.JSON_KEY_CREATED));
+        this.setContributors(jsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS)
+                ? Contributor.fromJson(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())
                 : null);
-        if (JsonNodeSource.has(Package.JSON_KEY_KEYWORDS)) {
-            ArrayNode arr = (ArrayNode) JsonNode.get(Package.JSON_KEY_KEYWORDS);
+        if (jsonNodeSource.has(Package.JSON_KEY_KEYWORDS)) {
+            ArrayNode arr = (ArrayNode) jsonObject.get(Package.JSON_KEY_KEYWORDS);
             for (int i = 0; i < arr.size(); i++) {
                 this.addKeyword(arr.get(i).asText());
             }
@@ -569,12 +618,13 @@ public class Package extends JSONBase{
         List<String> wellKnownKeys = Arrays.asList(JSON_KEY_RESOURCES, JSON_KEY_ID, JSON_KEY_VERSION,
                 JSON_KEY_HOMEPAGE, JSON_KEY_IMAGE, JSON_KEY_CREATED, JSON_KEY_CONTRIBUTORS,
                 JSON_KEY_KEYWORDS);
-        JsonNodeSource.fieldNames().forEachRemaining((k) -> {
+        jsonNodeSource.fieldNames().forEachRemaining((k) -> {
             if (!wellKnownKeys.contains(k)) {
-                Object obj = JsonNodeSource.get(k);
-                this.otherProperties.put(k, obj);
+                JsonNode obj = jsonNodeSource.get(k);
+                this.setProperty(k, obj);
             }
         });
+        validate();
     }
     /**
      * @return the profile
@@ -725,26 +775,6 @@ public class Package extends JSONBase{
         if (keywords.contains(keyword)) {
             this.keywords.remove(keyword);
         }
-    }
-
-    public Object getOtherProperty(String key) {
-        return otherProperties.get(key);
-    }
-
-    public void removeOtherProperty(String key) {
-        if (null == key)
-            return;
-        if (null == otherProperties)
-            return;
-        if (otherProperties.keySet().contains(key)) {
-            otherProperties.remove(key);
-        }
-    }
-
-    public void setOtherProperties(String key, Object value) {
-        if (null == key)
-            return;
-        this.otherProperties.put(key, value);
     }
 
     private static URL getParentUrl(URL urlSource) throws URISyntaxException, MalformedURLException {

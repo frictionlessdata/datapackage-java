@@ -1,17 +1,20 @@
 package io.frictionlessdata.datapackage;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.QuoteMode;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * CSV Dialect defines a simple format to describe the various dialects of CSV files in a language agnostic
@@ -25,8 +28,23 @@ import java.util.Map;
  * According to specification: https://frictionlessdata.io/specs/csv-dialect/
  */
 
-@JsonInclude(value = Include.NON_ABSENT, content = Include.NON_ABSENT)
+@JsonInclude(value = Include.NON_NULL, content = Include.NON_EMPTY)
+@JsonPropertyOrder({
+	"caseSensitiveHeader",
+	"quoteChar",
+	"doubleQuote",
+	"delimiter",
+	"lineTerminator",
+	"nullSequence",
+	"header",
+	"csvddfVersion",
+	"skipInitialSpace"
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Dialect {
+
+    private FileReference reference;
+
     // we construct one instance that will always keep the default values
     public static Dialect DEFAULT = new Dialect(){
         private JsonNode JsonNode;
@@ -78,7 +96,7 @@ public class Dialect {
     /**
      * specifies the null sequence (for example \N). Not set by default
      */
-    private String nullSequence = null;
+    private String nullSequence = "";
 
     /**
      * specifies how to interpret whitespace which immediately follows a delimiter;
@@ -108,6 +126,20 @@ public class Dialect {
      * a number, in n.n format, e.g., 1.2. If not present, consumers should assume latest schema version.
      */
     private Double csvddfVersion = 1.2;
+    
+    /**
+     * Any extra properties that arent defined explicitly
+     */
+    private Map<String, Object> additionalProperties = new HashMap<>();
+
+    @JsonIgnore
+    public FileReference getReference() {
+        return reference;
+    }
+
+    public void setReference (FileReference ref){
+        reference = ref;
+    }
 
     public Dialect clone() {
         Dialect retVal = new Dialect();
@@ -157,6 +189,24 @@ public class Dialect {
     }
 
     /**
+     * Read, create, and validate a Dialect from a FileReference.
+     *
+     * @param reference the File or URL to read dialect JSON data from
+     * @throws Exception thrown if reading from the stream or parsing throws an exception
+     */
+    public static Dialect fromJson (FileReference reference) throws Exception {
+        String dialectString = null;
+        try (InputStreamReader ir = new InputStreamReader(reference.getInputStream(), StandardCharsets.UTF_8);
+        BufferedReader br = new BufferedReader(ir)){
+            dialectString = br.lines().collect(Collectors.joining("\n"));
+        }
+        Dialect dialect = fromJson (dialectString);
+        dialect.reference = reference;
+        reference.close();
+        return dialect;
+    }
+
+    /**
      * Create a new Dialect object from a JSON representation
      * @param json JSON as String representation, eg. from Resource definition
      * @return new Dialect object with values from JsonNode
@@ -164,56 +214,21 @@ public class Dialect {
     public static Dialect fromJson(String json) {
         if (null == json)
             return null;
-        JsonNode jsonObj = JsonUtil.getInstance().createNode(json);
-        Dialect dialect = new Dialect();
-        if (jsonObj.has("delimiter")) {
-            dialect.setDelimiter(jsonObj.get("delimiter").asText());
-        }
-        if (jsonObj.has("escapeChar"))
-            dialect.setEscapeChar(jsonObj.get("escapeChar").asText().charAt(0));
-        if (jsonObj.has("skipInitialSpace"))
-            dialect.setSkipInitialSpace(jsonObj.get("skipInitialSpace").asBoolean());
-        if (jsonObj.has("nullSequence"))
-            dialect.setNullSequence(jsonObj.get("nullSequence").asText());
-        if (jsonObj.has("commentChar"))
-            dialect.setCommentChar(jsonObj.get("commentChar").asText().charAt(0));
-        if (jsonObj.has("header"))
-            dialect.setHasHeaderRow(jsonObj.get("header").asBoolean());
-        if (jsonObj.has("lineTerminator"))
-            dialect.setLineTerminator(jsonObj.get("lineTerminator").asText());
-        if (jsonObj.has("quoteChar"))
-            dialect.setQuoteChar(jsonObj.get("quoteChar").asText().charAt(0));
-        if (jsonObj.has("doubleQuote"))
-            dialect.setDoubleQuote(jsonObj.get("doubleQuote").asBoolean());
-        if (jsonObj.has("caseSensitiveHeader"))
-            dialect.setCaseSensitiveHeader(jsonObj.get("caseSensitiveHeader").asBoolean());
-        if (jsonObj.has("csvddfVersion"))
-            dialect.setCsvddfVersion(jsonObj.get("csvddfVersion").asDouble());
-        return dialect;
+        return JsonUtil.getInstance().deserialize(json, Dialect.class);
     }
 
     /**
      * Get JSON representation of the object.
      * @return a String representing the properties of this object encoded as JSON
      */
+    @JsonIgnore
     public String getJson() {
         return getJsonNode(true).toString();
     }
 
     private JsonNode getJsonNode(boolean checkDefault) {
-        HashMap<String, Object> retVal = new HashMap<>();
-        setProperty(retVal, "delimiter", delimiter, checkDefault);
-        setProperty(retVal, "escapeChar", escapeChar, checkDefault);
-        setProperty(retVal, "skipInitialSpace", skipInitialSpace, checkDefault);
-        setProperty(retVal, "nullSequence", nullSequence, checkDefault);
-        setProperty(retVal, "commentChar", commentChar, checkDefault);
-        setProperty(retVal, "header", hasHeaderRow, checkDefault);
-        setProperty(retVal, "lineTerminator", lineTerminator, checkDefault);
-        setProperty(retVal, "quoteChar", quoteChar, checkDefault);
-        setProperty(retVal, "doubleQuote", doubleQuote, checkDefault);
-        setProperty(retVal, "caseSensitiveHeader", caseSensitiveHeader, checkDefault);
-        setProperty(retVal, "csvddfVersion", csvddfVersion, checkDefault);
-        return JsonUtil.getInstance().convertValue(retVal, JsonNode.class);
+    	JsonNode json = JsonUtil.getInstance().createNode(this);
+    	return json;
     }
 
     public void writeJson (File outputFile) throws IOException{
@@ -270,6 +285,7 @@ public class Dialect {
         return skipInitialSpace;
     }
 
+    @JsonProperty(value = "header")
     public boolean isHasHeaderRow() {
         return hasHeaderRow;
     }
@@ -329,6 +345,16 @@ public class Dialect {
     public void setCsvddfVersion(Double csvddfVersion) {
         this.csvddfVersion = csvddfVersion;
     }
+
+    @JsonAnyGetter
+	public Map<String, Object> getAdditionalProperties() {
+		return additionalProperties;
+	}
+
+    @JsonAnySetter
+	public void setAdditionalProperties(Map<String, Object> additionalProperties) {
+		this.additionalProperties = additionalProperties;
+	}
 
     public boolean equals(final Object o) {
         if (o == this) return true;
@@ -405,4 +431,5 @@ public class Dialect {
         result = result * PRIME + ($caseSensitiveHeader == null ? 43 : $caseSensitiveHeader.hashCode());
         return result;
     }
+
 }

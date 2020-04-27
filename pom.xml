@@ -19,11 +19,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <tableschema-java-version>1.0-SNAPSHOT</tableschema-java-version>
+        <tableschema-java-version>28f6d9a</tableschema-java-version>
         <google-guava.version>23.6-jre</google-guava.version>
         <hamcrest.version>1.3</hamcrest.version>
         <junit.version>5.4.2</junit.version>
         <apache-commons-lang3.version>3.9</apache-commons-lang3.version>
+        <apache-commons-collections.version>4.4</apache-commons-collections.version>
         <apache-commons-csv.version>1.7</apache-commons-csv.version>
         <joda-time.version>2.9.9</joda-time.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -237,19 +238,17 @@
             <version>${apache-commons-lang3.version}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/joda-time/joda-time -->
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>${joda-time.version}</version>
-        </dependency>
-
-
         <!-- https://commons.apache.org/proper/commons-csv/ -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>${apache-commons-csv.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${apache-commons-collections.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
@@ -262,7 +261,7 @@
         <!-- tableschema-java -->
 
         <dependency>
-            <groupId>io.frictionlessdata</groupId>
+            <groupId>com.github.savantly-net</groupId>
             <artifactId>tableschema-java</artifactId>
             <version>${tableschema-java-version}</version>
         </dependency>

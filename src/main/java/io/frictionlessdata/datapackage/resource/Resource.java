@@ -36,32 +36,25 @@ public interface Resource<T,C> {
 
     List<Table> getTables() throws Exception ;
 
-    ObjectNode getJson();
+    String getJson();
 
-    List<Object[]> read (boolean cast) throws Exception;
+    List<Object[]> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
 
-    List<C> read (Class<C> beanClass) throws Exception;
+    List<C> getData(Class<C> beanClass) throws Exception;
 
     /**
-     * Write all the data in this resource as CSV into one or more
+     * Write all the data in this resource into one or more
      * files inside `outputDir`, depending on how many tables this
      * Resource holds.
      *
      * @param outputDir the directory to write to. Code must create
      *                  files as needed.
-     * @param dialect the CSV dialect to use for writing
      * @throws Exception if something fails while writing
      */
-    void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception;
+    void writeData(Path outputDir) throws Exception;
 
-    /**
-     * Write the Table as CSV into a file inside `outputDir`.
-     *
-     * @param outputFile the file to write to.
-     * @param dialect the CSV dialect to use for writing
-     * @throws Exception if something fails while writing
-     */
-    void writeTableAsCsv(Table table, Dialect dialect, Path outputFile) throws Exception;
+
+    void writeSchema(Path parentFilePath) throws IOException;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
@@ -75,8 +68,21 @@ public interface Resource<T,C> {
      * @return
      * @throws Exception
      */
-    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
+    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
 
+    Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception;
+
+    /**
+     * Returns an Iterator that returns rows as bean-arrays.
+     * {@link TableIterator} based on a Java Bean class instead of a {@link io.frictionlessdata.tableschema.schema.Schema}.
+     * It therefore disregards the Schema set on the {@link io.frictionlessdata.tableschema.Table} the iterator works
+     * on but creates its own Schema from the supplied `beanType`.
+     *
+     * @return Iterator that returns rows as bean-arrays.
+     * @param beanType the Bean class this BeanIterator expects
+     * @param relations follow relations to other data source
+     */
+    Iterator<C> beanIterator(Class<C> beanType, boolean relations)throws Exception;
     /**
      * Returns an Iterator that returns rows as string-arrays
      * @return
@@ -85,6 +91,26 @@ public interface Resource<T,C> {
     public Iterator<String[]> stringArrayIterator() throws Exception;
 
     String[] getHeaders() throws Exception;
+
+    /**
+     * Construct a path to write out the Schema for this Resource
+     * @return a String containing a relative path for writing or null
+     */
+    String getPathForWritingSchema();
+
+    /**
+     * Construct a path to write out the Dialect for this Resource
+     * @return a String containing a relative path for writing or null
+     */
+    String getPathForWritingDialect();
+
+    /**
+     * Return a set of relative path names we would use if we wanted to write
+     * the resource data to file. For DataResources, this helps with conversion
+     * to FileBasedResources
+     * @return Set of relative path names
+     */
+    Set<String> getDatafileNamesForWriting();
 
     /**
      * @return the name
@@ -189,8 +215,6 @@ public interface Resource<T,C> {
      */
     void setFormat(String format);
 
-    String getSchemaReference();
-
     String getDialectReference();
 
     Schema getSchema();
@@ -217,7 +241,19 @@ public interface Resource<T,C> {
      */
     void setLicenses(ArrayNode licenses);
 
+    boolean shouldSerializeToFile();
 
+    void setShouldSerializeToFile(boolean serializeToFile);
+
+    /**
+     * Sets the format (either CSV or JSON) for serializing the Resource content to File.
+     * @param format either FORMAT_CSV or FORMAT_JSON, other strings will cause an Exception
+     */
+    void setSerializationFormat(String format);
+
+    String getSerializationFormat();
+
+    Map<String, String> getOriginalReferences();
 
     static AbstractResource build(ObjectNode resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);

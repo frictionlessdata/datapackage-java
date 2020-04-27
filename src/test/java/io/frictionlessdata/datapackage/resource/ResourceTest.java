@@ -211,7 +211,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<Object[]> iter = resource.objectArrayIterator(false, false, true, false);
+        Iterator<Object[]> iter = resource.objectArrayIterator(false, false,  false);
         
         // Assert data.
         while(iter.hasNext()){
@@ -475,7 +475,7 @@ public class ResourceTest {
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
         // Assert
-        Assert.assertEquals(3, resource.read(false).size());
+        Assert.assertEquals(3, resource.getData(false, false, false, false).size());
     }
 
 
@@ -486,7 +486,7 @@ public class ResourceTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.read(false);
+        List<Object[]> data = r.getData(false, false, false, false);
     }
     
     @Test
