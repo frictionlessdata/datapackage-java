@@ -7,51 +7,77 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
+@JsonPropertyOrder({
+	"title",
+	"email",
+	"path",
+	"role",
+	"organization"
+})
 public class Contributor {
+	static final String invalidUrlMsg = "URLs for contributors must be fully qualified";
     private String title;
     private String email;
     private URL path;
     private Role role;
     private String organization;
 
-    /**
+    public String getTitle() {
+		return title;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public URL getPath() {
+		return path;
+	}
+
+	public Role getRole() {
+		return role;
+	}
+
+	public String getOrganization() {
+		return organization;
+	}
+
+	/**
      * Create a new Contributor object from a JSON representation
      * @param jsonObj JSON representation, eg. from Package definition
      * @return new Dialect object with values from JSONObject
      */
-    public static Contributor fromJson(Map jsonObj) throws MalformedURLException {
+    public static Contributor fromJson(Map jsonObj) {
         if (null == jsonObj)
             return null;
-        Contributor c = new Contributor();
-        if (jsonObj.containsKey("title"))
-            c.title = jsonObj.get("title").toString();
-        if (jsonObj.containsKey("email"))
-            c.title = jsonObj.get("email").toString();
-        if (jsonObj.containsKey("path")) {
-            URL url = new URL(jsonObj.get("path").toString());
-            if (isValidUrl(url)) {
-                c.path = url;
-            } else {
-                throw new DataPackageException("URLs for contributors must be fully qualified");
-            }
+        try {
+        	Contributor c = JsonUtil.getInstance().convertValue(jsonObj, Contributor.class);
+	        if (!isValidUrl(c.path)) {
+	        	throw new DataPackageException(invalidUrlMsg);
+	        }
+	        return c;
+        } catch (Exception ex) {
+        	Throwable cause = ex.getCause();
+        	if (Objects.nonNull(cause) && cause.getClass().isAssignableFrom(InvalidFormatException.class)) {
+        		if (Objects.nonNull(cause.getCause()) && cause.getCause().getClass().isAssignableFrom(MalformedURLException.class)) {
+        			throw new DataPackageException(invalidUrlMsg);
+        		}
+        	} 
+        	throw new DataPackageException(ex);
         }
-        if (jsonObj.containsKey("role")) {
-            String role = jsonObj.get("role").toString();
-            c.role = Role.valueOf(role.toUpperCase());
-        }
-        if (jsonObj.containsKey("organization"))
-            c.title = jsonObj.get("organization").toString();
-        return c;
     }
-
+    
     /**
      * Create a new Contributor object from a JSON representation
      * @param jsonArr JSON representation, eg. from Package definition
      * @return new Dialect object with values from JSONObject
      */
-    public static Collection<Contributor> fromJson(Collection<Map<String,?>> jsonArr) throws MalformedURLException {
+    public static Collection<Contributor> fromJson(Collection<Map<String,?>> jsonArr) {
         final Collection<Contributor> contributors = new ArrayList<>();
         Iterator<Map<String, ?>> iter = jsonArr.iterator();
         while (iter.hasNext()) {
@@ -61,7 +87,7 @@ public class Contributor {
         return contributors;
     }
 
-    public static Collection<Contributor> fromJson(String json) throws MalformedURLException {
+    public static Collection<Contributor> fromJson(String json) {
     	Collection<Map<String, ?>> objArray = new ArrayList<>();
     	JsonUtil.getInstance().createArrayNode(json).elements().forEachRemaining(o -> {
     		objArray.add(JsonUtil.getInstance().convertValue(o, Map.class));
