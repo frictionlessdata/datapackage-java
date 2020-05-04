@@ -18,7 +18,9 @@
     {
       "name":"isAdmin",
       "format":"default",
-      "type":"boolean"
+      "type":"boolean",
+      "trueValues": ["T"],
+      "falseValues": ["F"]
     },
     {
       "name":"addressCoordinates",
