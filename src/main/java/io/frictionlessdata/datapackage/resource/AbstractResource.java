@@ -112,7 +112,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
-            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass);
+            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass, false);
             while (iter.hasNext()) {
                 retVal.add(iter.next());
             }
