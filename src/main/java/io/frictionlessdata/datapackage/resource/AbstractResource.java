@@ -4,17 +4,19 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
-import org.apache.commons.collections.iterators.IteratorChain;
+import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -61,24 +63,34 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     AbstractResource(String name){
         this.name = name;
-        /*if (null == name)
-            throw new DataPackageException("Invalid Resource, it does not have a name property.");*/
+        if (null == name)
+            throw new DataPackageException("Invalid Resource, it does not have a name property.");
     }
 
     @Override
     public Iterator<Object[]> objectArrayIterator() throws Exception{
-        return this.objectArrayIterator(false, false, true, false);
+        return this.objectArrayIterator(false, false, false);
     }
 
     @Override
-    public Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
+    public Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator<Object[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.iterator(keyed, extended, cast, relations);
+            tableIteratorArray[cnt++] = table.iterator(keyed, extended, true, relations);
         }
         return new IteratorChain(tableIteratorArray);
+    }
+
+    private Iterator stringArrayIterator(boolean relations) throws Exception{
+        ensureDataLoaded();
+        Iterator[] tableIteratorArray = new TableIterator[tables.size()];
+        int cnt = 0;
+        for (Table table : tables) {
+            tableIteratorArray[cnt++] = table.iterator(false, false, false, relations);
+        }
+        return new IteratorChain<>(tableIteratorArray);
     }
 
     @Override
@@ -89,30 +101,80 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         for (Table table : tables) {
             tableIteratorArray[cnt++] = table.stringArrayIterator(false);
         }
+        return new IteratorChain<>(tableIteratorArray);
+    }
+
+    @Override
+    public Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception{
+        ensureDataLoaded();
+        Iterator<Map<String, Object>>[] tableIteratorArray = new TableIterator[tables.size()];
+        int cnt = 0;
+        for (Table table : tables) {
+            tableIteratorArray[cnt++] = table.keyedIterator(false, true, relations);
+        }
         return new IteratorChain(tableIteratorArray);
     }
 
-
-    public List<Object[]> read() throws Exception{
-        return this.read(false);
+    @Override
+    public Iterator<C> beanIterator(Class<C> beanType, boolean relations) throws Exception {
+        ensureDataLoaded();
+        IteratorChain<C> ic = new IteratorChain<>();
+        for (Table table : tables) {
+            ic.addIterator (table.iterator(beanType, false));
+        }
+        return ic;
     }
 
-    public List<Object[]> read (boolean cast) throws Exception{
-        List<Object[]> retVal = new ArrayList<>();
+    public List<String[]> getData() throws Exception{
+        List<String[]> retVal = new ArrayList<>();
         ensureDataLoaded();
-        Iterator<Object[]> iter = objectArrayIterator(false, false, cast, false);
+        Iterator<String[]> iter = stringArrayIterator();
         while (iter.hasNext()) {
             retVal.add(iter.next());
         }
         return retVal;
     }
 
+    /**
+     * Most customizable method to retrieve all data in a Resource. Parameters match those in
+     * {@link io.frictionlessdata.tableschema.Table#iterator(boolean, boolean, boolean, boolean)}. Data can be
+     * returned as:
+     *
+     * - String arrays,
+     * - as Object arrays (parameter `cast` = true),
+     * - as a Map&lt;key,val&gt; where key is the header name, and val is the data (parameter `keyed` = true),
+     * - or in an "extended" form (parameter `extended` = true) that returns an Object array where the first entry is the
+     *      row number, the second is a String array holding the headers, and the third is an Object array holding
+     *      the row data.
+     * @param keyed returns data as Maps
+     * @param extended returns data in "extended form"
+     * @param cast returns data as Objects, not Strings
+     * @param relations resolves relations
+     * @return List of data objects
+     * @throws Exception if reading data fails
+     */
+    public List<Object[]> getData(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
+        List<Object[]> retVal = new ArrayList<>();
+        ensureDataLoaded();
+        Iterator iter;
+        if (cast) {
+            iter = objectArrayIterator(keyed, extended, relations);
+        } else {
+            iter = stringArrayIterator(relations);
+        }
+        while (iter.hasNext()) {
+            retVal.add((Object[])iter.next());
+        }
+        return retVal;
+    }
+
+
     @Override
-    public List<C> read (Class<C> beanClass)  throws Exception {
+    public List<C> getData(Class<C> beanClass)  throws Exception {
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
-            final BeanIterator<C> iter = new BeanIterator<C>(t, beanClass, false);
+            final BeanIterator<C> iter = t.iterator(beanClass, false);
             while (iter.hasNext()) {
                 retVal.add(iter.next());
             }
@@ -136,7 +198,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * Get JSON representation of the object.
      * @return a JSONObject representing the properties of this object
      */
-    public JSONObject getJson(){
+    public String getJson(){
         //FIXME: Maybe use something lke GSON so we don't have to explicitly
         //code this...
         JSONObject json = new JSONObject(new LinkedHashMap<String, Object>());
@@ -166,7 +228,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             if (this.shouldSerializeToFile()) {
                 //TODO implement storing only the path - and where to get it
             } else {
-                json.put(JSON_KEY_DATA, ((AbstractDataResource) this).getData());
+                json.put(JSON_KEY_DATA, ((AbstractDataResource) this).getDataPoperty());
             }
         }
         json.put(JSON_KEY_PROFILE, this.profile);
@@ -195,13 +257,16 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             }
         }
         json.put(JSON_KEY_DIALECT, dialectObj);
-        return json;
+        return json.toString();
     }
 
 
 
     public void writeSchema(Path parentFilePath) throws IOException{
         String relPath = getPathForWritingSchema();
+        if (null == originalReferences.get(JSONBase.JSON_KEY_SCHEMA)) {
+            originalReferences.put(JSONBase.JSON_KEY_SCHEMA, relPath);
+        }
 
         if (null != relPath) {
             Path p;
@@ -509,8 +574,8 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     @Override
     public void setSerializationFormat(String format) {
-        if ((format.equals(Resource.FORMAT_JSON))
-            || format.equals(Resource.FORMAT_CSV)) {
+        if ((format.equals(DataSourceFormat.Format.FORMAT_JSON.getLabel()))
+            || format.equals(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
             this.serializationFormat = format;
         } else
             throw new DataPackageException("Serialization format "+format+" is unknown");
@@ -528,7 +593,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     abstract List<Table> readData() throws Exception;
 
-    abstract Set<String> getDatafileNamesForWriting();
+    public abstract Set<String> getDatafileNamesForWriting();
 
     private List<Table> ensureDataLoaded () throws Exception {
         if (null == tables) {
@@ -546,7 +611,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
         int cnt = 0;
         for (String fName : paths) {
-            System.out.println(fName);
             String fileName = fName+"."+getSerializationFormat();
             Table t  = tables.get(cnt++);
             Path p;
@@ -560,9 +624,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             }
             Files.deleteIfExists(p);
             try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
-                if (serializationFormat.equals(Resource.FORMAT_CSV)) {
+                if (serializationFormat.equals(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
                     t.writeCsv(wr, lDialect.toCsvFormat());
-                } else if (serializationFormat.equals(Resource.FORMAT_JSON)) {
+                } else if (serializationFormat.equals(DataSourceFormat.Format.FORMAT_JSON.getLabel())) {
                     wr.write(t.asJson());
                 }
             }

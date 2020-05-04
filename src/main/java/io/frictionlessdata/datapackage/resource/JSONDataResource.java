@@ -1,5 +1,6 @@
 package io.frictionlessdata.datapackage.resource;
 
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 import org.json.JSONArray;
 
 public class JSONDataResource<C> extends AbstractDataResource<JSONArray,C> {
@@ -11,6 +12,6 @@ public class JSONDataResource<C> extends AbstractDataResource<JSONArray,C> {
 
     @Override
     String getResourceFormat() {
-        return Resource.FORMAT_JSON;
+        return DataSourceFormat.Format.FORMAT_JSON.getLabel();
     }
 }

@@ -2,6 +2,7 @@ package io.frictionlessdata.datapackage.resource;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -21,10 +22,11 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         this.setSerializationFormat(sniffFormat(paths));
         schema = fromResource.getSchema();
         dialect = fromResource.getDialect();
-        List<String[]> data = fromResource.read(false);
+        List<String[]> data = fromResource.getData(false, false, false, false);
         Table table = new Table(data, fromResource.getHeaders(), fromResource.getSchema());
         tables = new ArrayList<>();
         tables.add(table);
+        serializeToFile = true;
     }
 
     FilebasedResource(String name, Collection<File> paths, File basePath) {
@@ -46,22 +48,23 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                 throw new DataPackageException("Path entries for file-based Resources cannot be absolute");
             }
         }
+        serializeToFile = true;
     }
 
     private static String sniffFormat(Collection<File> paths) {
         Set<String> foundFormats = new HashSet<>();
         paths.forEach((p) -> {
-            if (p.getName().toLowerCase().endsWith(Resource.FORMAT_CSV)) {
-                foundFormats.add(Resource.FORMAT_CSV);
-            } else if (p.getName().toLowerCase().endsWith(Resource.FORMAT_JSON)) {
-                foundFormats.add(Resource.FORMAT_JSON);
+            if (p.getName().toLowerCase().endsWith(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
+                foundFormats.add(DataSourceFormat.Format.FORMAT_CSV.getLabel());
+            } else if (p.getName().toLowerCase().endsWith(DataSourceFormat.Format.FORMAT_JSON.getLabel())) {
+                foundFormats.add(DataSourceFormat.Format.FORMAT_JSON.getLabel());
             }
         });
         if (foundFormats.size() > 1) {
             throw new DataPackageException("Resources cannot be mixed JSON/CSV");
         }
         if (foundFormats.isEmpty())
-            return Resource.FORMAT_CSV;
+            return DataSourceFormat.Format.FORMAT_CSV.getLabel();
         return foundFormats.iterator().next();
     }
 

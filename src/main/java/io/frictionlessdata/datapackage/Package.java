@@ -1,11 +1,12 @@
 package io.frictionlessdata.datapackage;
 
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.datapackage.resource.*;
+import io.frictionlessdata.datapackage.resource.AbstractDataResource;
+import io.frictionlessdata.datapackage.resource.AbstractReferencebasedResource;
+import io.frictionlessdata.datapackage.resource.FilebasedResource;
+import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.io.LocalFileReference;
-import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.Table;
 import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.collections.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +45,7 @@ public class Package extends JSONBase{
     private static final String JSON_KEY_CREATED = "created";
     private static final String JSON_KEY_CONTRIBUTORS = "contributors";
 
+    // Filesystem path pointing to the Package; either ZIP file or directory
     private Object basePath = null;
     private String id;
     private String version;
@@ -56,9 +58,9 @@ public class Package extends JSONBase{
     
     private JSONObject jsonObject = new JSONObject();
     private boolean strictValidation = false;
-    private List<Resource> resources = new ArrayList<>();
-    private List<Exception> errors = new ArrayList<>();
-    private Validator validator = new Validator();
+    private final List<Resource> resources = new ArrayList<>();
+    private final List<Exception> errors = new ArrayList<>();
+    private final Validator validator = new Validator();
 
     /**
      * Create a new DataPackage and initialize with a number of Resources.
@@ -101,9 +103,6 @@ public class Package extends JSONBase{
 
         // Create and set the JSONObject fpr the String representation of desriptor JSON object.
         this.setJson(new JSONObject(jsonStringSource));
-
-        // If String representation of desriptor JSON object is provided.
-        this.validate();
     }
 
     /**
@@ -135,8 +134,6 @@ public class Package extends JSONBase{
 
         // Create JSONObject and validate.
         this.setJson(new JSONObject(jsonString));
-        this.validate();  
-        
     }
 
     /**
@@ -177,7 +174,6 @@ public class Package extends JSONBase{
             sourceJsonObject = new JSONObject(sourceJsonString);
         }
         this.setJson(sourceJsonObject);
-        this.validate();
     }
 
 
@@ -389,7 +385,7 @@ public class Package extends JSONBase{
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         // If a name property isn't given...
-        if ((resource).getData() == null || (resource).getFormat() == null) {
+        if ((resource).getDataPoperty() == null || (resource).getFormat() == null) {
             dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
@@ -500,8 +496,8 @@ public class Package extends JSONBase{
      */
     final void validate() throws IOException, DataPackageException{
         try{
-            this.validator.validate(this.getJson());
-        }catch(ValidationException ve){
+            this.validator.validate(new JSONObject(this.getJson()));
+        } catch(ValidationException | DataPackageException ve){
             if(this.strictValidation){
                 throw ve;
             }else{
@@ -540,7 +536,23 @@ public class Package extends JSONBase{
         JSONArray resourcesJsonArray = new JSONArray();
         while(resourceIter.hasNext()){
             Resource resource = resourceIter.next();
-            resourcesJsonArray.put(resource.getJson());
+            // this is ugly. If we encounter a DataResource which should be written to a file via
+            // manual setting, do some trickery to not write the DataResource, but a curated version
+            // to the package descriptor.
+            if ((resource instanceof AbstractDataResource) && (resource.shouldSerializeToFile())) {
+                JSONObject obj = new JSONObject(resource.getJson());
+                Set<String> datafileNames = resource.getDatafileNamesForWriting();
+                Set<String> outPaths = datafileNames.stream().map((r) -> r+"."+resource.getSerializationFormat()).collect(Collectors.toSet());
+                if (outPaths.size() == 1) {
+                    obj.put("path", outPaths.iterator().next());
+                } else {
+                    obj.put("path", outPaths);
+                }
+                obj.put("format", resource.getSerializationFormat());
+                resourcesJsonArray.put(obj);
+            } else {
+                resourcesJsonArray.put(new JSONObject(resource.getJson()));
+            }
         }
 
         if(resourcesJsonArray.length() > 0){

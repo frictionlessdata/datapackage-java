@@ -31,14 +31,14 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     /**
      * @return the data
      */
-    public T getData() {
+    public T getDataPoperty() {
         return data;
     }
 
     /**
      * @param data the data to set
      */
-    public void setData(T data) {
+    public void setDataPoperty(T data) {
         this.data = data;
     }
 
@@ -60,12 +60,12 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     }
 
     @Override
-    Set<String> getDatafileNamesForWriting() {
+    public Set<String> getDatafileNamesForWriting() {
         String name = super.getName()
                 .toLowerCase()
                 .replaceAll("\\W", "_");
         Set<String> names = new HashSet<>();
-        names.add(name);
+        names.add(JSON_KEY_DATA+"/"+name);
         return names;
     }
 

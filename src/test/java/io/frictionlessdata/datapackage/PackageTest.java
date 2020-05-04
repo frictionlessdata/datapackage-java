@@ -31,8 +31,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 
-import javax.json.JsonObject;
-
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
 /**
@@ -291,7 +289,7 @@ public class PackageTest {
         dialect.setDelimiter("\t");
         resource.setDialect(dialect);
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.read(false);
+        List<Object[]>data = resource.getData(false, false, false, false);
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -313,7 +311,7 @@ public class PackageTest {
                 "/fixtures/tab_separated_datapackage_with_dialect.json", true);
         Resource resource = dp.getResource("first-resource");
         Assert.assertNotNull(resource);
-        List<Object[]>data = resource.read(false);
+        List<Object[]>data = resource.getData(false, false, false, false);
         Assert.assertEquals( 6, data.size());
         Assert.assertEquals("libreville", data.get(0)[0]);
         Assert.assertEquals("0.41,9.29", data.get(0)[1]);
@@ -374,22 +372,12 @@ public class PackageTest {
     }
     
     @Test
-    public void testAddInvalidJSONResourceWithStrictValidation() throws Exception {
+    public void testCreateInvalidJSONResource() throws Exception {
         Package dp = this.getDataPackageFromFilePath(true);
-        Resource res = new JSONDataResource((String)null, testResources.toString());
 
         exception.expectMessage("Invalid Resource, it does not have a name property.");
+        Resource res = new JSONDataResource(null, testResources.toString());
         dp.addResource(res);
-    }
-
-    @Test
-    public void testAddInvalidJSONResourceWithoutStrictValidation() throws Exception {
-        Package dp = this.getDataPackageFromFilePath(false);
-        Resource res = new JSONDataResource((String)null, testResources.toString());
-        dp.addResource(res);
-
-        Assert.assertTrue( dp.getErrors().size() > 0);
-        Assert.assertEquals("Invalid Resource, it does not have a name property.", dp.getErrors().get(0).getMessage());
     }
 
 
@@ -476,7 +464,7 @@ public class PackageTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.read(false);
+        List<Object[]> data = r.getData(false, false, false, false);
         Assert.assertEquals(2, data.size());
         Assert.assertArrayEquals(usdTestData, data.get(0));
         Assert.assertArrayEquals(gbpTestData, data.get(1));
@@ -647,7 +635,7 @@ public class PackageTest {
         Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
 
         Resource resource = pkg.getResource("employee-data");
-        final List<EmployeeBean> employees = resource.read(EmployeeBean.class);
+        final List<EmployeeBean> employees = resource.getData(EmployeeBean.class);
         Assert.assertEquals(3, employees.size());
         EmployeeBean frank = employees.get(1);
         Assert.assertEquals("Frank McKrank", frank.getName());
