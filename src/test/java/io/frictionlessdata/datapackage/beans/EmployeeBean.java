@@ -2,7 +2,6 @@ package io.frictionlessdata.datapackage.beans;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.time.Duration;

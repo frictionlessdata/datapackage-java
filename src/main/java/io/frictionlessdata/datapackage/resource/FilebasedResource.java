@@ -3,27 +3,47 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasourceformats.DataSourceFormat;
 import org.apache.commons.csv.CSVFormat;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 
+@JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C> {
     private File basePath;
     private boolean isInArchive;
 
-    public FilebasedResource(String name, Collection<File> paths, File basePath) {
+    public FilebasedResource(Resource fromResource, Collection<File> paths) throws Exception {
+        super(fromResource.getName(), paths);
+        if (null == paths) {
+            throw new DataPackageException("Invalid Resource. " +
+                    "The path property cannot be null for file-based Resources.");
+        }
+        this.setSerializationFormat(sniffFormat(paths));
+        schema = fromResource.getSchema();
+        dialect = fromResource.getDialect();
+        List<String[]> data = fromResource.getData(false, false, false, false);
+        Table table = new Table(data, fromResource.getHeaders(), fromResource.getSchema());
+        tables = new ArrayList<>();
+        tables.add(table);
+        serializeToFile = true;
+    }
+
+    FilebasedResource(String name, Collection<File> paths, File basePath) {
         super(name, paths);
         if (null == paths) {
             throw new DataPackageException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
+        this.setSerializationFormat(sniffFormat(paths));
         this.basePath = basePath;
         for (File path : paths) {
             /* from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
@@ -36,8 +56,31 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                 throw new DataPackageException("Path entries for file-based Resources cannot be absolute");
             }
         }
+        serializeToFile = true;
     }
 
+    private static String sniffFormat(Collection<File> paths) {
+        Set<String> foundFormats = new HashSet<>();
+        paths.forEach((p) -> {
+            if (p.getName().toLowerCase().endsWith(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
+                foundFormats.add(DataSourceFormat.Format.FORMAT_CSV.getLabel());
+            } else if (p.getName().toLowerCase().endsWith(DataSourceFormat.Format.FORMAT_JSON.getLabel())) {
+                foundFormats.add(DataSourceFormat.Format.FORMAT_JSON.getLabel());
+            }
+        });
+        if (foundFormats.size() > 1) {
+            throw new DataPackageException("Resources cannot be mixed JSON/CSV");
+        }
+        if (foundFormats.isEmpty())
+            return DataSourceFormat.Format.FORMAT_CSV.getLabel();
+        return foundFormats.iterator().next();
+    }
+
+    public static FilebasedResource fromSource(String name, Collection<File> paths, File basePath) {
+        return new FilebasedResource(name, paths, basePath);
+    }
+
+    @JsonIgnore
     public File getBasePath() {
         return basePath;
     }
@@ -56,7 +99,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
 
     @Override
     List<Table> readData () throws Exception{
-        List<Table> tables = new ArrayList<>();
+        List<Table> tables;
         if (this.isInArchive) {
             tables = readfromZipFile();
         } else {
@@ -91,7 +134,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         }
         return tables;
     }
-
+/*
     @Override
     public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
@@ -117,7 +160,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
             writeTableAsCsv(t, lDialect, p);
         }
     }
-    
+    */
     public void setIsInArchive(boolean isInArchive) {
         this.isInArchive = isInArchive;
     }

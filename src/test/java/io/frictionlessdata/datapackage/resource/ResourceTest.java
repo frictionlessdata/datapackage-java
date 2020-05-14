@@ -19,29 +19,32 @@ import io.frictionlessdata.datapackage.PackageTest;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.schema.Schema;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  *
  * 
  */
 public class ResourceTest {
-    static JSONObject resource1 = new JSONObject("{\"name\": \"first-resource\", \"path\": " +
+    static ObjectNode resource1 = (ObjectNode) JsonUtil.getInstance().createNode("{\"name\": \"first-resource\", \"path\": " +
             "[\"data/cities.csv\", \"data/cities2.csv\", \"data/cities3.csv\"]}");
-    static JSONObject resource2 = new JSONObject("{\"name\": \"second-resource\", \"path\": " +
+    static ObjectNode resource2 = (ObjectNode) JsonUtil.getInstance().createNode("{\"name\": \"second-resource\", \"path\": " +
             "[\"data/area.csv\", \"data/population.csv\"]}");
 
-    static JSONArray testResources;
+    static ArrayNode testResources;
 
     static {
-        testResources = new JSONArray();
-        testResources.put(resource1);
-        testResources.put(resource2);
+        testResources = JsonUtil.getInstance().createArrayNode();
+        testResources.add(resource1);
+        testResources.add(resource2);
     }
 
     @Rule
@@ -208,7 +211,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<Object[]> iter = resource.objectArrayIterator(false, false, true, false);
+        Iterator<Object[]> iter = resource.objectArrayIterator(false, false,  false);
         
         // Assert data.
         while(iter.hasNext()){
@@ -254,7 +257,7 @@ public class ResourceTest {
     @Test
     public void testBuildAndIterateDataFromCsvFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_csv_resource.json");
-        Resource resource = Resource.build(new JSONObject(dataString), getBasePath(), false);
+        Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
@@ -281,7 +284,7 @@ public class ResourceTest {
     @Test
     public void testBuildAndIterateDataFromTabseparatedCsvFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_csv_resource_tabseparated.json");
-        Resource resource = Resource.build(new JSONObject(dataString), getBasePath(), false);
+        Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
@@ -411,7 +414,7 @@ public class ResourceTest {
     @Test
     public void testBuildAndIterateDataFromJSONFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_json_array_resource.json");
-        Resource resource = Resource.build(new JSONObject(dataString), getBasePath(), false);
+        Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
@@ -472,7 +475,7 @@ public class ResourceTest {
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
         // Assert
-        Assert.assertEquals(3, resource.read(false).size());
+        Assert.assertEquals(3, resource.getData(false, false, false, false).size());
     }
 
 
@@ -483,7 +486,7 @@ public class ResourceTest {
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
 
-        List<Object[]> data = r.read(false);
+        List<Object[]> data = r.getData(false, false, false, false);
     }
     
     @Test

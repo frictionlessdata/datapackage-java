@@ -1,16 +1,19 @@
 package io.frictionlessdata.datapackage.resource;
 
-import org.json.JSONArray;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
-public class JSONDataResource<C> extends AbstractDataResource<JSONArray,C> {
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+
+public class JSONDataResource<C> extends AbstractDataResource<ArrayNode,C> {
 
     public JSONDataResource(String name, String json) {
-        super(name, new JSONArray(json));
+        super(name, JsonUtil.getInstance().createArrayNode(json));
         super.format = getResourceFormat();
     }
 
     @Override
     String getResourceFormat() {
-        return Resource.FORMAT_JSON;
+        return DataSourceFormat.Format.FORMAT_JSON.getLabel();
     }
 }

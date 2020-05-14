@@ -4,10 +4,14 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,10 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
@@ -35,32 +36,25 @@ public interface Resource<T,C> {
 
     List<Table> getTables() throws Exception ;
 
-    JSONObject getJson();
+    String getJson();
 
-    List<Object[]> read (boolean cast) throws Exception;
+    List<Object[]> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
 
-    List<C> read (Class<C> beanClass) throws Exception;
+    List<C> getData(Class<C> beanClass) throws Exception;
 
     /**
-     * Write all the data in this resource as CSV into one or more
+     * Write all the data in this resource into one or more
      * files inside `outputDir`, depending on how many tables this
      * Resource holds.
      *
      * @param outputDir the directory to write to. Code must create
      *                  files as needed.
-     * @param dialect the CSV dialect to use for writing
      * @throws Exception if something fails while writing
      */
-    void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception;
+    void writeData(Path outputDir) throws Exception;
 
-    /**
-     * Write the Table as CSV into a file inside `outputDir`.
-     *
-     * @param outputFile the file to write to.
-     * @param dialect the CSV dialect to use for writing
-     * @throws Exception if something fails while writing
-     */
-    void writeTableAsCsv(Table table, Dialect dialect, Path outputFile) throws Exception;
+
+    void writeSchema(Path parentFilePath) throws IOException;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
@@ -74,8 +68,21 @@ public interface Resource<T,C> {
      * @return
      * @throws Exception
      */
-    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
+    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
 
+    Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception;
+
+    /**
+     * Returns an Iterator that returns rows as bean-arrays.
+     * {@link TableIterator} based on a Java Bean class instead of a {@link io.frictionlessdata.tableschema.schema.Schema}.
+     * It therefore disregards the Schema set on the {@link io.frictionlessdata.tableschema.Table} the iterator works
+     * on but creates its own Schema from the supplied `beanType`.
+     *
+     * @return Iterator that returns rows as bean-arrays.
+     * @param beanType the Bean class this BeanIterator expects
+     * @param relations follow relations to other data source
+     */
+    Iterator<C> beanIterator(Class<C> beanType, boolean relations)throws Exception;
     /**
      * Returns an Iterator that returns rows as string-arrays
      * @return
@@ -84,6 +91,26 @@ public interface Resource<T,C> {
     public Iterator<String[]> stringArrayIterator() throws Exception;
 
     String[] getHeaders() throws Exception;
+
+    /**
+     * Construct a path to write out the Schema for this Resource
+     * @return a String containing a relative path for writing or null
+     */
+    String getPathForWritingSchema();
+
+    /**
+     * Construct a path to write out the Dialect for this Resource
+     * @return a String containing a relative path for writing or null
+     */
+    String getPathForWritingDialect();
+
+    /**
+     * Return a set of relative path names we would use if we wanted to write
+     * the resource data to file. For DataResources, this helps with conversion
+     * to FileBasedResources
+     * @return Set of relative path names
+     */
+    Set<String> getDatafileNamesForWriting();
 
     /**
      * @return the name
@@ -188,8 +215,6 @@ public interface Resource<T,C> {
      */
     void setFormat(String format);
 
-    String getSchemaReference();
-
     String getDialectReference();
 
     Schema getSchema();
@@ -199,30 +224,42 @@ public interface Resource<T,C> {
     /**
      * @return the sources
      */
-    JSONArray getSources();
+    ArrayNode getSources();
 
     /**
      * @param sources the sources to set
      */
-    void setSources(JSONArray sources);
+    void setSources(ArrayNode sources);
 
     /**
      * @return the licenses
      */
-    JSONArray getLicenses();
+    ArrayNode getLicenses();
 
     /**
      * @param licenses the licenses to set
      */
-    void setLicenses(JSONArray licenses);
+    void setLicenses(ArrayNode licenses);
 
+    boolean shouldSerializeToFile();
 
+    void setShouldSerializeToFile(boolean serializeToFile);
 
-    static AbstractResource build(JSONObject resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
-        String name = resourceJson.has(JSONBase.JSON_KEY_NAME) ? resourceJson.getString(JSONBase.JSON_KEY_NAME) : null;
-        Object path = resourceJson.has(JSONBase.JSON_KEY_PATH) ? resourceJson.get(JSONBase.JSON_KEY_PATH) : null;
-        Object data = resourceJson.has(JSONBase.JSON_KEY_DATA) ? resourceJson.get(JSONBase.JSON_KEY_DATA) : null;
-        String format = resourceJson.has(JSONBase.JSON_KEY_FORMAT) ? resourceJson.getString(JSONBase.JSON_KEY_FORMAT) : null;
+    /**
+     * Sets the format (either CSV or JSON) for serializing the Resource content to File.
+     * @param format either FORMAT_CSV or FORMAT_JSON, other strings will cause an Exception
+     */
+    void setSerializationFormat(String format);
+
+    String getSerializationFormat();
+
+    Map<String, String> getOriginalReferences();
+
+    static AbstractResource build(ObjectNode resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
+        String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
+        Object path = resourceJson.get(JSONBase.JSON_KEY_PATH);
+        Object data = resourceJson.get(JSONBase.JSON_KEY_DATA);
+        String format = textValueOrNull(resourceJson, JSONBase.JSON_KEY_FORMAT);
         Dialect dialect = JSONBase.buildDialect (resourceJson, basePath, isArchivePackage);
         Schema schema = JSONBase.buildSchema(resourceJson, basePath, isArchivePackage);
 
@@ -237,9 +274,9 @@ public interface Resource<T,C> {
             }
         } else if (data != null && format != null){
             if (format.equals(Resource.FORMAT_JSON))
-                resource = new JSONDataResource(name, ((JSONArray) data).toString());
+                resource = new JSONDataResource(name, ((ArrayNode) data).toString());
             else if (format.equals(Resource.FORMAT_CSV))
-                resource = new CSVDataResource(name, (String)data);
+                resource = new CSVDataResource(name, data.toString());
         } else {
             DataPackageException dpe = new DataPackageException(
                     "Invalid Resource. The path property or the data and format properties cannot be null.");
@@ -263,8 +300,8 @@ public interface Resource<T,C> {
                     files.add(((Path)o).toFile());
                 } else if (o instanceof URL) {
                     urls.add((URL)o);
-                } else if (o instanceof String) {
-                    strings.add((String)o);
+                } else if (o instanceof TextNode) {
+                    strings.add(o.toString());
                 } else {
                     throw new IllegalArgumentException("Cannot build a resource out of "+o.getClass());
                 }
@@ -326,43 +363,43 @@ public interface Resource<T,C> {
     static Collection fromJSON(Object path, Object basePath) throws IOException {
         if (null == path)
             return null;
-        Collection paths;
-        if (path instanceof JSONArray) {
-            paths = fromJSON((JSONArray) path, basePath);
+        if (path instanceof ArrayNode) {
+            return fromJSON((ArrayNode) path, basePath);
+        } else if (path instanceof TextNode) {
+        	return fromJSON(JsonUtil.getInstance().createArrayNode().add((TextNode)path), basePath);
         } else {
-            paths = new ArrayList();
-            paths.add(path);
+            return Collections.singleton(path);
         }
-        return paths;
     }
 
-    static Collection fromJSON(JSONArray arr, Object basePath) throws IOException {
+    static Collection fromJSON(ArrayNode arr, Object basePath) throws IOException {
         if (null == arr)
             return null;
         Collection dereferencedObj = new ArrayList();
 
-        for (Object obj : arr) {
-            if (!(obj instanceof String))
+        for (JsonNode obj : arr) {
+            if (!(obj.isTextual()))
                 throw new IllegalArgumentException("Cannot dereference a "+obj.getClass());
-            if (isValidUrl((String)obj)) {
+            String location = obj.asText();
+            if (isValidUrl(location)) {
                 /*
                     This is a fully qualified URL "https://somesite.com/data/cities.csv".
                  */
-                dereferencedObj.add(new URL((String)obj));
+                dereferencedObj.add(new URL(location));
             } else {
                 if (basePath instanceof Path) {
                     /*
                         relative path, store for later dereferencing.
                         For reading, must be read relative to the basePath
                      */
-                    dereferencedObj.add(new File((String) obj));
+                    dereferencedObj.add(new File(location));
                 } else if (basePath instanceof URL) {
                     /*
                         This is a URL fragment "data/cities.csv".
                         According to https://github.com/frictionlessdata/specs/issues/652,
                         it should be parsed against the base URL (the Descriptor URL)
                      */
-                    dereferencedObj.add(new URL(((URL)basePath),(String)obj));
+                    dereferencedObj.add(new URL(((URL)basePath),location));
                 }
             }
         }
@@ -395,5 +432,9 @@ public interface Resource<T,C> {
         }
 
         return resolvedPath;
+    }
+
+    static String textValueOrNull(JsonNode source, String fieldName) {
+    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }
 }
