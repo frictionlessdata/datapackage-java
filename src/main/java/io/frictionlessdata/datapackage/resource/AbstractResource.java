@@ -33,23 +33,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     // Data properties.
     protected List<Table> tables;
 
-    // Metadata properties.
-    // Required properties.
-    private String name;
-
-    // Recommended properties.
-    String profile = null;
-
-    // Optional properties.
-    String title = null;
-    String description = null;
 
 
     String format = null;
-    String mediaType = null;
-    String encoding = null;
-    Integer bytes = null;
-    String hash = null;
 
     Dialect dialect;
     JSONArray sources = null;

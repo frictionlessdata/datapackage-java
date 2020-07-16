@@ -52,21 +52,21 @@ public abstract class JSONBase {
     boolean isArchivePackage = false;
     // Metadata properties.
     // Required properties.
-    private String name;
+    protected String name;
 
     // Recommended properties.
-    private String profile = null;
+    protected String profile = null;
 
     // Optional properties.
-    private String title = null;
-    private String description = null;
+    protected String title = null;
+    protected String description = null;
 
 
     String format = null;
-    private String mediaType = null;
-    private String encoding = null;
-    private Integer bytes = null;
-    private String hash = null;
+    protected String mediaType = null;
+    protected String encoding = null;
+    protected Integer bytes = null;
+    protected String hash = null;
 
     Dialect dialect;
     private JSONArray sources = null;
