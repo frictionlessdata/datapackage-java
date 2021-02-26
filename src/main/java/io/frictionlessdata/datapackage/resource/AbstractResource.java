@@ -568,8 +568,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     /**
-     * if an expli
-     * @return
+     * if an explicit serialisation format was set, return this. Alternatively return the default
+     * {@link io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat.Format} as a String
+     * @return Serialisation format, either "csv" or "json"
      */
     public String getSerializationFormat() {
         if (null != serializationFormat)

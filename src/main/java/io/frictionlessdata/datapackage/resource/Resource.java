@@ -54,14 +54,14 @@ public interface Resource<T,C> {
 
     /**
      * Returns an Iterator that returns rows as object-arrays
-     * @return
+     * @return Row iterator
      * @throws Exception
      */
     Iterator<Object[]> objectArrayIterator() throws Exception;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
-     * @return
+     * @return Row Iterator
      * @throws Exception
      */
     Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
@@ -81,7 +81,7 @@ public interface Resource<T,C> {
     Iterator<C> beanIterator(Class<C> beanType, boolean relations)throws Exception;
     /**
      * Returns an Iterator that returns rows as string-arrays
-     * @return
+     * @return Row Iterator
      * @throws Exception
      */
     public Iterator<String[]> stringArrayIterator() throws Exception;
