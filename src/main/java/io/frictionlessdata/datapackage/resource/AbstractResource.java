@@ -2,6 +2,8 @@ package io.frictionlessdata.datapackage.resource;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -262,13 +264,22 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
 
 
-    public void writeSchema(Path parentFilePath) throws IOException{
+    public void writeSchema(Path parentFilePath) throws IOException {
         String relPath = getPathForWritingSchema();
         if (null == originalReferences.get(JSONBase.JSON_KEY_SCHEMA) && Objects.nonNull(relPath)) {
             originalReferences.put(JSONBase.JSON_KEY_SCHEMA, relPath);
         }
-
+        
         if (null != relPath) {
+            boolean isRemote;
+            try {
+                // don't try to write schema files that came from remote, let's just add the URL to the descriptor
+                URI uri = new URI(relPath);
+                isRemote = (null != uri.getScheme()) &&
+                        (uri.getScheme().equals("http") || uri.getScheme().equals("https"));
+                if (isRemote)
+                    return;
+            } catch (URISyntaxException ignored) {}
             Path p;
             if (parentFilePath.toString().isEmpty()) {
                 p = parentFilePath.getFileSystem().getPath(relPath);
@@ -344,7 +355,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         } else if ((reference instanceof URLFileReference)){
             return null;
         } else if (getOriginalReferences().containsKey(key)) {
-            return getOriginalReferences().get(key).toString();
+            return getOriginalReferences().get(key);
         } else if (null != reference) {
             return key + "/" + reference.getFileName();
         } else if (this.shouldSerializeToFile()) {

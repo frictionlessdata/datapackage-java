@@ -625,7 +625,7 @@ public class PackageTest {
 
     @Test
     public void testBeanResource1() throws Exception {
-        Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), true);
+        Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/bean-iterator/datapackage.json").toPath(), true);
 
         Resource resource = pkg.getResource("employee-data");
         final List<EmployeeBean> employees = resource.getData(EmployeeBean.class);

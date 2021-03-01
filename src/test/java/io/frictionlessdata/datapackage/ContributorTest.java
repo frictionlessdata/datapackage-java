@@ -43,7 +43,10 @@ public class ContributorTest {
     @DisplayName("validate serialization and deserialization of a contributor object")
     public void testSerialization() {
     	Collection<Contributor> contributors = Contributor.fromJson(validContributorsJson);
-    	Assertions.assertEquals(validContributorsJson, JsonUtil.getInstance().serialize(contributors));
+		JsonUtil instance = JsonUtil.getInstance();
+		instance.setIndent(false);
+		String actual = instance.serialize(contributors);
+    	Assertions.assertEquals(validContributorsJson, actual);
     }
     
     @Test

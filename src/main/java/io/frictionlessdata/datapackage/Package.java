@@ -529,8 +529,8 @@ public class Package extends JSONBase{
             // this is ugly. If we encounter a DataResource which should be written to a file via
             // manual setting, do some trickery to not write the DataResource, but a curated version
             // to the package descriptor.
+            ObjectNode obj = (ObjectNode) JsonUtil.getInstance().createNode(resource.getJson());
             if ((resource instanceof AbstractDataResource) && (resource.shouldSerializeToFile())) {
-                ObjectNode obj = (ObjectNode) JsonUtil.getInstance().createNode(resource.getJson());
                 Set<String> datafileNames = resource.getDatafileNamesForWriting();
                 Set<String> outPaths = datafileNames.stream().map((r) -> r+"."+resource.getSerializationFormat()).collect(Collectors.toSet());
                 if (outPaths.size() == 1) {
@@ -539,10 +539,9 @@ public class Package extends JSONBase{
                     obj.set("path", JsonUtil.getInstance().createArrayNode(outPaths));
                 }
                 obj.put("format", resource.getSerializationFormat());
-                resourcesJsonArray.add(obj);
-            } else {
-                resourcesJsonArray.add(JsonUtil.getInstance().createNode(resource.getJson()));
             }
+            obj.remove("originalReferences");
+            resourcesJsonArray.add(obj);
         }
 
         if(resourcesJsonArray.size() > 0){

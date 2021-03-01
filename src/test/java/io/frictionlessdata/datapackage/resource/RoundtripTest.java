@@ -20,11 +20,11 @@ import java.util.List;
  * Ensure datapackages are written in a valid format and can be read back. Compare data to see it matches
  */
 public class RoundtripTest {
-    private static CSVFormat csvFormat = DataSourceFormat
+    private static final CSVFormat csvFormat = DataSourceFormat
             .getDefaultCsvFormat()
             .withDelimiter('\t');
 
-    private static String resourceContent = "[\n" +
+    private static final String resourceContent = "[\n" +
             "    {\n" +
             "\t  \"city\": \"london\",\n" +
             "\t  \"year\": 2017,\n" +
@@ -77,7 +77,6 @@ public class RoundtripTest {
 
         for (int i = 0; i < validationData.size(); i++) {
             Assertions.assertArrayEquals(((Object[])validationData.get(i)), ((Object[])testData.get(i)));
-
         }
     }
 
