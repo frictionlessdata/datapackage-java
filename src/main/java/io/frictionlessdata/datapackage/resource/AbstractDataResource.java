@@ -34,7 +34,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
      * @return the data
      */
     @JsonIgnore
-    public T getDataPoperty() {
+    public T getDataProperty() {
         return data;
     }
 

@@ -1,27 +1,23 @@
 package io.frictionlessdata.datapackage;
 
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.datapackage.resource.*;
-import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.util.JsonUtil;
-import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.exception.InvalidCastException;
-import io.frictionlessdata.tableschema.exception.JsonSerializingException;
-import io.frictionlessdata.tableschema.exception.TableSchemaException;
-import io.frictionlessdata.tableschema.exception.ValidationException;
-import io.frictionlessdata.tableschema.io.LocalFileReference;
-
-import org.apache.commons.collections.list.UnmodifiableList;
-import org.apache.commons.collections.set.UnmodifiableSet;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.UrlValidator;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.resource.AbstractDataResource;
+import io.frictionlessdata.datapackage.resource.AbstractReferencebasedResource;
+import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.tableschema.exception.ValidationException;
+import io.frictionlessdata.tableschema.io.LocalFileReference;
+import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.apache.commons.collections.list.UnmodifiableList;
+import org.apache.commons.collections.set.UnmodifiableSet;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.UrlValidator;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -35,7 +31,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 
@@ -401,7 +396,7 @@ public class Package extends JSONBase{
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         // If a name property isn't given...
-        if ((resource).getDataPoperty() == null || (resource).getFormat() == null) {
+        if ((resource.getDataProperty() == null) || (resource).getFormat() == null) {
             dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
@@ -445,11 +440,11 @@ public class Package extends JSONBase{
         	this.jsonObject.put(key, value);
         }
     }
-    
+
     public void setProperty(String key, JsonNode value) throws DataPackageException{
     	this.jsonObject.set(key, value);
     }
-    
+
     public void addProperty(String key, JsonNode value) throws DataPackageException{
         if(this.jsonObject.has(key)){
             throw new DataPackageException("A property with the same key already exists.");
@@ -520,7 +515,7 @@ public class Package extends JSONBase{
     	this.jsonObject.fields().forEachRemaining(f->{
     		objectNode.set(f.getKey(), f.getValue());
     	});
-    	
+
     	Iterator<Resource> resourceIter = resources.iterator();
 
         ArrayNode resourcesJsonArray = JsonUtil.getInstance().createArrayNode();
@@ -814,7 +809,7 @@ public class Package extends JSONBase{
 
         return urlValidator.isValid(objString);
     }
-    
+
     private static String textValueOrNull(JsonNode source, String fieldName) {
     	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }

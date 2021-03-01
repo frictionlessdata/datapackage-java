@@ -1,17 +1,16 @@
 package io.frictionlessdata.datapackage.resource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
-import io.frictionlessdata.tableschema.util.JsonUtil;
 
 public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T,C> {
     Collection<T> paths;

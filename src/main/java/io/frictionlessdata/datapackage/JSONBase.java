@@ -60,21 +60,21 @@ public abstract class JSONBase {
     boolean isArchivePackage = false;
     // Metadata properties.
     // Required properties.
-    private String name;
+    protected String name;
 
     // Recommended properties.
-    private String profile = null;
+    protected String profile = null;
 
     // Optional properties.
-    private String title = null;
-    private String description = null;
+    protected String title = null;
+    protected String description = null;
 
 
     String format = null;
-    private String mediaType = null;
-    private String encoding = null;
-    private Integer bytes = null;
-    private String hash = null;
+    protected String mediaType = null;
+    protected String encoding = null;
+    protected Integer bytes = null;
+    protected String hash = null;
 
     Dialect dialect;
     private ArrayNode sources = null;
@@ -237,7 +237,7 @@ public abstract class JSONBase {
     }
 
     public static void setFromJson(JsonNode resourceJson, JSONBase retVal, Schema schema) {
-    	
+
         if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA) && resourceJson.get(JSONBase.JSON_KEY_SCHEMA).isTextual())
             retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA).asText());
         if (resourceJson.has(JSONBase.JSON_KEY_DIALECT) && resourceJson.get(JSONBase.JSON_KEY_DIALECT).isTextual())
@@ -274,7 +274,7 @@ public abstract class JSONBase {
         retVal.setSources(sources);
         retVal.setLicenses(licenses);
     }
-    
+
     private static String textValueOrNull(JsonNode source, String fieldName) {
     	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }
@@ -451,7 +451,7 @@ public abstract class JSONBase {
 
         return null;
     }
-    
+
     protected static JsonNode createNode(String json) {
     	try {
     		return JsonUtil.getInstance().createNode(json);
@@ -459,7 +459,7 @@ public abstract class JSONBase {
         	throw new DataPackageException(ex);
         }
     }
-    
+
     public static Object determineType(Object obj, Object basePath) throws IOException {
         if (null == obj)
             return null;

@@ -1,5 +1,22 @@
 package io.frictionlessdata.datapackage.resource;
 
+import io.frictionlessdata.datapackage.Dialect;
+import io.frictionlessdata.datapackage.JSONBase;
+import io.frictionlessdata.datapackage.Profile;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.io.FileReference;
+import io.frictionlessdata.tableschema.io.URLFileReference;
+import io.frictionlessdata.tableschema.iterator.BeanIterator;
+import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.iterator.TableIterator;
+import org.apache.commons.collections4.iterators.IteratorChain;
+import org.apache.commons.csv.CSVFormat;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URI;
@@ -41,23 +58,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     // Data properties.
     protected List<Table> tables;
 
-    // Metadata properties.
-    // Required properties.
-    private String name;
-
-    // Recommended properties.
-    String profile = null;
-
-    // Optional properties.
-    String title = null;
-    String description = null;
 
 
     String format = null;
-    String mediaType = null;
-    String encoding = null;
-    Integer bytes = null;
-    String hash = null;
 
     Dialect dialect;
     ArrayNode sources = null;
@@ -210,8 +213,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      */
     @JsonIgnore
     public String getJson(){
-        //FIXME: Maybe use something lke GSON so we don't have to explicitly
-        //code this...
         ObjectNode json = (ObjectNode) JsonUtil.getInstance().createNode(this);
 
         if (this instanceof URLbasedResource) {
@@ -236,7 +237,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             if (this.shouldSerializeToFile()) {
                 //TODO implement storing only the path - and where to get it
             } else {
-                json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(((AbstractDataResource) this).getDataPoperty()));
+                json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(((AbstractDataResource) this).getDataProperty()));
             }
         }
 
@@ -257,7 +258,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             }
         }
         if(Objects.nonNull(dialectObj)) {
-        	json.put(JSON_KEY_DIALECT, dialectObj);	
+        	json.put(JSON_KEY_DIALECT, dialectObj);
         }
         return json.toString();
     }
@@ -269,7 +270,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         if (null == originalReferences.get(JSONBase.JSON_KEY_SCHEMA) && Objects.nonNull(relPath)) {
             originalReferences.put(JSONBase.JSON_KEY_SCHEMA, relPath);
         }
-        
+
         if (null != relPath) {
             boolean isRemote;
             try {
@@ -598,8 +599,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     /**
-     * if an expli
-     * @return
+     * if an explicit serialisation format was set, return this. Alternatively return the default
+     * {@link io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat.Format} as a String
+     * @return Serialisation format, either "csv" or "json"
      */
     @JsonIgnore
     public String getSerializationFormat() {

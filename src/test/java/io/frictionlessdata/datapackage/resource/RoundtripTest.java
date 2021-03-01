@@ -77,6 +77,7 @@ public class RoundtripTest {
 
         for (int i = 0; i < validationData.size(); i++) {
             Assertions.assertArrayEquals(((Object[])validationData.get(i)), ((Object[])testData.get(i)));
+
         }
     }
 

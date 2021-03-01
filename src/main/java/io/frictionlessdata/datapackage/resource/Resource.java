@@ -58,14 +58,14 @@ public interface Resource<T,C> {
 
     /**
      * Returns an Iterator that returns rows as object-arrays
-     * @return
+     * @return Row iterator
      * @throws Exception
      */
     Iterator<Object[]> objectArrayIterator() throws Exception;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
-     * @return
+     * @return Row Iterator
      * @throws Exception
      */
     Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
@@ -85,7 +85,7 @@ public interface Resource<T,C> {
     Iterator<C> beanIterator(Class<C> beanType, boolean relations)throws Exception;
     /**
      * Returns an Iterator that returns rows as string-arrays
-     * @return
+     * @return Row Iterator
      * @throws Exception
      */
     public Iterator<String[]> stringArrayIterator() throws Exception;
@@ -243,6 +243,7 @@ public interface Resource<T,C> {
 
     boolean shouldSerializeToFile();
 
+
     void setShouldSerializeToFile(boolean serializeToFile);
 
     /**
@@ -253,7 +254,8 @@ public interface Resource<T,C> {
 
     String getSerializationFormat();
 
-    Map<String, String> getOriginalReferences();
+    //Map<String, String> getOriginalReferences();
+
 
     static AbstractResource build(ObjectNode resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
