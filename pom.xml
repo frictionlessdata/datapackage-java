@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <tableschema-java-version>0e7c4ff49e</tableschema-java-version>
+        <tableschema-java-version>cb08e00420</tableschema-java-version>
         <hamcrest.version>1.3</hamcrest.version>
         <junit.version>5.7.1</junit.version>
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
