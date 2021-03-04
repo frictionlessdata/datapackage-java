@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 
+
 /**
  *
  * 
@@ -577,9 +578,38 @@ public class PackageTest {
         JsonNode expectedSchemaJson = createNode(expectedSchema.getJson());
         JsonNode testSchemaJson = createNode(resource.getSchema().getJson());
         // Compare JSON objects
-        Assert.assertTrue("Schemas don't match", expectedSchemaJson.equals(testSchemaJson));
+        Assert.assertEquals("Schemas don't match", expectedSchemaJson, testSchemaJson);
     }
-    
+
+    @Test
+    public void testAddPackageProperty() throws Exception{
+        String testStr = "{\"units\":{\"mass\":\"kg\",\"mass flow\":\"kg/s\",\"pressure\":\"Pa\",\"temperature\":\"K\",\"time\":\"s\"}}";
+        JsonNode testNode = JsonUtil.getInstance().readValue(testStr);
+        Path pkgFile =  TestUtil.getResourcePath("/fixtures/datapackages/employees/datapackage.json");
+        Package p = new Package(pkgFile, false);
+        p.setProperty("test", testStr);
+        Assert.assertEquals("JSON doesn't match", testNode, p.getProperty("test"));
+    }
+
+    @Test
+    public void testAddPackageProperties() throws Exception{
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("mass", "kg");
+        map.put("mass flow", "kg/s");
+        map.put("pressure", "Pa");
+        map.put("temperature", "K");
+        map.put("time", "s");
+       
+        Path pkgFile =  TestUtil.getResourcePath("/fixtures/datapackages/employees/datapackage.json");
+        Package p = new Package(pkgFile, false);
+        p.setProperties(map);
+        Assert.assertEquals("JSON doesn't match", "kg", ((TextNode)p.getProperty("mass")).asText());
+        Assert.assertEquals("JSON doesn't match", "kg/s", ((TextNode)p.getProperty("mass flow")).asText());
+        Assert.assertEquals("JSON doesn't match", "Pa", ((TextNode)p.getProperty("pressure")).asText());
+        Assert.assertEquals("JSON doesn't match", "K", ((TextNode)p.getProperty("temperature")).asText());
+        Assert.assertEquals("JSON doesn't match", "s", ((TextNode)p.getProperty("time")).asText());
+    }
+
     /** TODO: Implement more thorough testing.
     @Test
     public void testResourceSchemaDereferencingWithInvalidResourceSchema() throws DataPackageException, IOException{

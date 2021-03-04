@@ -426,6 +426,16 @@ public class Package extends JSONBase{
     }
 
     /**
+     * Get the value of a named property of the Package (the `datapackage.json`).
+     * @return a JSON structure holding either a string, an array or a JSON object
+     */
+    public Object getProperty(String key) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        return jsonObject.get(key);
+    }
+    /**
      * Add a new property and value to the Package. If a value already is defined for the key,
      * an exception is thrown. The value can be either a plain string or a string holding a JSON-Array or
      * JSON-object.
@@ -452,12 +462,29 @@ public class Package extends JSONBase{
         	this.jsonObject.set(key, value);
         }
     }
-    
-    public Object getProperty(String key) {
-        if (!this.jsonObject.has(key)) {
-            return null;
+
+    /**
+     * Set a property to a certain value on the Package. The value can be either a plain string or a string
+     * holding a JSON-Array or JSON-object.
+     * @param key the property name
+     * @param value the value to set.
+     */
+    public void setProperty(String key, String value) {
+        JsonNode vNode = JsonUtil.getInstance().readValue(value);
+        jsonObject.set(key, vNode);
+    }
+
+    /**
+     * Set a number of properties at once. The `mapping` holds the properties as
+     * key/value pairs
+     * @param mapping the key/value map holding the properties
+     */
+    public void setProperties(Map<String, Object> mapping) {
+        JsonUtil jsonUtil = JsonUtil.getInstance();
+        for (String key : mapping.keySet()) {
+            JsonNode vNode = jsonUtil.createNode(mapping.get(key));
+            jsonObject.set(key, vNode);
         }
-        return jsonObject.get(key);
     }
 
     public void removeProperty(String key){
