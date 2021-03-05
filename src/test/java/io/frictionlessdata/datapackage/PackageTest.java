@@ -1,7 +1,28 @@
 package io.frictionlessdata.datapackage;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.frictionlessdata.datapackage.beans.EmployeeBean;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
+import io.frictionlessdata.datapackage.resource.FilebasedResource;
+import io.frictionlessdata.datapackage.resource.JSONDataResource;
+import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.datapackage.resource.ResourceTest;
+import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.exception.JsonParsingException;
+import io.frictionlessdata.tableschema.exception.ValidationException;
+import io.frictionlessdata.tableschema.field.DateField;
+import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,31 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
-import io.frictionlessdata.datapackage.resource.JSONDataResource;
-import io.frictionlessdata.datapackage.resource.FilebasedResource;
-import io.frictionlessdata.datapackage.resource.Resource;
-import io.frictionlessdata.datapackage.resource.ResourceTest;
-import io.frictionlessdata.tableschema.field.DateField;
-import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.util.JsonUtil;
-import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.exception.JsonParsingException;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
-import org.junit.rules.ExpectedException;
-import org.junit.Assert;
-import org.junit.rules.TemporaryFolder;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 /**
@@ -635,12 +633,13 @@ public class PackageTest {
         Assert.assertNull("JSON doesn't match", p.getProperty("null"));
     }
 
-    /** TODO: Implement more thorough testing.
+    // test schema validation. Schema is invalid, must throw
     @Test
-    public void testResourceSchemaDereferencingWithInvalidResourceSchema() throws DataPackageException, IOException{
-        exception.expect(ValidationException.class);
-        Package pkg = this.getDataPackageFromFilePath(true, "/fixtures/multi_data_datapackage_with_invalid_resource_schema.json");
-    }**/
+    public void testResourceSchemaDereferencingWithInvalidResourceSchema() {
+        assertThrows(ValidationException.class, () -> this.getDataPackageFromFilePath(
+                "/fixtures/multi_data_datapackage_with_invalid_resource_schema.json", true
+        ));
+    }
     
     @Test
     public void testResourceDialectDereferencing() throws Exception {

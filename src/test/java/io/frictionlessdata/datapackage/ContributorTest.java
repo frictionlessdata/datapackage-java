@@ -1,14 +1,12 @@
 package io.frictionlessdata.datapackage;
 
-import java.net.MalformedURLException;
-import java.util.Collection;
-
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.util.JsonUtil;
+import java.util.Collection;
 
 public class ContributorTest {
 	

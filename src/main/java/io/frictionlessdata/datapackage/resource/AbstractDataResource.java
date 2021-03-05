@@ -1,16 +1,15 @@
 package io.frictionlessdata.datapackage.resource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.frictionlessdata.datapackage.Dialect;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.Table;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import io.frictionlessdata.datapackage.Dialect;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.Table;
 
 /**
  * Abstract base class for all Resources that are based on directly set data, that is not on

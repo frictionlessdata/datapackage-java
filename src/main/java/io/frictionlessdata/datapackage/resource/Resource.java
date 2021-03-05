@@ -1,17 +1,16 @@
 package io.frictionlessdata.datapackage.resource;
 
-import io.frictionlessdata.datapackage.Dialect;
-import io.frictionlessdata.datapackage.JSONBase;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.util.JsonUtil;
-import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.iterator.TableIterator;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.frictionlessdata.datapackage.Dialect;
+import io.frictionlessdata.datapackage.JSONBase;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.iterator.TableIterator;
+import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;

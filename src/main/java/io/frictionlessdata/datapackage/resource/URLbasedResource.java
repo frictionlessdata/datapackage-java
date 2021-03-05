@@ -1,16 +1,11 @@
 package io.frictionlessdata.datapackage.resource;
 
-import io.frictionlessdata.datapackage.Dialect;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
 public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> {
 

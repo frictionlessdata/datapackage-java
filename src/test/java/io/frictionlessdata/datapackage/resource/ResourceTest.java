@@ -1,5 +1,18 @@
 package io.frictionlessdata.datapackage.resource;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.frictionlessdata.datapackage.Package;
+import io.frictionlessdata.datapackage.PackageTest;
+import io.frictionlessdata.datapackage.Profile;
+import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import java.io.File;
 import java.math.BigInteger;
 import java.net.URI;
@@ -13,21 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
-import io.frictionlessdata.datapackage.Package;
-import io.frictionlessdata.datapackage.PackageTest;
-import io.frictionlessdata.datapackage.Profile;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.util.JsonUtil;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  *

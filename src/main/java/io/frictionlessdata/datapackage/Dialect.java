@@ -1,20 +1,18 @@
 package io.frictionlessdata.datapackage;
 
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.frictionlessdata.tableschema.io.FileReference;
+import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.QuoteMode;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.QuoteMode;
-
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.frictionlessdata.tableschema.io.FileReference;
-import io.frictionlessdata.tableschema.util.JsonUtil;
 
 /**
  * CSV Dialect defines a simple format to describe the various dialects of CSV files in a language agnostic

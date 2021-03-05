@@ -1,40 +1,10 @@
 package io.frictionlessdata.datapackage.resource;
 
-import io.frictionlessdata.datapackage.Dialect;
-import io.frictionlessdata.datapackage.JSONBase;
-import io.frictionlessdata.datapackage.Profile;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
-import io.frictionlessdata.tableschema.io.FileReference;
-import io.frictionlessdata.tableschema.io.URLFileReference;
-import io.frictionlessdata.tableschema.iterator.BeanIterator;
-import io.frictionlessdata.tableschema.schema.Schema;
-import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.iterator.TableIterator;
-import org.apache.commons.collections4.iterators.IteratorChain;
-import org.apache.commons.csv.CSVFormat;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
-import org.apache.commons.collections4.iterators.IteratorChain;
-import org.apache.commons.csv.CSVFormat;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
@@ -47,6 +17,17 @@ import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.apache.commons.collections4.iterators.IteratorChain;
+import org.apache.commons.csv.CSVFormat;
+
+import java.io.IOException;
+import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * Abstract base implementation of a Resource.

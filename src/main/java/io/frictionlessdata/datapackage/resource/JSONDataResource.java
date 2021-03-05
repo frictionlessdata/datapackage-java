@@ -1,7 +1,6 @@
 package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 

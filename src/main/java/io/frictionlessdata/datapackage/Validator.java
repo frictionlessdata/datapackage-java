@@ -1,17 +1,16 @@
 package io.frictionlessdata.datapackage;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.schema.JsonSchema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.apache.commons.validator.routines.UrlValidator;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import org.apache.commons.validator.routines.UrlValidator;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  *

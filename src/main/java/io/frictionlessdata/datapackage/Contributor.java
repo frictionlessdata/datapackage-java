@@ -1,14 +1,13 @@
 package io.frictionlessdata.datapackage;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
