@@ -58,7 +58,7 @@ public class ValidatorTest {
         Package dp = new Package(url, true);
         
         String invalidProfileId = "INVALID_PROFILE_ID";
-        dp.addProperty("profile", invalidProfileId);
+        dp.setProperty("profile", invalidProfileId);
         
         exception.expectMessage("Invalid profile id: " + invalidProfileId);
         dp.validate();
@@ -83,7 +83,7 @@ public class ValidatorTest {
         
         String invalidProfileUrl = "https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
                 "/master/src/main/resources/schemas/INVALID.json";
-        dp.addProperty("profile", invalidProfileUrl);
+        dp.setProperty("profile", invalidProfileUrl);
         
         exception.expectMessage("Invalid profile schema URL: " + invalidProfileUrl);
         dp.validate();

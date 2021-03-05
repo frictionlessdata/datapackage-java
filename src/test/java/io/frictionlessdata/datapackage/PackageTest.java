@@ -5,6 +5,8 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -583,31 +585,54 @@ public class PackageTest {
 
     @Test
     public void testAddPackageProperty() throws Exception{
-        String testStr = "{\"units\":{\"mass\":\"kg\",\"mass flow\":\"kg/s\",\"pressure\":\"Pa\",\"temperature\":\"K\",\"time\":\"s\"}}";
-        JsonNode testNode = JsonUtil.getInstance().readValue(testStr);
+        Object[] entries = new Object[]{"K", 3.2, 2};
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("time", "s");
+        props.put("length", 3.2);
+        props.put("count", 7);
+
         Path pkgFile =  TestUtil.getResourcePath("/fixtures/datapackages/employees/datapackage.json");
         Package p = new Package(pkgFile, false);
-        p.setProperty("test", testStr);
-        Assert.assertEquals("JSON doesn't match", testNode, p.getProperty("test"));
+
+        p.setProperty("mass unit", "kg");
+        p.setProperty("mass flow", 3.2);
+        p.setProperty("number of parcels", 5);
+        p.setProperty("entries", entries);
+        p.setProperty("props", props);
+        p.setProperty("null", null);
+        Assert.assertEquals("JSON doesn't match", "kg", p.getProperty("mass unit"));
+        Assert.assertEquals("JSON doesn't match", new BigDecimal("3.2"), p.getProperty("mass flow"));
+        Assert.assertEquals("JSON doesn't match", new BigInteger("5"), p.getProperty("number of parcels"));
+        Assert.assertEquals("JSON doesn't match", Arrays.asList(entries), p.getProperty("entries"));
+        Assert.assertEquals("JSON doesn't match", props, p.getProperty("props"));
+        Assert.assertNull("JSON doesn't match", p.getProperty("null"));
     }
 
     @Test
-    public void testAddPackageProperties() throws Exception{
+    // tests the setProperties() method of Package
+    public void testSetPackageProperties() throws Exception{
+        Object[] entries = new Object[]{"K", 3.2, 2};
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("mass", "kg");
-        map.put("mass flow", "kg/s");
-        map.put("pressure", "Pa");
-        map.put("temperature", "K");
-        map.put("time", "s");
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("time", "s");
+        props.put("length", 3.2);
+        props.put("count", 7);
+        map.put("mass unit", "kg");
+        map.put("mass flow", 3.2);
+        map.put("number of parcels", 5);
+        map.put("entries", entries);
+        map.put("props", props);
+        map.put("null", null);
        
         Path pkgFile =  TestUtil.getResourcePath("/fixtures/datapackages/employees/datapackage.json");
         Package p = new Package(pkgFile, false);
         p.setProperties(map);
-        Assert.assertEquals("JSON doesn't match", "kg", ((TextNode)p.getProperty("mass")).asText());
-        Assert.assertEquals("JSON doesn't match", "kg/s", ((TextNode)p.getProperty("mass flow")).asText());
-        Assert.assertEquals("JSON doesn't match", "Pa", ((TextNode)p.getProperty("pressure")).asText());
-        Assert.assertEquals("JSON doesn't match", "K", ((TextNode)p.getProperty("temperature")).asText());
-        Assert.assertEquals("JSON doesn't match", "s", ((TextNode)p.getProperty("time")).asText());
+        Assert.assertEquals("JSON doesn't match", "kg", p.getProperty("mass unit"));
+        Assert.assertEquals("JSON doesn't match", new BigDecimal("3.2"), p.getProperty("mass flow"));
+        Assert.assertEquals("JSON doesn't match", new BigInteger("5"), p.getProperty("number of parcels"));
+        Assert.assertEquals("JSON doesn't match", Arrays.asList(entries), p.getProperty("entries"));
+        Assert.assertEquals("JSON doesn't match", props, p.getProperty("props"));
+        Assert.assertNull("JSON doesn't match", p.getProperty("null"));
     }
 
     /** TODO: Implement more thorough testing.
@@ -638,16 +663,15 @@ public class PackageTest {
 
         Object creator = dp.getProperty("creator");
         Assert.assertNotNull(creator);
-        Assert.assertEquals(TextNode.class, creator.getClass());
-        Assert.assertEquals("Horst", ((TextNode)creator).asText());
+        Assert.assertEquals("Horst", creator);
 
         Object testprop = dp.getProperty("testprop");
         Assert.assertNotNull(testprop);
-        Assert.assertTrue(testprop instanceof JsonNode);
+        Assert.assertTrue(testprop instanceof Map);
 
         Object testarray = dp.getProperty("testarray");
         Assert.assertNotNull(testarray);
-        Assert.assertTrue(testarray instanceof ArrayNode);
+        Assert.assertTrue(testarray instanceof ArrayList);
 
         Object resObj = dp.getProperty("something");
         Assert.assertNull(resObj);

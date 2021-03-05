@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,6 +21,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -427,52 +430,44 @@ public class Package extends JSONBase{
 
     /**
      * Get the value of a named property of the Package (the `datapackage.json`).
-     * @return a JSON structure holding either a string, an array or a JSON object
+     * @return a Java class, either a string, BigInteger, BitDecimal, array or an object
      */
     public Object getProperty(String key) {
         if (!this.jsonObject.has(key)) {
             return null;
         }
-        return jsonObject.get(key);
+        JsonNode jNode = jsonObject.get(key);
+        if (jNode.isArray()) {
+            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<ArrayList<?>>() {});
+        } else if (jNode.isTextual()) {
+            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<String>() {});
+        } else if (jNode.isBoolean()) {
+            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<Boolean>() {});
+        } else if (jNode.isFloatingPointNumber()) {
+            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<BigDecimal>() {});
+        } else if (jNode.isIntegralNumber()) {
+            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<BigInteger>() {});
+        } else if (jNode.isObject()) {
+            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<Object>() {});
+        } else if (jNode.isNull() || jNode.isEmpty() || jNode.isMissingNode()) {
+            return null;
+        }
+        return null;
     }
     /**
-     * Add a new property and value to the Package. If a value already is defined for the key,
-     * an exception is thrown. The value can be either a plain string or a string holding a JSON-Array or
-     * JSON-object.
+     * Set a property and value on the Package.  The value will be converted to a JsonObject and added to the
+     * datapackage.json on serialization
      * @param key the property name
      * @param value the value to set.
-     * @throws DataPackageException if the property denoted by `key` already exists
      */
-    public void addProperty(String key, String value) throws DataPackageException{
-        if(this.jsonObject.has(key)){
-            throw new DataPackageException("A property with the same key already exists.");
-        }else{
-        	this.jsonObject.put(key, value);
-        }
+    public void setProperty(String key, Object value) {
+        this.jsonObject.set(key, JsonUtil.getInstance().createNode(value));
     }
 
     public void setProperty(String key, JsonNode value) throws DataPackageException{
     	this.jsonObject.set(key, value);
     }
 
-    public void addProperty(String key, JsonNode value) throws DataPackageException{
-        if(this.jsonObject.has(key)){
-            throw new DataPackageException("A property with the same key already exists.");
-        }else{
-        	this.jsonObject.set(key, value);
-        }
-    }
-
-    /**
-     * Set a property to a certain value on the Package. The value can be either a plain string or a string
-     * holding a JSON-Array or JSON-object.
-     * @param key the property name
-     * @param value the value to set.
-     */
-    public void setProperty(String key, String value) {
-        JsonNode vNode = JsonUtil.getInstance().readValue(value);
-        jsonObject.set(key, vNode);
-    }
 
     /**
      * Set a number of properties at once. The `mapping` holds the properties as
