@@ -438,22 +438,39 @@ public class Package extends JSONBase{
         }
         JsonNode jNode = jsonObject.get(key);
         if (jNode.isArray()) {
-            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<ArrayList<?>>() {});
+            return getProperty(key, new TypeReference<ArrayList<?>>() {});
         } else if (jNode.isTextual()) {
-            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<String>() {});
+            return getProperty(key, new TypeReference<String>() {});
         } else if (jNode.isBoolean()) {
-            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<Boolean>() {});
+            return getProperty(key, new TypeReference<Boolean>() {});
         } else if (jNode.isFloatingPointNumber()) {
-            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<BigDecimal>() {});
+            return getProperty(key, new TypeReference<BigDecimal>() {});
         } else if (jNode.isIntegralNumber()) {
-            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<BigInteger>() {});
+            return getProperty(key, new TypeReference<BigInteger>() {});
         } else if (jNode.isObject()) {
-            return JsonUtil.getInstance().deserialize(jNode, new TypeReference<Object>() {});
+            return getProperty(key, new TypeReference<Object>() {});
         } else if (jNode.isNull() || jNode.isEmpty() || jNode.isMissingNode()) {
             return null;
         }
         return null;
     }
+
+    public Object getProperty(String key, TypeReference<?> typeRef) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        JsonNode jNode = jsonObject.get(key);
+        return JsonUtil.getInstance().deserialize(jNode, typeRef);
+    }
+
+    public Object getProperty(String key, Class<?> clazz) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        JsonNode jNode = jsonObject.get(key);
+        return JsonUtil.getInstance().deserialize(jNode, clazz);
+    }
+
     /**
      * Set a property and value on the Package.  The value will be converted to a JsonObject and added to the
      * datapackage.json on serialization
