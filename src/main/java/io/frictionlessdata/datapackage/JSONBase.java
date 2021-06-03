@@ -360,10 +360,13 @@ public abstract class JSONBase {
             throw new DataPackageException("The zip file does not contain the expected file: " + fileName);
         }
 
+        String content;
         // Read the datapackage.json file inside the zip
         try (InputStream stream = zipFile.getInputStream(entry)) {
-            return getFileContentAsString(stream);
+            content = getFileContentAsString(stream);
         }
+        zipFile.close();
+        return content;
     }
 
     public static ObjectNode dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {

@@ -431,7 +431,6 @@ public class PackageTest {
     public void testSaveToAndReadFromZipFile() throws Exception{
         Path tempDirPath = Files.createTempDirectory("datapackage-");
         File createdFile = new File(tempDirPath.toFile(), "test_save_datapackage.zip");
-        System.out.println(createdFile);
         
         // saveDescriptor the datapackage in zip file.
         Package originalPackage = this.getDataPackageFromFilePath(true);
@@ -462,6 +461,22 @@ public class PackageTest {
         Assert.assertEquals(2, data.size());
         Assert.assertArrayEquals(usdTestData, data.get(0));
         Assert.assertArrayEquals(gbpTestData, data.get(1));
+    }
+
+    /*
+     * ensure the zip file is closed after reading so we don't leave file handles dangling.
+     */
+    @Test
+    public void testClosesZipFile() throws Exception{
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        File createdFile = new File(tempDirPath.toFile(), "test_save_datapackage.zip");
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/zip/countries-and-currencies.zip");
+        Files.copy(resourcePath, createdFile.toPath());
+
+        Package dp = new Package(createdFile.toPath(), true);
+        Resource r = dp.getResource("currencies");
+        createdFile.delete();
+        Assert.assertFalse(createdFile.exists());
     }
     
     @Test
