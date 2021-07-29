@@ -253,9 +253,18 @@ public interface Resource<T,C> {
 
     String getSerializationFormat();
 
-    //Map<String, String> getOriginalReferences();
-
-
+    /**
+     * Recreate a Resource object from a JSON descriptor, a base path to resolve relative file paths against
+     * and a flag that tells us whether we are reading from inside a ZIP archive.
+     *
+     * @param resourceJson JSON descriptor containing properties like `name, `data` or `path`
+     * @param basePath File system path used to resolve relative path entries if `path` contains entries
+     * @param isArchivePackage  true if we are reading files from inside a ZIP archive.
+     * @return fully inflated Resource object. Subclass depends on the data found
+     * @throws IOException thrown if reading data failed
+     * @throws DataPackageException for invalid data
+     * @throws Exception if other operation fails.
+     */
     static AbstractResource build(ObjectNode resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
         Object path = resourceJson.get(JSONBase.JSON_KEY_PATH);

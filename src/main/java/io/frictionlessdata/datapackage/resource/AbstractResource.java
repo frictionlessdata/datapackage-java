@@ -39,8 +39,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     // Data properties.
     protected List<Table> tables;
 
-
-
     String format = null;
 
     Dialect dialect;

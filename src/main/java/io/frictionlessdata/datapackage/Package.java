@@ -81,7 +81,7 @@ public class Package extends JSONBase{
     public Package(Collection<Resource> resources) throws IOException {
         for (Resource r : resources) {
             addResource(r, false);
-                   }
+        }
         UUID uuid = UUID.randomUUID();
         id = uuid.toString();
         validate();
@@ -314,19 +314,7 @@ public class Package extends JSONBase{
         }
     }
 
-    /*
-    // TODO migrate into Schema.java
-    private static void writeSchema(Path parentFilePath, Schema schema) throws IOException {
-        if (!Files.exists(parentFilePath)) {
-            Files.createDirectories(parentFilePath);
-        }
-        Files.deleteIfExists(parentFilePath);
-        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(schema.getJson());
-        }
-    }
-
-        */
+        
         // TODO migrate into Dialet.java
         private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
             if (!Files.exists(parentFilePath)) {
@@ -337,6 +325,7 @@ public class Package extends JSONBase{
                 wr.write(dialect.getJson());
             }
         }
+
     public Resource getResource(String resourceName){
         for (Resource resource : this.resources) {
             if (resource.getName().equalsIgnoreCase(resourceName)) {

@@ -35,8 +35,7 @@ import static io.frictionlessdata.datapackage.Package.isValidUrl;
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public abstract class JSONBase {
     static final int JSON_INDENT_FACTOR = 4;// JSON keys.
-    // FIXME: Use somethign like GSON instead so this explicit mapping is not
-    // necessary?
+    // TODO: Use somethign like GSON instead so this explicit mapping is not necessary?
     public static final String JSON_KEY_NAME = "name";
     public static final String JSON_KEY_PROFILE = "profile";
     public static final String JSON_KEY_PATH = "path";
@@ -67,7 +66,6 @@ public abstract class JSONBase {
     // Optional properties.
     protected String title = null;
     protected String description = null;
-
 
     String format = null;
     protected String mediaType = null;
