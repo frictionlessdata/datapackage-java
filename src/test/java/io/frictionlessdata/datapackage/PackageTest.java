@@ -478,7 +478,23 @@ public class PackageTest {
         createdFile.delete();
         Assert.assertFalse(createdFile.exists());
     }
-    
+
+    // Archive file name doesn't end with ".zip"
+    @Test
+    public void testReadFromZipFileWithDifferentSuffix() throws Exception{
+        String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
+        String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
+        String sourceFileAbsPath = ResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zap").getPath();
+
+        Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
+        Resource r = dp.getResource("currencies");
+
+        List<Object[]> data = r.getData(false, false, false, false);
+        Assert.assertEquals(2, data.size());
+        Assert.assertArrayEquals(usdTestData, data.get(0));
+        Assert.assertArrayEquals(gbpTestData, data.get(1));
+    }
+
     @Test
     public void testReadFromZipFileWithInvalidDatapackageFilenameInside() throws Exception{
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/zip/invalid_filename_datapackage.zip").getPath();

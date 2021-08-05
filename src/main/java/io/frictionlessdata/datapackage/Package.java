@@ -178,7 +178,7 @@ public class Package extends JSONBase{
     public Package(Path descriptorFile, boolean strict) throws Exception {
         this.strictValidation = strict;
         JsonNode sourceJsonNode;
-        if (descriptorFile.toFile().getName().toLowerCase().endsWith(".zip")) {
+        if (isArchive(descriptorFile.toFile())) {
             isArchivePackage = true;
             basePath = descriptorFile;
         	sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
@@ -806,6 +806,14 @@ public class Package extends JSONBase{
                 : uri.resolve(".")).toURL();
     }
 
+    // https://stackoverflow.com/a/47595502/2535335
+    private static boolean isArchive(File f) throws IOException {
+        int fileSignature = 0;
+        RandomAccessFile raf = new RandomAccessFile(f, "r");
+        fileSignature = raf.readInt();
+        raf.close();
+        return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
+    }
 
     /**
      * Check whether an input URL is valid according to DataPackage specs.
