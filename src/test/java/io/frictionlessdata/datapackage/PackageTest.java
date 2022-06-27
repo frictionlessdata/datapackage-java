@@ -514,7 +514,7 @@ public class PackageTest {
     
     @Test
     public void testReadFromInvalidZipFilePath() throws Exception{
-        exception.expect(IOException.class);
+        exception.expect(DataPackageFileOrUrlNotFoundException.class);
         File invalidFile = new File ("/invalid/path/does/not/exist/datapackage.zip");
         Package p = new Package(invalidFile.toPath(), false);
     }

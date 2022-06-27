@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.resource.AbstractDataResource;
 import io.frictionlessdata.datapackage.resource.AbstractReferencebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
@@ -172,12 +173,16 @@ public class Package extends JSONBase{
      *                  a local directory) or the ZIP file if it's a ZIP-based
      *                  package.
      * @param strict whether to use strict schema parsing
+     * @throws DataPackageFileOrUrlNotFoundException if the path is invalid
      * @throws IOException thrown if I/O operations fail
      * @throws DataPackageException thrown if constructing the Descriptor fails
      */
     public Package(Path descriptorFile, boolean strict) throws Exception {
         this.strictValidation = strict;
         JsonNode sourceJsonNode;
+        if (!descriptorFile.toFile().exists()) {
+            throw new DataPackageFileOrUrlNotFoundException("File " + descriptorFile + "does not exist");
+        }
         if (isArchive(descriptorFile.toFile())) {
             isArchivePackage = true;
             basePath = descriptorFile;
