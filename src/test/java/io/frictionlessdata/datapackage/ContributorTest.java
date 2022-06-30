@@ -42,8 +42,7 @@ public class ContributorTest {
     public void testSerialization() {
     	Collection<Contributor> contributors = Contributor.fromJson(validContributorsJson);
 		JsonUtil instance = JsonUtil.getInstance();
-		instance.setIndent(false);
-		String actual = instance.serialize(contributors);
+		String actual = instance.serialize(contributors, false);
     	Assertions.assertEquals(validContributorsJson, actual);
     }
     
