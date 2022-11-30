@@ -110,7 +110,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         ensureDataLoaded();
         IteratorChain<C> ic = new IteratorChain<>();
         for (Table table : tables) {
-            ic.addIterator (table.iterator(beanType, false));
+            ic.addIterator ((Iterator<? extends C>) table.iterator(beanType, false));
         }
         return ic;
     }
@@ -164,7 +164,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
-            final BeanIterator<C> iter = t.iterator(beanClass, false);
+            final BeanIterator<C> iter = (BeanIterator<C>) t.iterator(beanClass, false);
             while (iter.hasNext()) {
                 retVal.add(iter.next());
             }

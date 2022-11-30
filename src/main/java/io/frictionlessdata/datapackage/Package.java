@@ -197,7 +197,7 @@ public class Package extends JSONBase{
 
 
     private FileSystem getTargetFileSystem(File outputDir, boolean zipCompressed) throws IOException {
-        FileSystem outFs = null;
+        FileSystem outFs;
         if (zipCompressed) {
             if (outputDir.exists()) {
                 throw new DataPackageException("Cannot save into existing ZIP file: "
@@ -205,7 +205,7 @@ public class Package extends JSONBase{
             }
             Map<String, String> env = new HashMap<>();
             env.put("create", "true");
-            outFs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI().toString()), env);
+            outFs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI()), env);
         } else {
             if (!(outputDir.isDirectory())) {
                 throw new DataPackageException("Target for save() exists and is a regular file: "
@@ -500,8 +500,8 @@ public class Package extends JSONBase{
     /**
      * Validation is strict or unstrict depending on how the package was
      * instantiated with the strict flag.
-     * @throws IOException
-     * @throws DataPackageException
+     * @throws IOException if something goes wrong reading the datapackage
+     * @throws DataPackageException if validation fails and validation is strict
      */
     final void validate() throws IOException, DataPackageException{
         try{
@@ -813,7 +813,7 @@ public class Package extends JSONBase{
 
     // https://stackoverflow.com/a/47595502/2535335
     private static boolean isArchive(File f) throws IOException {
-        int fileSignature = 0;
+        int fileSignature;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
         fileSignature = raf.readInt();
         raf.close();

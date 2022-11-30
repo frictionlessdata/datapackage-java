@@ -405,7 +405,7 @@ public abstract class JSONBase {
      */
 
     private static ObjectNode dereference(String url, URL basePath) throws IOException {
-        JsonNode dereferencedObj = null;
+        JsonNode dereferencedObj;
 
         if (isValidUrl(url)) {
             // Create the dereferenced object from the remote file.
