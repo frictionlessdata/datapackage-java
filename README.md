@@ -7,7 +7,9 @@
 [![Codebase](https://img.shields.io/badge/codebase-github-brightgreen)](https://github.com/frictionlessdata/datapackage-java)
 [![Support](https://img.shields.io/badge/support-discord-brightgreen)](https://discordapp.com/invite/Sewv6av)
 
-A Java library for working with Data Packages. Snapshots on [Jitpack](https://jitpack.io/#frictionlessdata/datapackage-java)
+A Java library for working with Data Packages according to the [Frictionless Data](https://specs.frictionlessdata.io/data-package/) specifications. A Data Package is a simple container format for creating self-contained packages of data. It provides the basis for convenient delivery, installation and management of datasets.
+
+Snapshots on [Jitpack](https://jitpack.io/#frictionlessdata/datapackage-java)
 
 ## Usage
 
