@@ -50,7 +50,7 @@ public interface Resource<T,C> {
      *
      * The method can be configured to return table rows as:
      * <ul>
-     *     <li>String arrays</li>
+     *     <li>String arrays  (parameter `cast` = false)</li>
      *     <li>as Object arrays (parameter `cast` = true)</li>
      *     <li>as a Map&lt;key,val&gt; where key is the header name, and val is the data (parameter `keyed` = true)</li>
      *     <li>in an "extended" form (parameter `extended` = true) that returns an Object array where the first entry
@@ -81,7 +81,7 @@ public interface Resource<T,C> {
      * It therefore disregards the Schema set on the {@link io.frictionlessdata.tableschema.Table} the iterator works
      * on but creates its own Schema from the supplied `beanType`.
      *
-     * @return Iterator that returns rows as bean-arrays.
+     * @return List of rows as bean instances.
      * @param beanClass the Bean class this BeanIterator expects
      */
     List<C> getData(Class<C> beanClass) throws Exception;
