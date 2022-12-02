@@ -25,7 +25,9 @@ import static io.frictionlessdata.datapackage.Package.isValidUrl;
 
 
 /**
- * Interface for a Resource.
+ * Interface for a Resource. The essence of a Data Resource is a locator for the data it describes.
+ * A range of other properties can be declared to provide a richer set of metadata.
+ *
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
 public interface Resource<T,C> {
@@ -33,12 +35,55 @@ public interface Resource<T,C> {
     String FORMAT_CSV = "csv";
     String FORMAT_JSON = "json";
 
+    /**
+     * Return the {@link Table} objects underlying the Resource.
+     * @return Table(s)
+     * @throws Exception if reading the tables fails.
+     */
     List<Table> getTables() throws Exception ;
 
     String getJson();
 
+    /**
+     * Read all data from a Resource. This can be used for smaller datapackages, but for huge or unknown
+     * sizes, reading via iterator  is preferred.
+     *
+     * The method can be configured to return table rows as:
+     * <ul>
+     *     <li>String arrays</li>
+     *     <li>as Object arrays (parameter `cast` = true)</li>
+     *     <li>as a Map&lt;key,val&gt; where key is the header name, and val is the data (parameter `keyed` = true)</li>
+     *     <li>in an "extended" form (parameter `extended` = true) that returns an Object array where the first entry
+     *      is the row number, the second is a String array holding the headers,
+     *      and the third is an Object array holding the row data.</li>
+     *      <li>with relations to other data sources resolved</li>
+     * </ul>
+     *
+     * The method uses Iterators provided by {@link Table} class, and is roughly implemented after
+     * https://github.com/frictionlessdata/tableschema-py/blob/master/tableschema/table.py
+     *
+     * @param cast true: convert CSV cells to Java objects other than String
+     * @param keyed true: return table rows as key/value maps
+     * @param extended true: return table rows in an extended form
+     * @param relations true: follow relations
+     * @return A list of table rows.
+     * @throws Exception if parsing the data fails
+     *
+     */
     List<Object[]> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
 
+    /**
+     * Read all data from a Resource. This can be used for smaller datapackages, but for huge or unknown
+     * sizes, reading via iterator  is preferred. The method ignores relations.
+     *
+     * Returns as a List of Java objects of the type `beanClass`. Under the hood, it uses a  {@link TableIterator}
+     * for reading based on a Java Bean class instead of a {@link io.frictionlessdata.tableschema.schema.Schema}.
+     * It therefore disregards the Schema set on the {@link io.frictionlessdata.tableschema.Table} the iterator works
+     * on but creates its own Schema from the supplied `beanType`.
+     *
+     * @return Iterator that returns rows as bean-arrays.
+     * @param beanClass the Bean class this BeanIterator expects
+     */
     List<C> getData(Class<C> beanClass) throws Exception;
 
     /**
@@ -52,23 +97,35 @@ public interface Resource<T,C> {
      */
     void writeData(Path outputDir) throws Exception;
 
-
+    /**
+     * Write the Resource {@link Schema} to `outputDir`.
+     *
+     * @param parentFilePath the directory to write to. Code must create
+     *                  files as needed.
+     * @throws IOException if something fails while writing
+     */
     void writeSchema(Path parentFilePath) throws IOException;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
      * @return Row iterator
-     * @throws Exception
+     * @throws Exception  if parsing the data fails
      */
     Iterator<Object[]> objectArrayIterator() throws Exception;
 
     /**
      * Returns an Iterator that returns rows as object-arrays
      * @return Row Iterator
-     * @throws Exception
+     * @throws Exception if parsing the data fails
      */
     Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
 
+
+    /**
+     * Returns an Iterator that returns rows as a Map&lt;key,val&gt; where key is the header name, and val is the data
+     * @return Row Iterator
+     * @throws Exception if parsing the data fails
+     */
     Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception;
 
     /**
@@ -85,7 +142,7 @@ public interface Resource<T,C> {
     /**
      * Returns an Iterator that returns rows as string-arrays
      * @return Row Iterator
-     * @throws Exception
+     * @throws Exception if parsing the data fails
      */
     public Iterator<String[]> stringArrayIterator() throws Exception;
 

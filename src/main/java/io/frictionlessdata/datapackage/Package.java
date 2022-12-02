@@ -195,34 +195,6 @@ public class Package extends JSONBase{
         this.setJson((ObjectNode) sourceJsonNode);
     }
 
-
-    private FileSystem getTargetFileSystem(File outputDir, boolean zipCompressed) throws IOException {
-        FileSystem outFs;
-        if (zipCompressed) {
-            if (outputDir.exists()) {
-                throw new DataPackageException("Cannot save into existing ZIP file: "
-                        +outputDir.getName());
-            }
-            Map<String, String> env = new HashMap<>();
-            env.put("create", "true");
-            outFs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI()), env);
-        } else {
-            if (!(outputDir.isDirectory())) {
-                throw new DataPackageException("Target for save() exists and is a regular file: "
-                        +outputDir.getName());
-            }
-            outFs = outputDir.toPath().getFileSystem();
-        }
-        return outFs;
-    }
-
-    private void writeDescriptor (FileSystem outFs, String parentDirName) throws IOException {
-        Path nf = outFs.getPath(parentDirName+File.separator+DATAPACKAGE_FILENAME);
-        try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
-            writer.write(this.getJsonNode().toPrettyString());
-        }
-    }
-
     /**
      * Convert all Resources to CSV files, no matter whether they come from
      * URLs, JSON Arrays, or files originally. The result is just one JSON
@@ -276,7 +248,7 @@ public class Package extends JSONBase{
             String dialectP = r.getPathForWritingDialect();
             if (null != dialectP) {
                 Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
-                writeDialect(dialectPath, r.getDialect());
+                r.getDialect().writeDialect(dialectPath);
             }
             Dialect dia = r.getDialect();
             if (null != dia) {
@@ -291,45 +263,29 @@ public class Package extends JSONBase{
         } catch (UnsupportedOperationException es) {};
     }
 
+    /**
+     * Serialize the whole package including Resources to JSON and write to a file
+     *
+     * @param outputFile File to write to
+     * @throws IOException if writing fails
+     */
     public void writeJson (File outputFile) throws IOException{
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             writeJson(fos);
         }
     }
 
+    /**
+     * Serialize the whole package including Resources to JSON and write to an OutputStream
+     *
+     * @param output OutputStream to write to
+     * @throws IOException if writing fails
+     */
     public void writeJson (OutputStream output) throws IOException{
         try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
             file.write(this.getJsonNode().toPrettyString());
         }
     }
-
-    private void saveZip(File outputFilePath) throws IOException, DataPackageException{
-        try(FileOutputStream fos = new FileOutputStream(outputFilePath)){
-            try(BufferedOutputStream bos = new BufferedOutputStream(fos)){
-                try(ZipOutputStream zos = new ZipOutputStream(bos)){
-                    // File is not on the disk, test.txt indicates
-                    // only the file name to be put into the zip.
-                    ZipEntry entry = new ZipEntry(DATAPACKAGE_FILENAME);
-
-                    zos.putNextEntry(entry);
-                    zos.write(this.getJsonNode().toPrettyString().getBytes());
-                    zos.closeEntry();
-                }
-            }
-        }
-    }
-
-        
-        // TODO migrate into Dialet.java
-        private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
-            if (!Files.exists(parentFilePath)) {
-                Files.createDirectories(parentFilePath);
-            }
-            Files.deleteIfExists(parentFilePath);
-            try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-                wr.write(dialect.getJson());
-            }
-        }
 
     public Resource getResource(String resourceName){
         for (Resource resource : this.resources) {
@@ -339,35 +295,9 @@ public class Package extends JSONBase{
         }
         return null;
     }
-
     
     public List<Resource> getResources(){
         return this.resources;
-    }
-
-    private void validate(DataPackageException dpe) throws IOException {
-        if (dpe != null) {
-            if (this.strictValidation) {
-                throw dpe;
-            } else {
-                errors.add(dpe);
-            }
-        }
-
-        // Validate.
-        this.validate();
-    }
-
-    private DataPackageException checkDuplicates(Resource resource) {
-        DataPackageException dpe = null;
-        // Check if there is duplication.
-        for (Resource value : this.resources) {
-            if (value.getName().equalsIgnoreCase(resource.getName())) {
-                dpe = new DataPackageException(
-                        "A resource with the same name already exists.");
-            }
-        }
-        return dpe;
     }
 
     public void addResource(Resource resource)
@@ -375,51 +305,97 @@ public class Package extends JSONBase{
         addResource(resource, true);
     }
 
-    private void addResource(Resource resource, boolean validate)
-            throws IOException, ValidationException, DataPackageException{
-        DataPackageException dpe = null;
-        if (resource.getName() == null){
-            dpe = new DataPackageException("Invalid Resource, it does not have a name property.");
-        }
-        if (resource instanceof AbstractDataResource)
-            addResource((AbstractDataResource) resource, validate);
-        else if (resource instanceof AbstractReferencebasedResource)
-            addResource((AbstractReferencebasedResource) resource, validate);
-        if (validate)
-            validate(dpe);
-    }
-
-    private void addResource(AbstractDataResource resource, boolean validate)
-            throws IOException, ValidationException, DataPackageException{
-        DataPackageException dpe = null;
-        // If a name property isn't given...
-        if ((resource.getDataProperty() == null) || (resource).getFormat() == null) {
-            dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
-        } else {
-            dpe = checkDuplicates(resource);
-        }
-        if (validate)
-            validate(dpe);
-
-        this.resources.add(resource);
-    }
-
-    private void addResource(AbstractReferencebasedResource resource, boolean validate)
-            throws IOException, ValidationException, DataPackageException{
-        DataPackageException dpe = null;
-        if (resource.getPaths() == null) {
-            dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
-        } else {
-            dpe = checkDuplicates(resource);
-        }
-        if (validate)
-            validate(dpe);
-
-        this.resources.add(resource);
-    }
-
     void removeResource(String name){
         this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
+    }
+
+    /**
+     * Return the profile of the Package descriptor. See https://specs.frictionlessdata.io/profiles/
+     * for details
+     *
+     * @return the profile.
+     */
+    @Override
+    public String getProfile() {
+        if (null == super.getProfile())
+            return Profile.PROFILE_DATA_PACKAGE_DEFAULT;
+        return super.getProfile();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getVersion() {
+        if (versionParts != null) {
+            return versionParts[0]+"."+versionParts[1]+"."+versionParts[2];
+        } else
+            return version;
+    }
+
+    public URL getHomepage() {
+        return homepage;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public ZonedDateTime getCreated() {
+        return created;
+    }
+
+
+    public List<Contributor> getContributors() {
+        if (null == contributors)
+            return null;
+        return UnmodifiableList.decorate(contributors);
+    }
+
+
+    public void addContributor (Contributor contributor) {
+        if (null == contributor)
+            return;
+        if (null == contributors)
+            contributors = new ArrayList<>();
+        this.contributors.add(contributor);
+    }
+
+    public void removeContributor (Contributor contributor) {
+        if (null == contributor)
+            return;
+        if (null == contributors)
+            return;
+        if (contributors.contains(contributor)) {
+            this.contributors.remove(contributor);
+        }
+    }
+
+    public Set<String> getKeywords() {
+        if (null == keywords)
+            return null;
+        return UnmodifiableSet.decorate(keywords);
+    }
+
+    public void setKeywords(Set<String> keywords) {
+        if (null == keywords)
+            return;
+        this.keywords = new LinkedHashSet<>(keywords);
+    }
+
+
+    public void removeKeyword (String keyword) {
+        if (null == keyword)
+            return;
+        if (null == keywords)
+            return;
+        if (keywords.contains(keyword)) {
+            this.keywords.remove(keyword);
+        }
     }
 
     /**
@@ -449,6 +425,13 @@ public class Package extends JSONBase{
         return null;
     }
 
+    /**
+     * Get the value of a Package property (i.e. from the `datapackage.json`. The value will be returned
+     * as a Java Object corresponding to `typeRef`
+     *
+     * @param key the property name
+     * @param typeRef the Java type of the property value.
+     */
     public Object getProperty(String key, TypeReference<?> typeRef) {
         if (!this.jsonObject.has(key)) {
             return null;
@@ -457,6 +440,13 @@ public class Package extends JSONBase{
         return JsonUtil.getInstance().deserialize(jNode, typeRef);
     }
 
+    /**
+     * Get the value of a Package property (i.e. from the `datapackage.json`. The value will be returned
+     * as a Java Object corresponding to `clazz`
+     *
+     * @param key the property name
+     * @param clazz the Java type of the property value.
+     */
     public Object getProperty(String key, Class<?> clazz) {
         if (!this.jsonObject.has(key)) {
             return null;
@@ -514,7 +504,16 @@ public class Package extends JSONBase{
             }
         }
     }
-    
+
+    /**
+     * Convert both the descriptor and all linked Resources to JSON and return them.
+     * @return JSON-String representation of the Package
+     */
+    @JsonIgnore
+    public String getJson(){
+        return getJsonNode().toPrettyString();
+    }
+
     @JsonIgnore
     final Path getBasePath(){
         if (basePath instanceof File)
@@ -530,15 +529,6 @@ public class Package extends JSONBase{
         if (basePath instanceof URL)
             return (URL)basePath;
         return null;
-    }
-
-    /**
-     * Convert both the descriptor and all linked Resources to JSON and return them.
-     * @return JSON-String representation of the Package
-     */
-    @JsonIgnore
-    public String getJson(){
-        return getJsonNode().toPrettyString();
     }
 
     @JsonIgnore
@@ -582,10 +572,11 @@ public class Package extends JSONBase{
     List<Exception> getErrors(){
         return this.errors;
     }
-    
+
+
     private void setJson(ObjectNode jsonNodeSource) throws Exception {
         this.jsonObject = jsonNodeSource;
-        
+
         // Create Resource list, if there are resources.
         if(jsonNodeSource.has(JSON_KEY_RESOURCES) && jsonNodeSource.get(JSON_KEY_RESOURCES).isArray()){
             ArrayNode resourcesJsonArray = (ArrayNode) jsonNodeSource.get(JSON_KEY_RESOURCES);
@@ -600,7 +591,7 @@ public class Package extends JSONBase{
                         this.resources.clear();
 
                         throw dpe;
-                        
+
                     }else{
                         this.errors.add(dpe);
                     }
@@ -653,30 +644,6 @@ public class Package extends JSONBase{
         });
         validate();
     }
-    /**
-     * @return the profile
-     */
-    @Override
-    public String getProfile() {
-        if (null == super.getProfile())
-            return Profile.PROFILE_DATA_PACKAGE_DEFAULT;
-        return super.getProfile();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getVersion() {
-        if (versionParts != null) {
-            return versionParts[0]+"."+versionParts[1]+"."+versionParts[2];
-        } else
-            return version;
-    }
 
     /**
      * DataPackage version SHOULD be SemVer, but sloppy versions are acceptable.
@@ -708,10 +675,6 @@ public class Package extends JSONBase{
         this.version = version;
     }
 
-    public URL getHomepage() {
-        return homepage;
-    }
-
     private void setHomepage(URL homepage) {
         if (null == homepage)
             return;
@@ -720,17 +683,8 @@ public class Package extends JSONBase{
         this.homepage = homepage;
     }
 
-
-    public String getImage() {
-        return image;
-    }
-
     private void setImage(String image) {
         this.image = image;
-    }
-
-    public ZonedDateTime getCreated() {
-        return created;
     }
 
     private void setCreated(ZonedDateTime created) {
@@ -744,46 +698,10 @@ public class Package extends JSONBase{
         setCreated(dt);
     }
 
-    public List<Contributor> getContributors() {
-        if (null == contributors)
-            return null;
-        return UnmodifiableList.decorate(contributors);
-    }
-
     private void setContributors(Collection<Contributor> contributors) {
         if (null == contributors)
             return;
         this.contributors = new ArrayList<>(contributors);
-    }
-
-    public void addContributor (Contributor contributor) {
-        if (null == contributor)
-            return;
-        if (null == contributors)
-            contributors = new ArrayList<>();
-        this.contributors.add(contributor);
-    }
-
-    public void removeContributor (Contributor contributor) {
-        if (null == contributor)
-            return;
-        if (null == contributors)
-            return;
-        if (contributors.contains(contributor)) {
-            this.contributors.remove(contributor);
-        }
-    }
-
-    public Set<String> getKeywords() {
-        if (null == keywords)
-            return null;
-        return UnmodifiableSet.decorate(keywords);
-    }
-
-    public void setKeywords(Set<String> keywords) {
-        if (null == keywords)
-            return;
-        this.keywords = new LinkedHashSet<>(keywords);
     }
 
     private void addKeyword(String keyword) {
@@ -794,13 +712,98 @@ public class Package extends JSONBase{
         this.keywords.add(keyword);
     }
 
-    public void removeKeyword (String keyword) {
-        if (null == keyword)
-            return;
-        if (null == keywords)
-            return;
-        if (keywords.contains(keyword)) {
-            this.keywords.remove(keyword);
+    private void addResource(Resource resource, boolean validate)
+            throws IOException, ValidationException, DataPackageException{
+        DataPackageException dpe = null;
+        if (resource.getName() == null){
+            dpe = new DataPackageException("Invalid Resource, it does not have a name property.");
+        }
+        if (resource instanceof AbstractDataResource)
+            addResource((AbstractDataResource) resource, validate);
+        else if (resource instanceof AbstractReferencebasedResource)
+            addResource((AbstractReferencebasedResource) resource, validate);
+        if (validate)
+            validate(dpe);
+    }
+
+    private void addResource(AbstractDataResource resource, boolean validate)
+            throws IOException, ValidationException, DataPackageException{
+        DataPackageException dpe = null;
+        // If a name property isn't given...
+        if ((resource.getDataProperty() == null) || (resource).getFormat() == null) {
+            dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
+        } else {
+            dpe = checkDuplicates(resource);
+        }
+        if (validate)
+            validate(dpe);
+
+        this.resources.add(resource);
+    }
+
+    private void addResource(AbstractReferencebasedResource resource, boolean validate)
+            throws IOException, ValidationException, DataPackageException{
+        DataPackageException dpe = null;
+        if (resource.getPaths() == null) {
+            dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
+        } else {
+            dpe = checkDuplicates(resource);
+        }
+        if (validate)
+            validate(dpe);
+
+        this.resources.add(resource);
+    }
+
+    private void validate(DataPackageException dpe) throws IOException {
+        if (dpe != null) {
+            if (this.strictValidation) {
+                throw dpe;
+            } else {
+                errors.add(dpe);
+            }
+        }
+
+        // Validate.
+        this.validate();
+    }
+
+    private DataPackageException checkDuplicates(Resource resource) {
+        DataPackageException dpe = null;
+        // Check if there is duplication.
+        for (Resource value : this.resources) {
+            if (value.getName().equalsIgnoreCase(resource.getName())) {
+                dpe = new DataPackageException(
+                        "A resource with the same name already exists.");
+            }
+        }
+        return dpe;
+    }
+
+    private FileSystem getTargetFileSystem(File outputDir, boolean zipCompressed) throws IOException {
+        FileSystem outFs;
+        if (zipCompressed) {
+            if (outputDir.exists()) {
+                throw new DataPackageException("Cannot save into existing ZIP file: "
+                        +outputDir.getName());
+            }
+            Map<String, String> env = new HashMap<>();
+            env.put("create", "true");
+            outFs = FileSystems.newFileSystem(URI.create("jar:" + outputDir.toURI()), env);
+        } else {
+            if (!(outputDir.isDirectory())) {
+                throw new DataPackageException("Target for save() exists and is a regular file: "
+                        +outputDir.getName());
+            }
+            outFs = outputDir.toPath().getFileSystem();
+        }
+        return outFs;
+    }
+
+    private void writeDescriptor (FileSystem outFs, String parentDirName) throws IOException {
+        Path nf = outFs.getPath(parentDirName+File.separator+DATAPACKAGE_FILENAME);
+        try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
+            writer.write(this.getJsonNode().toPrettyString());
         }
     }
 

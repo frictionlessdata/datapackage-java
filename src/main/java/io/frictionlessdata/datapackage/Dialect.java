@@ -10,6 +10,8 @@ import org.apache.commons.csv.QuoteMode;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -240,6 +242,18 @@ public class Dialect {
             file.write(this.getJson());
         }
     }
+
+
+    public void writeDialect(Path parentFilePath) throws IOException {
+        if (!Files.exists(parentFilePath)) {
+            Files.createDirectories(parentFilePath);
+        }
+        Files.deleteIfExists(parentFilePath);
+        try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
+            wr.write(getJson());
+        }
+    }
+
     Object get(String key) {
         JsonNode obj = getJsonNode(true);
         return obj.get(key);
