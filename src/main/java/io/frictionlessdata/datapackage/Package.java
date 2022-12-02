@@ -40,7 +40,7 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Load, validate, create, and save a datapackage object according to the specifications at
- * https://github.com/frictionlessdata/specs/blob/master/specs/data-package.md
+ * https://specs.frictionlessdata.io/data-package
  */
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public class Package extends JSONBase{
