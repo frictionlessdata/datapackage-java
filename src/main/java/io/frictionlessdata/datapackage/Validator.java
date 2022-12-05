@@ -57,7 +57,7 @@ public class Validator {
 
         InputStream inputStream = Validator.class.getResourceAsStream("/schemas/" + profileId + ".json");
         if(inputStream != null){
-             JsonSchema schema = JsonSchema.fromJson(inputStream, true);
+            JsonSchema schema = JsonSchema.fromJson(inputStream, true);
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }else{
