@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static io.frictionlessdata.datapackage.Package.isValidUrl;
+import static io.frictionlessdata.datapackage.Validator.isValidUrl;
 
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public abstract class JSONBase {

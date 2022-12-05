@@ -25,7 +25,7 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JsonNode jsonObjectToValidate) throws IOException, DataPackageException, ValidationException{
+    public static void validate(JsonNode jsonObjectToValidate) throws IOException, DataPackageException, ValidationException{
         
         // If a profile value is provided.
         if(jsonObjectToValidate.has(Package.JSON_KEY_PROFILE)){
@@ -35,14 +35,14 @@ public class Validator {
             UrlValidator urlValidator = new UrlValidator(schemes);
             
             if (urlValidator.isValid(profile)) {
-                this.validate(jsonObjectToValidate, new URL(profile));
+                validate(jsonObjectToValidate, new URL(profile));
             }else{
-                this.validate(jsonObjectToValidate, profile);
+                validate(jsonObjectToValidate, profile);
             }
             
         }else{
             // If no profile value is provided, use default value.
-            this.validate(jsonObjectToValidate, Profile.PROFILE_DATA_PACKAGE_DEFAULT);
+            validate(jsonObjectToValidate, Profile.PROFILE_DATA_PACKAGE_DEFAULT);
         }   
     }
     
@@ -53,7 +53,7 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JsonNode jsonObjectToValidate, String profileId) throws DataPackageException, ValidationException{ 
+    public static void validate(JsonNode jsonObjectToValidate, String profileId) throws DataPackageException, ValidationException{
 
         InputStream inputStream = Validator.class.getResourceAsStream("/schemas/" + profileId + ".json");
         if(inputStream != null){
@@ -74,7 +74,7 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(JsonNode jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
+    public static void validate(JsonNode jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
         try{
             InputStream inputStream = schemaUrl.openStream();
             JsonSchema schema = JsonSchema.fromJson(inputStream, true);
@@ -92,8 +92,39 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException 
      */
-    public void validate(String jsonStringToValidate) throws IOException, DataPackageException, ValidationException{
+    public static void validate(String jsonStringToValidate) throws IOException, DataPackageException, ValidationException{
         JsonNode jsonObject = JsonUtil.getInstance().createNode(jsonStringToValidate);
         validate(jsonObject);
+    }
+
+    /**
+     * Check whether an input URL is valid according to DataPackage specs.
+     *
+     * From the specification: "URLs MUST be fully qualified. MUST be using either
+     * http or https scheme."
+     *
+     * https://frictionlessdata.io/specs/data-resource/#url-or-path
+     * @param url URL to test
+     * @return true if the String contains a URL starting with HTTP/HTTPS
+     */
+    public static boolean isValidUrl(URL url) {
+        return isValidUrl(url.toExternalForm());
+    }
+
+    /**
+     * Check whether an input string contains a valid URL.
+     *
+     * From the specification: "URLs MUST be fully qualified. MUST be using either
+     * http or https scheme."
+     *
+     * https://frictionlessdata.io/specs/data-resource/#url-or-path
+     * @param objString String to test
+     * @return true if the String contains a URL starting with HTTP/HTTPS
+     */
+    public static boolean isValidUrl(String objString) {
+        String[] schemes = {"http", "https"};
+        UrlValidator urlValidator = new UrlValidator(schemes);
+
+        return urlValidator.isValid(objString);
     }
 }

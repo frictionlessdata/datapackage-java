@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static io.frictionlessdata.datapackage.Validator.isValidUrl;
+
 
 /**
  * Load, validate, create, and save a datapackage object according to the specifications at
@@ -69,7 +71,6 @@ public class Package extends JSONBase{
     private boolean strictValidation = false;
     private final List<Resource> resources = new ArrayList<>();
     private final List<Exception> errors = new ArrayList<>();
-    private final Validator validator = new Validator();
 
     /**
      * Create a new DataPackage and initialize with a number of Resources.
@@ -195,10 +196,254 @@ public class Package extends JSONBase{
         this.setJson((ObjectNode) sourceJsonNode);
     }
 
+    public Resource getResource(String resourceName){
+        for (Resource resource : this.resources) {
+            if (resource.getName().equalsIgnoreCase(resourceName)) {
+                return resource;
+            }
+        }
+        return null;
+    }
+
     /**
-     * Convert all Resources to CSV files, no matter whether they come from
-     * URLs, JSON Arrays, or files originally. The result is just one JSON
-     * file
+     * Return a List of data {@link Resource}s of the Package. See https://specs.frictionlessdata.io/data-resource/
+     * for details
+     *
+     * @return the resources as a List.
+     */
+    public List<Resource> getResources(){
+        return new ArrayList<>(this.resources);
+    }
+
+    /**
+     * Return a List of of all Resources.
+     *
+     * @return the resource names as a List.
+     */
+    public List<String> getResourceNames(){
+        return resources.stream().map(Resource::getName).collect(Collectors.toList());
+    }
+
+    /**
+     * Return the profile of the Package descriptor. See https://specs.frictionlessdata.io/profiles/
+     * for details
+     *
+     * @return the profile.
+     */
+    @Override
+    public String getProfile() {
+        if (null == super.getProfile())
+            return Profile.PROFILE_DATA_PACKAGE_DEFAULT;
+        return super.getProfile();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Set<String> getKeywords() {
+        if (null == keywords)
+            return null;
+        return UnmodifiableSet.decorate(keywords);
+    }
+
+    public String getVersion() {
+        if (versionParts != null) {
+            return versionParts[0]+"."+versionParts[1]+"."+versionParts[2];
+        } else
+            return version;
+    }
+
+    public URL getHomepage() {
+        return homepage;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public ZonedDateTime getCreated() {
+        return created;
+    }
+
+
+    public List<Contributor> getContributors() {
+        if (null == contributors)
+            return null;
+        return UnmodifiableList.decorate(contributors);
+    }
+
+    /**
+     * Get the value of a named property of the Package (the `datapackage.json`).
+     * @return a Java class, either a string, BigInteger, BitDecimal, array or an object
+     */
+    public Object getProperty(String key) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        JsonNode jNode = jsonObject.get(key);
+        if (jNode.isArray()) {
+            return getProperty(key, new TypeReference<ArrayList<?>>() {});
+        } else if (jNode.isTextual()) {
+            return getProperty(key, new TypeReference<String>() {});
+        } else if (jNode.isBoolean()) {
+            return getProperty(key, new TypeReference<Boolean>() {});
+        } else if (jNode.isFloatingPointNumber()) {
+            return getProperty(key, new TypeReference<BigDecimal>() {});
+        } else if (jNode.isIntegralNumber()) {
+            return getProperty(key, new TypeReference<BigInteger>() {});
+        } else if (jNode.isObject()) {
+            return getProperty(key, new TypeReference<Object>() {});
+        } else if (jNode.isNull() || jNode.isEmpty() || jNode.isMissingNode()) {
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Get the value of a Package property (i.e. from the `datapackage.json`. The value will be returned
+     * as a Java Object corresponding to `typeRef`
+     *
+     * @param key the property name
+     * @param typeRef the Java type of the property value.
+     */
+    public Object getProperty(String key, TypeReference<?> typeRef) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        JsonNode jNode = jsonObject.get(key);
+        return JsonUtil.getInstance().deserialize(jNode, typeRef);
+    }
+
+    /**
+     * Convert both the descriptor and all linked Resources to JSON and return them.
+     * @return JSON-String representation of the Package
+     */
+    @JsonIgnore
+    public String getJson(){
+        return getJsonNode().toPrettyString();
+    }
+
+    /**
+     * Get the value of a Package property (i.e. from the `datapackage.json`. The value will be returned
+     * as a Java Object corresponding to `clazz`
+     *
+     * @param key the property name
+     * @param clazz the Java type of the property value.
+     */
+    public Object getProperty(String key, Class<?> clazz) {
+        if (!this.jsonObject.has(key)) {
+            return null;
+        }
+        JsonNode jNode = jsonObject.get(key);
+        return JsonUtil.getInstance().deserialize(jNode, clazz);
+    }
+
+    /**
+     * Returns the validation status of this Data Package. Always `true` if strict mode is enabled because reading
+     * an invalid Package would throw an exception.
+     * @return true if either `strictValidation` is true or no errors were encountered
+     */
+    public boolean isValid() {
+        if (strictValidation){
+            return true;
+        } else {
+            return errors.isEmpty();
+        }
+    }
+
+    public void addContributor (Contributor contributor) {
+        if (null == contributor)
+            return;
+        if (null == contributors)
+            contributors = new ArrayList<>();
+        this.contributors.add(contributor);
+    }
+
+    /**
+     * Add a {@link Resource}s to the Package. The Resource will be validated and a {@link ValidationException} is
+     * thrown if it is invalid
+     */
+    public void addResource(Resource resource)
+            throws IOException, ValidationException, DataPackageException{
+        addResource(resource, true);
+    }
+
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setKeywords(Set<String> keywords) {
+        if (null == keywords)
+            return;
+        this.keywords = new LinkedHashSet<>(keywords);
+    }
+
+
+    /**
+     * Set a property and value on the Package.  The value will be converted to a JsonObject and added to the
+     * datapackage.json on serialization
+     * @param key the property name
+     * @param value the value to set.
+     */
+    public void setProperty(String key, Object value) {
+        this.jsonObject.set(key, JsonUtil.getInstance().createNode(value));
+    }
+
+    public void setProperty(String key, JsonNode value) throws DataPackageException{
+    	this.jsonObject.set(key, value);
+    }
+
+
+    /**
+     * Set a number of properties at once. The `mapping` holds the properties as
+     * key/value pairs
+     * @param mapping the key/value map holding the properties
+     */
+    public void setProperties(Map<String, Object> mapping) {
+        JsonUtil jsonUtil = JsonUtil.getInstance();
+        for (String key : mapping.keySet()) {
+            JsonNode vNode = jsonUtil.createNode(mapping.get(key));
+            jsonObject.set(key, vNode);
+        }
+    }
+
+    /**
+     * Remove a {@link Resource}s from the Package. If no resource with a name matching `name`, no exception is thrown
+     */
+    public void removeResource(String name){
+        this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
+    }
+
+    public void removeContributor (Contributor contributor) {
+        if (null == contributor)
+            return;
+        if (null == contributors)
+            return;
+        if (contributors.contains(contributor)) {
+            this.contributors.remove(contributor);
+        }
+    }
+
+    public void removeProperty(String key){
+        this.getJsonNode().remove(key);
+    }
+
+    public void removeKeyword (String keyword) {
+        if (null == keyword)
+            return;
+        if (null == keywords)
+            return;
+        if (keywords.contains(keyword)) {
+            this.keywords.remove(keyword);
+        }
+    }
+
+    /**
+     * Convert all Resources to JSON, no matter whether they come from
+     * URLs, JSON Arrays, or files originally. Then write the descriptor and all Resources to file.
+     * The result is just one JSON file
      * @param outputDir the directory or ZIP file to write the "datapackage.json"
      *                  file to
      * @param zipCompressed whether we are writing to a ZIP archive
@@ -287,217 +532,17 @@ public class Package extends JSONBase{
         }
     }
 
-    public Resource getResource(String resourceName){
-        for (Resource resource : this.resources) {
-            if (resource.getName().equalsIgnoreCase(resourceName)) {
-                return resource;
-            }
-        }
-        return null;
-    }
-    
-    public List<Resource> getResources(){
-        return this.resources;
-    }
-
-    public void addResource(Resource resource)
-            throws IOException, ValidationException, DataPackageException{
-        addResource(resource, true);
-    }
-
-    void removeResource(String name){
-        this.resources.removeIf(resource -> resource.getName().equalsIgnoreCase(name));
-    }
-
     /**
-     * Return the profile of the Package descriptor. See https://specs.frictionlessdata.io/profiles/
-     * for details
-     *
-     * @return the profile.
-     */
-    @Override
-    public String getProfile() {
-        if (null == super.getProfile())
-            return Profile.PROFILE_DATA_PACKAGE_DEFAULT;
-        return super.getProfile();
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getVersion() {
-        if (versionParts != null) {
-            return versionParts[0]+"."+versionParts[1]+"."+versionParts[2];
-        } else
-            return version;
-    }
-
-    public URL getHomepage() {
-        return homepage;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public ZonedDateTime getCreated() {
-        return created;
-    }
-
-
-    public List<Contributor> getContributors() {
-        if (null == contributors)
-            return null;
-        return UnmodifiableList.decorate(contributors);
-    }
-
-
-    public void addContributor (Contributor contributor) {
-        if (null == contributor)
-            return;
-        if (null == contributors)
-            contributors = new ArrayList<>();
-        this.contributors.add(contributor);
-    }
-
-    public void removeContributor (Contributor contributor) {
-        if (null == contributor)
-            return;
-        if (null == contributors)
-            return;
-        if (contributors.contains(contributor)) {
-            this.contributors.remove(contributor);
-        }
-    }
-
-    public Set<String> getKeywords() {
-        if (null == keywords)
-            return null;
-        return UnmodifiableSet.decorate(keywords);
-    }
-
-    public void setKeywords(Set<String> keywords) {
-        if (null == keywords)
-            return;
-        this.keywords = new LinkedHashSet<>(keywords);
-    }
-
-
-    public void removeKeyword (String keyword) {
-        if (null == keyword)
-            return;
-        if (null == keywords)
-            return;
-        if (keywords.contains(keyword)) {
-            this.keywords.remove(keyword);
-        }
-    }
-
-    /**
-     * Get the value of a named property of the Package (the `datapackage.json`).
-     * @return a Java class, either a string, BigInteger, BitDecimal, array or an object
-     */
-    public Object getProperty(String key) {
-        if (!this.jsonObject.has(key)) {
-            return null;
-        }
-        JsonNode jNode = jsonObject.get(key);
-        if (jNode.isArray()) {
-            return getProperty(key, new TypeReference<ArrayList<?>>() {});
-        } else if (jNode.isTextual()) {
-            return getProperty(key, new TypeReference<String>() {});
-        } else if (jNode.isBoolean()) {
-            return getProperty(key, new TypeReference<Boolean>() {});
-        } else if (jNode.isFloatingPointNumber()) {
-            return getProperty(key, new TypeReference<BigDecimal>() {});
-        } else if (jNode.isIntegralNumber()) {
-            return getProperty(key, new TypeReference<BigInteger>() {});
-        } else if (jNode.isObject()) {
-            return getProperty(key, new TypeReference<Object>() {});
-        } else if (jNode.isNull() || jNode.isEmpty() || jNode.isMissingNode()) {
-            return null;
-        }
-        return null;
-    }
-
-    /**
-     * Get the value of a Package property (i.e. from the `datapackage.json`. The value will be returned
-     * as a Java Object corresponding to `typeRef`
-     *
-     * @param key the property name
-     * @param typeRef the Java type of the property value.
-     */
-    public Object getProperty(String key, TypeReference<?> typeRef) {
-        if (!this.jsonObject.has(key)) {
-            return null;
-        }
-        JsonNode jNode = jsonObject.get(key);
-        return JsonUtil.getInstance().deserialize(jNode, typeRef);
-    }
-
-    /**
-     * Get the value of a Package property (i.e. from the `datapackage.json`. The value will be returned
-     * as a Java Object corresponding to `clazz`
-     *
-     * @param key the property name
-     * @param clazz the Java type of the property value.
-     */
-    public Object getProperty(String key, Class<?> clazz) {
-        if (!this.jsonObject.has(key)) {
-            return null;
-        }
-        JsonNode jNode = jsonObject.get(key);
-        return JsonUtil.getInstance().deserialize(jNode, clazz);
-    }
-
-    /**
-     * Set a property and value on the Package.  The value will be converted to a JsonObject and added to the
-     * datapackage.json on serialization
-     * @param key the property name
-     * @param value the value to set.
-     */
-    public void setProperty(String key, Object value) {
-        this.jsonObject.set(key, JsonUtil.getInstance().createNode(value));
-    }
-
-    public void setProperty(String key, JsonNode value) throws DataPackageException{
-    	this.jsonObject.set(key, value);
-    }
-
-
-    /**
-     * Set a number of properties at once. The `mapping` holds the properties as
-     * key/value pairs
-     * @param mapping the key/value map holding the properties
-     */
-    public void setProperties(Map<String, Object> mapping) {
-        JsonUtil jsonUtil = JsonUtil.getInstance();
-        for (String key : mapping.keySet()) {
-            JsonNode vNode = jsonUtil.createNode(mapping.get(key));
-            jsonObject.set(key, vNode);
-        }
-    }
-
-    public void removeProperty(String key){
-        this.getJsonNode().remove(key);
-    }
-    
-    /**
-     * Validation is strict or unstrict depending on how the package was
+     * Validation is strict or lenient depending on how the package was
      * instantiated with the strict flag.
      * @throws IOException if something goes wrong reading the datapackage
      * @throws DataPackageException if validation fails and validation is strict
      */
     final void validate() throws IOException, DataPackageException{
         try{
-            this.validator.validate(this.getJsonNode());
+            Validator.validate(this.getJsonNode());
         }catch(ValidationException | DataPackageException ve){
-            if(this.strictValidation){
+            if (this.strictValidation){
                 throw ve;
             }else{
                 errors.add(ve);
@@ -505,14 +550,7 @@ public class Package extends JSONBase{
         }
     }
 
-    /**
-     * Convert both the descriptor and all linked Resources to JSON and return them.
-     * @return JSON-String representation of the Package
-     */
-    @JsonIgnore
-    public String getJson(){
-        return getJsonNode().toPrettyString();
-    }
+
 
     @JsonIgnore
     final Path getBasePath(){
@@ -568,7 +606,12 @@ public class Package extends JSONBase{
 
         return objectNode;
     }
-    
+
+    /**
+     * Returns the validation errors of this Data Package. Always an empty List if strict mode is enabled because
+     * reading an invalid Package would throw an exception.
+     * @return List of Exceptions caught reading the Package
+     */
     List<Exception> getErrors(){
         return this.errors;
     }
@@ -823,36 +866,6 @@ public class Package extends JSONBase{
         return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
     }
 
-    /**
-     * Check whether an input URL is valid according to DataPackage specs.
-     *
-     * From the specification: "URLs MUST be fully qualified. MUST be using either
-     * http or https scheme."
-     *
-     * https://frictionlessdata.io/specs/data-resource/#url-or-path
-     * @param url URL to test
-     * @return true if the String contains a URL starting with HTTP/HTTPS
-     */
-    public static boolean isValidUrl(URL url) {
-        return isValidUrl(url.toExternalForm());
-    }
-
-    /**
-     * Check whether an input string contains a valid URL.
-     *
-     * From the specification: "URLs MUST be fully qualified. MUST be using either
-     * http or https scheme."
-     *
-     * https://frictionlessdata.io/specs/data-resource/#url-or-path
-     * @param objString String to test
-     * @return true if the String contains a URL starting with HTTP/HTTPS
-     */
-    public static boolean isValidUrl(String objString) {
-        String[] schemes = {"http", "https"};
-        UrlValidator urlValidator = new UrlValidator(schemes);
-
-        return urlValidator.isValid(objString);
-    }
 
     private static String textValueOrNull(JsonNode source, String fieldName) {
     	return source.has(fieldName) ? source.get(fieldName).asText() : null;

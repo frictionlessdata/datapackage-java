@@ -9,7 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import static io.frictionlessdata.datapackage.Package.isValidUrl;
+import static io.frictionlessdata.datapackage.Validator.isValidUrl;
 
 @JsonPropertyOrder({
 	"title",
