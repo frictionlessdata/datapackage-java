@@ -79,15 +79,15 @@ public interface Resource<T,C> {
      * The method uses Iterators provided by {@link Table} class, and is roughly implemented after
      * https://github.com/frictionlessdata/tableschema-py/blob/master/tableschema/table.py
      *
-     * @param cast true: convert CSV cells to Java objects other than String
      * @param keyed true: return table rows as key/value maps
      * @param extended true: return table rows in an extended form
+     * @param cast true: convert CSV cells to Java objects other than String
      * @param relations true: follow relations
      * @return A list of table rows.
      * @throws Exception if parsing the data fails
      *
      */
-    List<Object> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
+    List<Object> getData(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception;
 
     /**
      * Read all data from a Resource. This can be used for smaller datapackages, but for huge or unknown
