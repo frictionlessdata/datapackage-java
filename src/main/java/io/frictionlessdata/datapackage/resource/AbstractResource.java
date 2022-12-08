@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
+import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
+import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
@@ -59,21 +61,21 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     @Override
     public Iterator<Object[]> objectArrayIterator() throws Exception{
-        return this.objectArrayIterator(false, false, false);
+        return this.objectArrayIterator(false, false);
     }
 
     @Override
-    public Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception{
+    public Iterator<Object[]> objectArrayIterator(boolean extended, boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator<Object[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.iterator(keyed, extended, true, relations);
+            tableIteratorArray[cnt++] = (Iterator)table.iterator(false, extended, true, relations);
         }
         return new IteratorChain(tableIteratorArray);
     }
 
-    private Iterator stringArrayIterator(boolean relations) throws Exception{
+    private Iterator<String[]> stringArrayIterator(boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
@@ -95,7 +97,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     @Override
-    public Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception{
+    public Iterator<Map<String, Object>> mappingIterator(boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator<Map<String, Object>>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
@@ -126,6 +128,22 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return retVal;
     }
 
+    @Override
+    public List<Map<String, Object>> getMappedData(boolean relations) throws Exception {
+        List<Map<String, Object>> retVal = new ArrayList<>();
+        ensureDataLoaded();
+        Iterator[] tableIteratorArray = new TableIterator[tables.size()];
+        int cnt = 0;
+        for (Table table : tables) {
+            tableIteratorArray[cnt++] = table.iterator(true, false, true, relations);
+        }
+        Iterator iter = new IteratorChain<>(tableIteratorArray);
+        while (iter.hasNext()) {
+            retVal.add((Map)iter.next());
+        }
+        return retVal;
+    }
+
     /**
      * Most customizable method to retrieve all data in a Resource. Parameters match those in
      * {@link io.frictionlessdata.tableschema.Table#iterator(boolean, boolean, boolean, boolean)}. Data can be
@@ -144,12 +162,12 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * @return List of data objects
      * @throws Exception if reading data fails
      */
-    public List<Object[]> getData(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
-        List<Object[]> retVal = new ArrayList<>();
+    public List<Object> getData(boolean keyed, boolean extended, boolean cast, boolean relations) throws Exception{
+        List<Object> retVal = new ArrayList<>();
         ensureDataLoaded();
         Iterator iter;
         if (cast) {
-            iter = objectArrayIterator(keyed, extended, relations);
+            iter = objectArrayIterator(extended, relations);
         } else {
             iter = stringArrayIterator(relations);
         }
@@ -184,6 +202,21 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     public List<Table> getTables() throws Exception {
         ensureDataLoaded();
         return tables;
+    }
+
+    public void checkRelations() throws Exception {
+        if (null != schema) {
+            for (ForeignKey fk : schema.getForeignKeys()) {
+                fk.validate();
+                fk.getReference().validate();
+            }
+            for (ForeignKey fk : schema.getForeignKeys()) {
+                if (null != fk.getReference().getResource()) {
+                    //Package pkg = new Package(fk.getReference().getDatapackage(), true);
+                    // TODO fix this
+                }
+            }
+        }
     }
 
     /**
@@ -570,8 +603,8 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     @Override
     public void setSerializationFormat(String format) {
-        if ((format.equals(DataSourceFormat.Format.FORMAT_JSON.getLabel()))
-            || format.equals(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
+        if ((format.equals(TableDataSource.Format.FORMAT_JSON.getLabel()))
+            || format.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
             this.serializationFormat = format;
         } else
             throw new DataPackageException("Serialization format "+format+" is unknown");
@@ -579,7 +612,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     /**
      * if an explicit serialisation format was set, return this. Alternatively return the default
-     * {@link io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat.Format} as a String
+     * {@link io.frictionlessdata.tableschema.tabledatasource.TableDataSource.Format} as a String
      * @return Serialisation format, either "csv" or "json"
      */
     @JsonIgnore
@@ -622,9 +655,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
             }
             Files.deleteIfExists(p);
             try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
-                if (serializationFormat.equals(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
+                if (serializationFormat.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
                     t.writeCsv(wr, lDialect.toCsvFormat());
-                } else if (serializationFormat.equals(DataSourceFormat.Format.FORMAT_JSON.getLabel())) {
+                } else if (serializationFormat.equals(TableDataSource.Format.FORMAT_JSON.getLabel())) {
                     wr.write(t.asJson());
                 }
             }

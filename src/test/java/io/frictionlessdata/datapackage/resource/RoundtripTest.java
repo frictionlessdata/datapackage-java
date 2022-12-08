@@ -3,8 +3,8 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.TestUtil;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +20,7 @@ import java.util.List;
  * Ensure datapackages are written in a valid format and can be read back. Compare data to see it matches
  */
 public class RoundtripTest {
-    private static final CSVFormat csvFormat = DataSourceFormat
+    private static final CSVFormat csvFormat = TableDataSource
             .getDefaultCsvFormat()
             .withDelimiter('\t');
 

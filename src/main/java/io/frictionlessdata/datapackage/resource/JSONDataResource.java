@@ -1,7 +1,7 @@
 package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
 public class JSONDataResource<C> extends AbstractDataResource<ArrayNode,C> {
@@ -13,6 +13,6 @@ public class JSONDataResource<C> extends AbstractDataResource<ArrayNode,C> {
 
     @Override
     String getResourceFormat() {
-        return DataSourceFormat.Format.FORMAT_JSON.getLabel();
+        return TableDataSource.Format.FORMAT_JSON.getLabel();
     }
 }

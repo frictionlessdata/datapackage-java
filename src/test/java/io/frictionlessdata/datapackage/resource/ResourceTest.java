@@ -10,7 +10,9 @@ import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.File;
@@ -22,10 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Year;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+
+import static io.frictionlessdata.datapackage.TestUtil.getTestDataDirectory;
 
 /**
  *
@@ -209,7 +210,7 @@ public class ResourceTest {
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
-        Iterator<Object[]> iter = resource.objectArrayIterator(false, false,  false);
+        Iterator<Object[]> iter = resource.objectArrayIterator(false,  false);
         
         // Assert data.
         while(iter.hasNext()){
@@ -476,7 +477,6 @@ public class ResourceTest {
         Assert.assertEquals(3, resource.getData(false, false, false, false).size());
     }
 
-
     @Test
     public void testReadFromZipFile() throws Exception{
         String sourceFileAbsPath = ResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zip").getPath();
@@ -502,20 +502,67 @@ public class ResourceTest {
 
 
     @Test
+    @DisplayName("Paths in File-based resources must not be absolute")
+    /*
+        Test to verify https://specs.frictionlessdata.io/data-resource/#data-location :
+        POSIX paths (unix-style with / as separator) are supported for referencing local files,
+        with the security restraint that they MUST be relative siblings or children of the descriptor.
+        Absolute paths (/) and relative parent paths (…/) MUST NOT be used,
+        and implementations SHOULD NOT support these path types.
+     */
     public void readCreateInvalidResourceContainingAbsolutePaths() throws Exception{
-        Path tempDirPath = Files.createTempDirectory("datapackage-");
         URI sourceFileAbsPathURI1 = PackageTest.class.getResource("/fixtures/data/cities.csv").toURI();
         URI sourceFileAbsPathURI2 = PackageTest.class.getResource("/fixtures/data/cities2.csv").toURI();
         File sourceFileAbsPathU1 = Paths.get(sourceFileAbsPathURI1).toAbsolutePath().toFile();
         File sourceFileAbsPathU2 = Paths.get(sourceFileAbsPathURI2).toAbsolutePath().toFile();
+
         ArrayList<File> files = new ArrayList<>();
         files.add(sourceFileAbsPathU1);
         files.add(sourceFileAbsPathU2);
 
-        exception.expect(DataPackageException.class);
-        FilebasedResource r = new FilebasedResource("resource-one", files, getBasePath());
-        Package pkg = new Package("test", tempDirPath.resolve("datapackage.json"), true);
-        pkg.addResource(r);
+        Exception dpe = Assertions.assertThrows(DataPackageException.class, () -> {
+            FilebasedResource r = new FilebasedResource("resource-one", files, getBasePath());
+        });
+        Assertions.assertEquals("Path entries for file-based Resources cannot be absolute", dpe.getMessage());
+    }
+
+    @Test
+    @DisplayName("Test reading Resource data rows as Map<String, Object>, ensuring we get values of " +
+            "the correct Schema Field type")
+    public void testReadMapped1() throws Exception{
+        String[][] referenceData = new String[][]{
+                {"city","year","population"},
+                {"london","2017","8780000"},
+                {"paris","2017","2240000"},
+                {"rome","2017","2860000"}};
+        Resource resource = buildResource("/fixtures/data/population.csv");
+        Schema schema = Schema.fromJson(new File(getTestDataDirectory()
+                , "/fixtures/schema/population_schema.json"), true);
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        resource.setSchema(schema);
+        List<Map<String, Object>> mappedData = resource.getMappedData(false);
+        Assertions.assertEquals(3, mappedData.size());
+        String[] headers = referenceData[0];
+        //need to omit the table header in the referenceData
+        for (int i = 0; i < mappedData.size(); i++) {
+            String[] refRow = referenceData[i+1];
+            Map<String, Object> testData = mappedData.get(i);
+            // ensure row size is correct
+            Assertions.assertEquals(refRow.length, testData.size());
+
+            // ensure we get the headers in the right sort order
+            ArrayList<String> testDataColKeys = new ArrayList<>(testData.keySet());
+            String[] testHeaders = testDataColKeys.toArray(new String[]{});
+            Assertions.assertArrayEquals(headers, testHeaders);
+
+            // validate values match and types are as expected
+            Assertions.assertEquals(refRow[0], testData.get(testDataColKeys.get(0))); //String value for city name
+            Assertions.assertEquals(Year.class, testData.get(testDataColKeys.get(1)).getClass());
+            Assertions.assertEquals(refRow[1], ((Year)testData.get(testDataColKeys.get(1))).toString());//Year value for year
+            Assertions.assertEquals(BigInteger.class, testData.get(testDataColKeys.get(2)).getClass()); //String value for city name
+            Assertions.assertEquals(refRow[2], testData.get(testDataColKeys.get(2)).toString());//BigInteger value for population
+        }
     }
 
     private static Resource buildResource(String relativeInPath) throws URISyntaxException {

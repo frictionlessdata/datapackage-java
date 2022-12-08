@@ -1,0 +1,72 @@
+{
+  "name": "foreign-keys",
+  "resources": [
+    {
+      "name": "teams",
+      "data": [
+        [
+          "id",
+          "name",
+          "city"
+        ],
+        [
+          "1",
+          "Arsenal",
+          "London"
+        ],
+        [
+          "2",
+          "Real",
+          "Madrid"
+        ],
+        [
+          "3",
+          "Bayern",
+          "Munich"
+        ]
+      ],
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "city",
+            "reference": {
+              "resource": "cities",
+              "fields": "name"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "cities",
+      "data": [
+        [
+          "name",
+          "country"
+        ],
+        [
+          "London",
+          "England"
+        ],
+        [
+          "Madrid",
+          "Spain"
+        ]
+      ]
+    }
+  ]
+}

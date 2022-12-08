@@ -3,7 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
 import java.util.ArrayList;
@@ -53,11 +53,11 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
     public Set<String> getDatafileNamesForWriting() {
         List<String> paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
         return paths.stream().map((p) -> {
-            if (p.toLowerCase().endsWith("."+ DataSourceFormat.Format.FORMAT_CSV.getLabel())){
-                int i = p.toLowerCase().indexOf("."+DataSourceFormat.Format.FORMAT_CSV.getLabel());
+            if (p.toLowerCase().endsWith("."+ TableDataSource.Format.FORMAT_CSV.getLabel())){
+                int i = p.toLowerCase().indexOf("."+TableDataSource.Format.FORMAT_CSV.getLabel());
                 return p.substring(0, i);
-            } else if (p.toLowerCase().endsWith("."+DataSourceFormat.Format.FORMAT_JSON.getLabel())){
-                int i = p.toLowerCase().indexOf("."+DataSourceFormat.Format.FORMAT_JSON.getLabel());
+            } else if (p.toLowerCase().endsWith("."+TableDataSource.Format.FORMAT_JSON.getLabel())){
+                int i = p.toLowerCase().indexOf("."+TableDataSource.Format.FORMAT_JSON.getLabel());
                 return p.substring(0, i);
             }
             return p;

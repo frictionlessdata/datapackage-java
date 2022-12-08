@@ -45,6 +45,23 @@ public interface Resource<T,C> {
     String getJson();
 
     /**
+     * Read all data from a Resource, each row as Map objects. This can be used for smaller datapackages,
+     * but for huge or unknown sizes, reading via iterator  is preferred.
+     *
+     * The method returns Map&lt;String,Object&gt; where key is the header name, and val is the data.
+     * It can be configured to return table rows with relations to other data sources resolved
+     *
+     * The method uses Iterators provided by {@link Table} class, and is roughly implemented after
+     * https://github.com/frictionlessdata/tableschema-py/blob/master/tableschema/table.py
+     *
+     * @param relations true: follow relations
+     * @return A list of table rows.
+     * @throws Exception if parsing the data fails
+     *
+     */
+    List<Map<String, Object>> getMappedData(boolean relations) throws Exception;
+
+    /**
      * Read all data from a Resource. This can be used for smaller datapackages, but for huge or unknown
      * sizes, reading via iterator  is preferred.
      *
@@ -70,7 +87,7 @@ public interface Resource<T,C> {
      * @throws Exception if parsing the data fails
      *
      */
-    List<Object[]> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
+    List<Object> getData(boolean cast, boolean keyed, boolean extended, boolean relations) throws Exception;
 
     /**
      * Read all data from a Resource. This can be used for smaller datapackages, but for huge or unknown
@@ -118,7 +135,7 @@ public interface Resource<T,C> {
      * @return Row Iterator
      * @throws Exception if parsing the data fails
      */
-    Iterator<Object[]> objectArrayIterator(boolean keyed, boolean extended, boolean relations) throws Exception;
+    Iterator<Object[]> objectArrayIterator(boolean extended, boolean relations) throws Exception;
 
 
     /**
@@ -126,7 +143,7 @@ public interface Resource<T,C> {
      * @return Row Iterator
      * @throws Exception if parsing the data fails
      */
-    Iterator<Map<String, Object>> mappedIterator(boolean relations) throws Exception;
+    Iterator<Map<String, Object>> mappingIterator(boolean relations) throws Exception;
 
     /**
      * Returns an Iterator that returns rows as bean-arrays.
@@ -310,6 +327,8 @@ public interface Resource<T,C> {
 
     String getSerializationFormat();
 
+    void checkRelations() throws Exception;
+
     /**
      * Recreate a Resource object from a JSON descriptor, a base path to resolve relative file paths against
      * and a flag that tells us whether we are reading from inside a ZIP archive.
@@ -339,21 +358,29 @@ public interface Resource<T,C> {
             if (resource instanceof FilebasedResource) {
                 ((FilebasedResource)resource).setIsInArchive(isArchivePackage);
             }
-        } else if (data != null && format != null){
-            if (format.equals(Resource.FORMAT_JSON))
-                resource = new JSONDataResource(name, ((ArrayNode) data).toString());
+            // inlined data
+        } else if (data != null){
+            if (null == format) {
+                if (!(data instanceof ArrayNode)) {
+                    // from the spec: " a JSON string - in this case the format or
+                    // mediatype properties MUST be provided
+                    // https://specs.frictionlessdata.io/data-resource/#data-inline-data
+                    throw new DataPackageException(
+                            "Invalid Resource. The format property cannot be null for inlined CSV data.");
+                }
+                resource = new JSONDataResource(name, data.toString());
+            } else if (format.equals(Resource.FORMAT_JSON))
+                resource = new JSONDataResource(name, data.toString());
             else if (format.equals(Resource.FORMAT_CSV))
                 resource = new CSVDataResource(name, data.toString());
         } else {
-            DataPackageException dpe = new DataPackageException(
+            throw new DataPackageException(
                     "Invalid Resource. The path property or the data and format properties cannot be null.");
-            throw dpe;
         }
         resource.setDialect(dialect);
         JSONBase.setFromJson(resourceJson, resource, schema);
         return resource;
     }
-
 
     static AbstractResource build(String name, Collection pathOrUrl, Object basePath) throws MalformedURLException {
         if (pathOrUrl != null) {
@@ -379,7 +406,7 @@ public interface Resource<T,C> {
             for (String s : strings) {
                 if (basePath instanceof URL) {
                     /*
-                     * We have a URL fragment, that is not valid on its own.
+                     * We have a URL fragment that is not valid on its own.
                      * According to https://github.com/frictionlessdata/specs/issues/652 ,
                      * URL fragments should be resolved relative to the base URL
                      */

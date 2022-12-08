@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.datasourceformat.DataSourceFormat;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -58,17 +58,17 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     private static String sniffFormat(Collection<File> paths) {
         Set<String> foundFormats = new HashSet<>();
         paths.forEach((p) -> {
-            if (p.getName().toLowerCase().endsWith(DataSourceFormat.Format.FORMAT_CSV.getLabel())) {
-                foundFormats.add(DataSourceFormat.Format.FORMAT_CSV.getLabel());
-            } else if (p.getName().toLowerCase().endsWith(DataSourceFormat.Format.FORMAT_JSON.getLabel())) {
-                foundFormats.add(DataSourceFormat.Format.FORMAT_JSON.getLabel());
+            if (p.getName().toLowerCase().endsWith(TableDataSource.Format.FORMAT_CSV.getLabel())) {
+                foundFormats.add(TableDataSource.Format.FORMAT_CSV.getLabel());
+            } else if (p.getName().toLowerCase().endsWith(TableDataSource.Format.FORMAT_JSON.getLabel())) {
+                foundFormats.add(TableDataSource.Format.FORMAT_JSON.getLabel());
             }
         });
         if (foundFormats.size() > 1) {
             throw new DataPackageException("Resources cannot be mixed JSON/CSV");
         }
         if (foundFormats.isEmpty())
-            return DataSourceFormat.Format.FORMAT_CSV.getLabel();
+            return TableDataSource.Format.FORMAT_CSV.getLabel();
         return foundFormats.iterator().next();
     }
 
