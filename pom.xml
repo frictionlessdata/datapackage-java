@@ -263,11 +263,6 @@
             <artifactId>tableschema-java</artifactId>
             <version>${tableschema-java-version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.frictionlessdata</groupId>
-            <artifactId>tableschema-java</artifactId>
-            <version>0.5.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
+
     </dependencies>
 </project>
