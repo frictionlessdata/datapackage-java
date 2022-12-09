@@ -80,7 +80,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         Iterator[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.iterator(false, false, false, relations);
+            tableIteratorArray[cnt++] = table.stringArrayIterator(relations);
         }
         return new IteratorChain<>(tableIteratorArray);
     }
@@ -91,7 +91,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         Iterator<String[]>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.stringArrayIterator(false);
+            tableIteratorArray[cnt++] = table.stringArrayIterator();
         }
         return new IteratorChain<>(tableIteratorArray);
     }
@@ -102,7 +102,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         Iterator<Map<String, Object>>[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
         for (Table table : tables) {
-            tableIteratorArray[cnt++] = table.keyedIterator(false, true, relations);
+            tableIteratorArray[cnt++] = table.mappingIterator(false, true, relations);
         }
         return new IteratorChain(tableIteratorArray);
     }
@@ -117,17 +117,46 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return ic;
     }
 
+    /**
+     * Read all data from a Resource, each row as String arrays. This can be used for smaller datapackages,
+     * but for huge or unknown sizes, reading via iterator  is preferred, as this method loads all data into RAM.
+     *
+     * It can be configured to return table rows with relations to other data sources resolved
+     *
+     * The method uses Iterators provided by {@link Table} class, and is roughly implemented after
+     * https://github.com/frictionlessdata/tableschema-py/blob/master/tableschema/table.py
+     *
+     * @param relations true: follow relations
+     * @return A list of table rows.
+     * @throws Exception if parsing the data fails
+     *
+     */
     @JsonIgnore
-    public List<String[]> getData() throws Exception{
+    public List<String[]> getData(boolean relations) throws Exception{
         List<String[]> retVal = new ArrayList<>();
         ensureDataLoaded();
-        Iterator<String[]> iter = stringArrayIterator();
+        Iterator<String[]> iter = stringArrayIterator(relations);
         while (iter.hasNext()) {
             retVal.add(iter.next());
         }
         return retVal;
     }
 
+    /**
+     * Read all data from a Resource, each row as Map objects. This can be used for smaller datapackages,
+     * but for huge or unknown sizes, reading via iterator  is preferred, as this method loads all data into RAM.
+     *
+     * The method returns Map&lt;String,Object&gt; where key is the header name, and val is the data.
+     * It can be configured to return table rows with relations to other data sources resolved
+     *
+     * The method uses Iterators provided by {@link Table} class, and is roughly implemented after
+     * https://github.com/frictionlessdata/tableschema-py/blob/master/tableschema/table.py
+     *
+     * @param relations true: follow relations
+     * @return A list of table rows.
+     * @throws Exception if parsing the data fails
+     *
+     */
     @Override
     public List<Map<String, Object>> getMappedData(boolean relations) throws Exception {
         List<Map<String, Object>> retVal = new ArrayList<>();
@@ -148,13 +177,20 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
      * Most customizable method to retrieve all data in a Resource. Parameters match those in
      * {@link io.frictionlessdata.tableschema.Table#iterator(boolean, boolean, boolean, boolean)}. Data can be
      * returned as:
-     *
-     * - String arrays,
-     * - as Object arrays (parameter `cast` = true),
-     * - as a Map&lt;key,val&gt; where key is the header name, and val is the data (parameter `keyed` = true),
-     * - or in an "extended" form (parameter `extended` = true) that returns an Object array where the first entry is the
+     * <ul>
+     *  <li>String arrays,</li>
+     *  <li>as Object arrays (parameter `cast` = true),</li>
+     *  <li>as a Map&lt;String,Object&gt; where key is the header name, and val is the data (parameter `keyed` = true),
+     *  <li>or in an "extended" form (parameter `extended` = true) that returns an Object array where the first entry is the
      *      row number, the second is a String array holding the headers, and the third is an Object array holding
-     *      the row data.
+     *      the row data.</li>
+     *</ul>
+     * The following rules apply:
+     * <ul>
+     *   <li>if no Schema is present, rows will always return string, not objects, as if `cast` was always off</li>
+     *   <li>if `extended` is true, then `cast` is also true, but `keyed` is false</li>
+     *   <li>if `keyed` is true, then `cast` is also true, but `extended` is false</li>
+     * </ul>
      * @param keyed returns data as Maps
      * @param extended returns data in "extended form"
      * @param cast returns data as Objects, not Strings
@@ -166,13 +202,15 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         List<Object> retVal = new ArrayList<>();
         ensureDataLoaded();
         Iterator iter;
-        if (cast) {
+        if (keyed) {
+            iter = mappingIterator(relations);
+        } else if (cast) {
             iter = objectArrayIterator(extended, relations);
         } else {
             iter = stringArrayIterator(relations);
         }
         while (iter.hasNext()) {
-            retVal.add((Object[])iter.next());
+            retVal.add(iter.next());
         }
         return retVal;
     }
