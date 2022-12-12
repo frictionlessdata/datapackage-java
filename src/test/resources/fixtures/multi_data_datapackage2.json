@@ -1,13 +1,14 @@
 {
     "name": "multi-data",
     "profile": "tabular-data-package",
+    "homepage" : "",
     "resources": [
     {
         "name": "fifth-resource",
         "profile": "tabular-data-resource",
-        "schema": "src/test/resources/fixtures/schema/population_schema.json",
-        "path": "src/test/resources/fixtures/data/population.csv",
-        "dialect": "src/test/resources/fixtures/dialect.json"
+        "schema": "schema/population_schema.json",
+        "path": "data/population.csv",
+        "dialect": "dialect.json"
     }
   ]
 }

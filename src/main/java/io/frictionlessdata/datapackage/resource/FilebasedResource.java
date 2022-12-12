@@ -33,7 +33,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         serializeToFile = true;
     }
 
-    FilebasedResource(String name, Collection<File> paths, File basePath) {
+    public FilebasedResource(String name, Collection<File> paths, File basePath) {
         super(name, paths);
         if (null == paths) {
             throw new DataPackageException("Invalid Resource. " +

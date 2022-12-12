@@ -656,24 +656,28 @@ public class Package extends JSONBase{
         }
         Schema schema = buildSchema (jsonNodeSource, basePath, isArchivePackage);
         setFromJson(jsonNodeSource, this, schema);
-
-        this.setName(textValueOrNull(jsonNodeSource, Package.JSON_KEY_ID));
+        this.setId(textValueOrNull(jsonNodeSource, Package.JSON_KEY_ID));
+        this.setName(textValueOrNull(jsonNodeSource, Package.JSON_KEY_NAME));
         this.setVersion(textValueOrNull(jsonNodeSource, Package.JSON_KEY_VERSION));
-        this.setHomepage(jsonNodeSource.has(Package.JSON_KEY_HOMEPAGE)
-                ? new URL(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText())
-                : null);
+
+        if (jsonNodeSource.has(Package.JSON_KEY_HOMEPAGE) &&
+                StringUtils.isNotEmpty(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText())) {
+            this.setHomepage( new URL(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText()));
+        }
+
         this.setImage(textValueOrNull(jsonNodeSource, Package.JSON_KEY_IMAGE));
         this.setCreated(textValueOrNull(jsonNodeSource, Package.JSON_KEY_CREATED));
-        this.setContributors(jsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS)
-                ? Contributor.fromJson(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())
-                : null);
+        if (jsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS) &&
+                StringUtils.isNotEmpty(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())) {
+            setContributors(Contributor.fromJson(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText()));
+        }
         if (jsonNodeSource.has(Package.JSON_KEY_KEYWORDS)) {
             ArrayNode arr = (ArrayNode) jsonObject.get(Package.JSON_KEY_KEYWORDS);
             for (int i = 0; i < arr.size(); i++) {
                 this.addKeyword(arr.get(i).asText());
             }
         }
-        List<String> wellKnownKeys = Arrays.asList(JSON_KEY_RESOURCES, JSON_KEY_ID, JSON_KEY_VERSION,
+        List<String> wellKnownKeys = Arrays.asList(JSON_KEY_NAME, JSON_KEY_RESOURCES, JSON_KEY_ID, JSON_KEY_VERSION,
                 JSON_KEY_HOMEPAGE, JSON_KEY_IMAGE, JSON_KEY_CREATED, JSON_KEY_CONTRIBUTORS,
                 JSON_KEY_KEYWORDS);
         jsonNodeSource.fieldNames().forEachRemaining((k) -> {

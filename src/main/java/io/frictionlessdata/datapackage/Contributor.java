@@ -48,6 +48,7 @@ public class Contributor {
 
 	/**
      * Create a new Contributor object from a JSON representation
+	 *
      * @param jsonObj JSON representation, eg. from Package definition
      * @return new Dialect object with values from JSONObject
      */
@@ -56,7 +57,7 @@ public class Contributor {
             return null;
         try {
         	Contributor c = JsonUtil.getInstance().convertValue(jsonObj, Contributor.class);
-	        if (!isValidUrl(c.path)) {
+			if (c.path != null && !isValidUrl(c.path)) {
 	        	throw new DataPackageException(invalidUrlMsg);
 	        }
 	        return c;
