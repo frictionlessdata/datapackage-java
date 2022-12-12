@@ -3,7 +3,7 @@ package io.frictionlessdata.datapackage;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
-import io.frictionlessdata.tableschema.schema.JsonSchema;
+import io.frictionlessdata.tableschema.schema.FormalSchemaValidator;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.validator.routines.UrlValidator;
 
@@ -57,7 +57,7 @@ public class Validator {
 
         InputStream inputStream = Validator.class.getResourceAsStream("/schemas/" + profileId + ".json");
         if(inputStream != null){
-            JsonSchema schema = JsonSchema.fromJson(inputStream, true);
+            FormalSchemaValidator schema = FormalSchemaValidator.fromJson(inputStream, true);
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }else{
@@ -77,7 +77,7 @@ public class Validator {
     public static void validate(JsonNode jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException, ValidationException{
         try{
             InputStream inputStream = schemaUrl.openStream();
-            JsonSchema schema = JsonSchema.fromJson(inputStream, true);
+            FormalSchemaValidator schema = FormalSchemaValidator.fromJson(inputStream, true);
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }catch(FileNotFoundException e){

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.Year;
 
 @JsonPropertyOrder({
-        "countryName", "countryCode", "year", "amount"
+        "Country Name", "Country Code", "Year", "Value"
 })
 public class GrossDomesticProductBean {
 

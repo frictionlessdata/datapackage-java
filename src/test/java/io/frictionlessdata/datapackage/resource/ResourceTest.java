@@ -8,12 +8,9 @@ import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -46,9 +43,6 @@ public class ResourceTest {
         testResources.add(resource2);
     }
 
-    @Rule
-    public final ExpectedException exception = ExpectedException.none();
-
     @Test
     public void testIterateDataFromUrlPath() throws Exception{
        
@@ -74,9 +68,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
             
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
             
             expectedDataIndex++;
         } 
@@ -103,9 +97,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
             
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
             
             expectedDataIndex++;
         }    
@@ -146,8 +140,8 @@ public class ResourceTest {
             String city = record[0];
             String coords = record[1];
             
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], coords);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], coords);
             
             expectedDataIndex++;
         }
@@ -190,8 +184,8 @@ public class ResourceTest {
             String city = record[0];
             String coords = record[1];
             
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], coords);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], coords);
             
             expectedDataIndex++;
         }
@@ -216,9 +210,9 @@ public class ResourceTest {
         while(iter.hasNext()){
             Object[] record = iter.next();
             
-            Assert.assertEquals(String.class, record[0].getClass());
-            Assert.assertEquals(Year.class, record[1].getClass());
-            Assert.assertEquals(BigInteger.class, record[2].getClass());
+            Assertions.assertEquals(String.class, record[0].getClass());
+            Assertions.assertEquals(Year.class, record[1].getClass());
+            Assertions.assertEquals(BigInteger.class, record[2].getClass());
         }
     }
 
@@ -245,9 +239,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
 
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
 
             expectedDataIndex++;
         }
@@ -273,9 +267,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
 
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
 
             expectedDataIndex++;
         }
@@ -300,9 +294,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
 
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
 
             expectedDataIndex++;
         }
@@ -351,9 +345,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
             
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
             
             expectedDataIndex++;
         } 
@@ -402,9 +396,9 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
 
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
 
             expectedDataIndex++;
         }
@@ -430,43 +424,14 @@ public class ResourceTest {
             String year = record[1];
             String population = record[2];
 
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[0], city);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[1], year);
-            Assert.assertEquals(expectedData.get(expectedDataIndex)[2], population);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[0], city);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[1], year);
+            Assertions.assertEquals(expectedData.get(expectedDataIndex)[2], population);
 
             expectedDataIndex++;
         }
     }
 
-
-    /*
-    FIXME: since strongly typed, those don't work anymore
-    @Test
-    public void testCreatingJSONResourceWithInvalidFormatNullValue() throws Exception {
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/" +
-                "datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
-        Package dp = new Package(url, true);
-
-        // format property is null but data is not null.
-        Resource resource = new JSONDataResource("resource-name", testResources, (String)null);
-
-        exception.expectMessage("Invalid Resource. The data and format properties cannot be null.");
-        dp.addResource(resource);
-    }
-
-    @Test
-    public void testCreatingResourceWithInvalidFormatDataValue() throws Exception {
-        URL url = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master/src/test/resources/fixtures/multi_data_datapackage.json");
-        Package dp = new Package(url, true);
-
-        // data property is null but format is not null.
-        Resource resource = new JSONDataResource("resource-name", (String)null, "csv");
-
-        exception.expectMessage("Invalid Resource. The path property or the data and format properties cannot be null.");
-        dp.addResource(resource);
-    }
-
-     */
     @Test
     public void testRead() throws Exception{
         Resource resource = buildResource("/fixtures/data/population.csv");
@@ -475,7 +440,7 @@ public class ResourceTest {
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
         // Assert
-        Assert.assertEquals(3, resource.getData(false, false, false, false).size());
+        Assertions.assertEquals(3, resource.getData(false, false, false, false).size());
     }
 
     @Test
@@ -496,9 +461,9 @@ public class ResourceTest {
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
         
         // Assert
-        Assert.assertEquals("city", resource.getHeaders()[0]);
-        Assert.assertEquals("year", resource.getHeaders()[1]);
-        Assert.assertEquals("population", resource.getHeaders()[2]);
+        Assertions.assertEquals("city", resource.getHeaders()[0]);
+        Assertions.assertEquals("year", resource.getHeaders()[1]);
+        Assertions.assertEquals("population", resource.getHeaders()[2]);
     }
 
 
