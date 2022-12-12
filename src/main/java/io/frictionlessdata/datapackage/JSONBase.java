@@ -35,7 +35,6 @@ import static io.frictionlessdata.datapackage.Validator.isValidUrl;
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
 public abstract class JSONBase {
     static final int JSON_INDENT_FACTOR = 4;// JSON keys.
-    // TODO: Use somethign like GSON instead so this explicit mapping is not necessary?
     public static final String JSON_KEY_NAME = "name";
     public static final String JSON_KEY_PROFILE = "profile";
     public static final String JSON_KEY_PATH = "path";
@@ -234,7 +233,6 @@ public abstract class JSONBase {
     }
 
     public static void setFromJson(JsonNode resourceJson, JSONBase retVal, Schema schema) {
-
         if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA) && resourceJson.get(JSONBase.JSON_KEY_SCHEMA).isTextual())
             retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA).asText());
         if (resourceJson.has(JSONBase.JSON_KEY_DIALECT) && resourceJson.get(JSONBase.JSON_KEY_DIALECT).isTextual())

@@ -416,22 +416,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     /**
-     * @return the name
-     */
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    @Override
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
      * @return the profile
      */
     @Override
@@ -439,111 +423,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         if (null == profile)
             return Profile.PROFILE_DATA_RESOURCE_DEFAULT;
         return profile;
-    }
-
-    /**
-     * @param profile the profile to set
-     */
-    @Override
-    public void setProfile(String profile) {
-        this.profile = profile;
-    }
-
-    /**
-     * @return the title
-     */
-    @Override
-    public String getTitle() {
-        return title;
-    }
-
-    /**
-     * @param title the title to set
-     */
-    @Override
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    /**
-     * @return the description
-     */
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * @param description the description to set
-     */
-    @Override
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-
-    /**
-     * @return the mediaType
-     */
-    @Override
-    public String getMediaType() {
-        return mediaType;
-    }
-
-    /**
-     * @param mediaType the mediaType to set
-     */
-    @Override
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
-    }
-
-    /**
-     * @return the encoding
-     */
-    @Override
-    public String getEncoding() {
-        return encoding;
-    }
-
-    /**
-     * @param encoding the encoding to set
-     */
-    @Override
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
-
-    /**
-     * @return the bytes
-     */
-    @Override
-    public Integer getBytes() {
-        return bytes;
-    }
-
-    /**
-     * @param bytes the bytes to set
-     */
-    @Override
-    public void setBytes(Integer bytes) {
-        this.bytes = bytes;
-    }
-
-    /**
-     * @return the hash
-     */
-    @Override
-    public String getHash() {
-        return hash;
-    }
-
-    /**
-     * @param hash the hash to set
-     */
-    @Override
-    public void setHash(String hash) {
-        this.hash = hash;
     }
 
     /**
@@ -594,39 +473,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
         return lDialect.toCsvFormat();
     }
-
-    /**
-     * @return the sources
-     */
-    @Override
-    public ArrayNode getSources() {
-        return sources;
-    }
-
-    /**
-     * @param sources the sources to set
-     */
-    @Override
-    public void setSources(ArrayNode sources) {
-        this.sources = sources;
-    }
-
-    /**
-     * @return the licenses
-     */
-    @Override
-    public ArrayNode getLicenses() {
-        return licenses;
-    }
-
-    /**
-     * @param licenses the licenses to set
-     */
-    @Override
-    public void setLicenses(ArrayNode licenses) {
-        this.licenses = licenses;
-    }
-
 
     @Override
     @JsonIgnore
