@@ -7,22 +7,22 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
-import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.iterator.BeanIterator;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -75,7 +75,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return new IteratorChain(tableIteratorArray);
     }
 
-    private Iterator<String[]> stringArrayIterator(boolean relations) throws Exception{
+    public Iterator<String[]> stringArrayIterator(boolean relations) throws Exception{
         ensureDataLoaded();
         Iterator[] tableIteratorArray = new TableIterator[tables.size()];
         int cnt = 0;
@@ -671,6 +671,18 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return tables;
     }
 
+    @Override
+    public void writeData(Writer out) throws Exception {
+        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
+        List<Table> tables = getTables();
+        for (Table t : tables) {
+            if (serializationFormat.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
+                t.writeCsv(out, lDialect.toCsvFormat());
+            } else if (serializationFormat.equals(TableDataSource.Format.FORMAT_JSON.getLabel())) {
+                out.write(t.asJson());
+            }
+        }
+    }
 
     @Override
     public void writeData(Path outputDir) throws Exception {

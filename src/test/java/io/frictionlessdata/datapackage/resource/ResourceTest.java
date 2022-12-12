@@ -221,6 +221,7 @@ public class ResourceTest {
             Assert.assertEquals(BigInteger.class, record[2].getClass());
         }
     }
+
     
     @Test
     public void testIterateDataFromCsvFormat() throws Exception{

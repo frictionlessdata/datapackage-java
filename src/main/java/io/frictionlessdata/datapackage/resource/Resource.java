@@ -12,10 +12,9 @@ import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.locationtech.jts.io.OutStream;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -137,6 +136,14 @@ public interface Resource<T,C> {
     void writeData(Path outputDir) throws Exception;
 
     /**
+     * Write all the data in this resource into the provided {@link Writer}.
+     *
+     * @param out the writer to write to.
+     * @throws Exception if something fails while writing
+     */
+    void writeData(Writer out) throws Exception;
+
+    /**
      * Write the Resource {@link Schema} to `outputDir`.
      *
      * @param parentFilePath the directory to write to. Code must create
@@ -190,6 +197,15 @@ public interface Resource<T,C> {
      * @return Iterator that returns rows as string arrays.
      */
     public Iterator<String[]> stringArrayIterator() throws Exception;
+
+    /**
+     * This method creates an Iterator that will return table rows as String arrays.
+     * It therefore disregards the Schema set on the table. It can be configured to follow relations.
+     *
+     * @return Iterator that returns rows as string arrays.
+     */
+    public Iterator<String[]> stringArrayIterator(boolean relations) throws Exception;
+
 
     String[] getHeaders() throws Exception;
 

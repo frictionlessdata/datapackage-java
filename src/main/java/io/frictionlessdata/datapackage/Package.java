@@ -19,7 +19,6 @@ import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.collections.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.UrlValidator;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -34,8 +33,6 @@ import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static io.frictionlessdata.datapackage.Validator.isValidUrl;
 
