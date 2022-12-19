@@ -14,6 +14,7 @@ import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +34,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
@@ -252,7 +256,11 @@ public class PackageTest {
     public void testCreatingResourceWithInvalidPathNullValue() throws Exception {
         exception.expectMessage("Invalid Resource. " +
                 "The path property cannot be null for file-based Resources.");
-        FilebasedResource resource = FilebasedResource.fromSource("resource-name", null, null);
+        FilebasedResource resource = FilebasedResource.fromSource(
+                "resource-name",
+                null,
+                null,
+                TableDataSource.getDefaultEncoding());
         Assert.assertNotNull(resource);
     }
 
@@ -356,7 +364,7 @@ public class PackageTest {
         for (String s : Arrays.asList("cities.csv", "cities2.csv")) {
             files.add(new File(s));
         }
-        Resource resource = Resource.build("new-resource", files, basePath);
+        Resource resource = Resource.build("new-resource", files, basePath, TableDataSource.getDefaultEncoding());
         Assert.assertTrue(resource instanceof FilebasedResource);
         dp.addResource((FilebasedResource)resource);
         Assert.assertEquals(6, dp.getResources().size());
@@ -387,7 +395,7 @@ public class PackageTest {
         for (String s : Arrays.asList("cities.csv", "cities2.csv")) {
             files.add(new File(s));
         }
-        Resource resource = Resource.build("third-resource", files, basePath);
+        Resource resource = Resource.build("third-resource", files, basePath, TableDataSource.getDefaultEncoding());
         Assert.assertTrue(resource instanceof FilebasedResource);
         
         exception.expectMessage("A resource with the same name already exists.");
@@ -405,7 +413,7 @@ public class PackageTest {
         for (String s : Arrays.asList("cities.csv", "cities2.csv")) {
             files.add(new File(s));
         }
-        Resource resource = Resource.build("third-resource", files, basePath);
+        Resource resource = Resource.build("third-resource", files, basePath, TableDataSource.getDefaultEncoding());
         Assert.assertTrue(resource instanceof FilebasedResource);
         dp.addResource((FilebasedResource)resource);
         
@@ -519,6 +527,37 @@ public class PackageTest {
         Package p = new Package(invalidFile.toPath(), false);
     }
 
+    @Test
+    public void testWriteImageToFolderPackage() throws Exception{
+        File dataDirectory = TestUtil.getTestDataDirectory();
+        Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), false);
+        File imgFile = new File (dataDirectory, "fixtures/files/frictionless-color-full-logo.svg");
+        byte [] fileData = Files.readAllBytes(imgFile.toPath());
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+
+        pkg.setImage("logo/ file.svg", fileData);
+        File dir = new File (tempDirPath.toFile(), "with-image");
+        Path dirPath = Files.createDirectory(dir.toPath(), new FileAttribute[] {});
+        System.out.println(tempDirPath);
+        pkg.write(dirPath.toFile(), false);
+        System.out.println(tempDirPath);
+    }
+
+    @Test
+    public void testWriteImageToZipPackage() throws Exception{
+        File dataDirectory = TestUtil.getTestDataDirectory();
+        File imgFile = new File (dataDirectory, "fixtures/files/frictionless-color-full-logo.svg");
+        byte [] fileData = Files.readAllBytes(imgFile.toPath());
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/zip/countries-and-currencies.zip");
+        File createdFile = new File(tempDirPath.toFile(), "test_save_datapackage.zip");
+        Files.copy(resourcePath, createdFile.toPath());
+
+        Package dp = new Package(createdFile.toPath(), true);
+        dp.setImage("logo/ file.svg", fileData);
+        dp.write(new File(tempDirPath.toFile(), "with-image.zip"), true);
+        System.out.println(tempDirPath);
+    }
     
     @Test
     public void testMultiPathIterationForLocalFiles() throws Exception{
@@ -621,7 +660,7 @@ public class PackageTest {
         props.put("count", 7);
 
         Path pkgFile =  TestUtil.getResourcePath("/fixtures/datapackages/employees/datapackage.json");
-        Package p = new Package(pkgFile, false);
+        Package p = new Package(pkgFile, true);
 
         p.setProperty("mass unit", "kg");
         p.setProperty("mass flow", 3.2);

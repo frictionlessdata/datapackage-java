@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.resource.AbstractDataResource;
 import io.frictionlessdata.datapackage.resource.AbstractReferencebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
@@ -61,13 +62,14 @@ public class Package extends JSONBase{
     private URL homepage;
     private Set<String> keywords = new TreeSet<>();
     private String image;
+    private byte[] imageData;
     private ZonedDateTime created;
     private List<Contributor> contributors = new ArrayList<>();
     
     private ObjectNode jsonObject = JsonUtil.getInstance().createNode();
     private boolean strictValidation = false;
     private final List<Resource> resources = new ArrayList<>();
-    private final List<Exception> errors = new ArrayList<>();
+    private final List<DataPackageValidationException> errors = new ArrayList<>();
 
     /**
      * Create a new DataPackage and initialize with a number of Resources.
@@ -498,6 +500,29 @@ public class Package extends JSONBase{
             }
         }
         writeDescriptor(outFs, parentDirName);
+
+        if (null != imageData) {
+            if (null == getBasePath()) {
+                if (null != getBaseUrl()) {
+                    throw new DataPackageException("Cannot add image data to a package read from an URL");
+                }
+                throw new DataPackageException("Invalid package, base path is null");
+            }
+            String fileName = (!StringUtils.isEmpty(this.image)) ? this.image : "image-file";
+            String sanitizedFileName = fileName.replaceAll("[\\s/\\\\]+", "_");
+            if (isArchivePackage) {
+                Path imagePath = outFs.getPath(sanitizedFileName);
+                OutputStream out = Files.newOutputStream(imagePath);
+                out.write(imageData);
+                out.close();
+            } else {
+                Path path = outFs.getPath(parentDirName);
+                File imageFile = new File(path.toFile(), sanitizedFileName);
+                try (FileOutputStream out = new FileOutputStream(imageFile)){
+                    out.write(imageData);
+                }
+            }
+        }
         // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
         // like to get closed...
         try {
@@ -538,11 +563,14 @@ public class Package extends JSONBase{
     final void validate() throws IOException, DataPackageException{
         try{
             Validator.validate(this.getJsonNode());
-        }catch(ValidationException | DataPackageException ve){
+        } catch(ValidationException | DataPackageException ve){
             if (this.strictValidation){
                 throw ve;
             }else{
-                errors.add(ve);
+                if (ve instanceof DataPackageValidationException)
+                    errors.add((DataPackageValidationException)ve);
+                else
+                    errors.add(new DataPackageValidationException (ve));
             }
         }
     }
@@ -609,7 +637,7 @@ public class Package extends JSONBase{
      * reading an invalid Package would throw an exception.
      * @return List of Exceptions caught reading the Package
      */
-    List<Exception> getErrors(){
+    List<DataPackageValidationException> getErrors(){
         return this.errors;
     }
 
@@ -631,9 +659,11 @@ public class Package extends JSONBase{
                         this.resources.clear();
 
                         throw dpe;
-
                     }else{
-                        this.errors.add(dpe);
+                        if (dpe instanceof DataPackageValidationException)
+                            this.errors.add((DataPackageValidationException)dpe);
+                        else
+                            this.errors.add(new DataPackageValidationException(dpe));
                     }
                 }
 
@@ -642,7 +672,7 @@ public class Package extends JSONBase{
                 }
             }
         } else {
-            DataPackageException dpe = new DataPackageException("Trying to create a DataPackage from JSON, " +
+            DataPackageValidationException dpe = new DataPackageValidationException("Trying to create a DataPackage from JSON, " +
                     "but no resource entries found");
             if(this.strictValidation){
                 this.jsonObject = null;
@@ -665,7 +695,7 @@ public class Package extends JSONBase{
             this.setHomepage( new URL(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText()));
         }
 
-        this.setImage(textValueOrNull(jsonNodeSource, Package.JSON_KEY_IMAGE));
+        this.setImagePath(textValueOrNull(jsonNodeSource, Package.JSON_KEY_IMAGE));
         this.setCreated(textValueOrNull(jsonNodeSource, Package.JSON_KEY_CREATED));
         if (jsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS) &&
                 StringUtils.isNotEmpty(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())) {
@@ -686,6 +716,7 @@ public class Package extends JSONBase{
                 this.setProperty(k, obj);
             }
         });
+        resources.forEach(Resource::validate);
         validate();
     }
 
@@ -727,8 +758,13 @@ public class Package extends JSONBase{
         this.homepage = homepage;
     }
 
-    private void setImage(String image) {
+    private void setImagePath(String image) {
         this.image = image;
+    }
+
+    public void setImage(String fileName, byte[]data) throws IOException {
+        this.image = fileName;
+        this.imageData = data;
     }
 
     private void setCreated(ZonedDateTime created) {
@@ -804,7 +840,10 @@ public class Package extends JSONBase{
             if (this.strictValidation) {
                 throw dpe;
             } else {
-                errors.add(dpe);
+                if (dpe instanceof DataPackageValidationException)
+                    errors.add((DataPackageValidationException)dpe);
+
+                errors.add(new DataPackageValidationException(dpe));
             }
         }
 
@@ -829,7 +868,7 @@ public class Package extends JSONBase{
         if (zipCompressed) {
             if (outputDir.exists()) {
                 throw new DataPackageException("Cannot save into existing ZIP file: "
-                        +outputDir.getName());
+                        +outputDir.getAbsolutePath());
             }
             Map<String, String> env = new HashMap<>();
             env.put("create", "true");

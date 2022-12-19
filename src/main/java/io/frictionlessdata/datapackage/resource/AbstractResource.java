@@ -9,6 +9,7 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.io.FileReference;
@@ -52,6 +53,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
 
     boolean serializeToFile = true;
     private String serializationFormat;
+    final List<DataPackageValidationException> errors = new ArrayList<>();
 
     AbstractResource(String name){
         this.name = name;
@@ -242,7 +244,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return tables;
     }
 
-    public void checkRelations() throws Exception {
+    public void checkRelations() {
         if (null != schema) {
             for (ForeignKey fk : schema.getForeignKeys()) {
                 fk.validate();
@@ -253,6 +255,23 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
                     //Package pkg = new Package(fk.getReference().getDatapackage(), true);
                     // TODO fix this
                 }
+            }
+        }
+    }
+
+    public void validate()  {
+        if (null == tables)
+            return;
+        try {
+            // will validate schema against data
+            tables.forEach(Table::validate);
+            checkRelations();
+        } catch (Exception ex) {
+            if (ex instanceof DataPackageValidationException) {
+                errors.add((DataPackageValidationException) ex);
+            }
+            else {
+                errors.add(new DataPackageValidationException(ex));
             }
         }
     }
@@ -278,7 +297,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
                         ArrayNode arr = JsonUtil.getInstance().createArrayNode(t.asJson());
                         arr.elements().forEachRemaining(o->data.add(o));
                     }
-                    json.put(JSON_KEY_DATA, data);
+                    json.set(JSON_KEY_DATA, data);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }

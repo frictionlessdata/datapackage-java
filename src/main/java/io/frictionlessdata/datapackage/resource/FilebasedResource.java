@@ -8,6 +8,7 @@ import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -23,6 +24,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
             throw new DataPackageException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
+        encoding = fromResource.getEncoding();
         this.setSerializationFormat(sniffFormat(paths));
         schema = fromResource.getSchema();
         dialect = fromResource.getDialect();
@@ -33,8 +35,9 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         serializeToFile = true;
     }
 
-    public FilebasedResource(String name, Collection<File> paths, File basePath) {
+    public FilebasedResource(String name, Collection<File> paths, File basePath, Charset encoding) {
         super(name, paths);
+        this.encoding = encoding.name();
         if (null == paths) {
             throw new DataPackageException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
@@ -55,6 +58,10 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         serializeToFile = true;
     }
 
+    public FilebasedResource(String name, Collection<File> paths, File basePath) {
+        this(name, paths, basePath, Charset.defaultCharset());
+    }
+
     private static String sniffFormat(Collection<File> paths) {
         Set<String> foundFormats = new HashSet<>();
         paths.forEach((p) -> {
@@ -72,8 +79,10 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         return foundFormats.iterator().next();
     }
 
-    public static FilebasedResource fromSource(String name, Collection<File> paths, File basePath) {
-        return new FilebasedResource(name, paths, basePath);
+    public static FilebasedResource fromSource(String name, Collection<File> paths, File basePath, Charset encoding) {
+        FilebasedResource r = new FilebasedResource(name, paths, basePath);
+        r.encoding = encoding.name();
+        return r;
     }
 
     @JsonIgnore

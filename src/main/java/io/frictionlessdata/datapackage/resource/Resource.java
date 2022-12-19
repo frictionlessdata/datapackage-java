@@ -11,12 +11,15 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.locationtech.jts.io.OutStream;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -392,13 +395,18 @@ public interface Resource<T,C> {
         String format = textValueOrNull(resourceJson, JSONBase.JSON_KEY_FORMAT);
         Dialect dialect = JSONBase.buildDialect (resourceJson, basePath, isArchivePackage);
         Schema schema = JSONBase.buildSchema(resourceJson, basePath, isArchivePackage);
+        String encoding = textValueOrNull(resourceJson, JSONBase.JSON_KEY_ENCODING);
+        Charset charset = TableDataSource.getDefaultEncoding();
+        if (StringUtils.isNotEmpty(encoding)) {
+            charset = Charset.forName(encoding);
+        }
 
         // Now we can build the resource objects
         AbstractResource resource = null;
 
         if (path != null){
             Collection paths = fromJSON(path, basePath);
-            resource = build(name, paths, basePath);
+            resource = build(name, paths, basePath, charset);
             if (resource instanceof FilebasedResource) {
                 ((FilebasedResource)resource).setIsInArchive(isArchivePackage);
             }
@@ -426,7 +434,8 @@ public interface Resource<T,C> {
         return resource;
     }
 
-    static AbstractResource build(String name, Collection pathOrUrl, Object basePath) throws MalformedURLException {
+    static AbstractResource build(String name, Collection<?> pathOrUrl, Object basePath, Charset encoding)
+            throws MalformedURLException {
         if (pathOrUrl != null) {
             List<File> files = new ArrayList<>();
             List<URL> urls = new ArrayList<>();
@@ -474,7 +483,7 @@ public interface Resource<T,C> {
             if (!files.isEmpty() && !urls.isEmpty()) {
                 throw new DataPackageException("Resources with mixed URL/File paths are not allowed");
             } else if (!files.isEmpty()) {
-                return new FilebasedResource(name, files, normalizePath(basePath));
+                return new FilebasedResource(name, files, normalizePath(basePath), encoding);
             } else if (!urls.isEmpty()) {
                 return new URLbasedResource(name, urls);
             }
@@ -575,4 +584,6 @@ public interface Resource<T,C> {
     static String textValueOrNull(JsonNode source, String fieldName) {
     	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }
+
+    void validate();
 }

@@ -4,13 +4,13 @@ package io.frictionlessdata.datapackage.exceptions;
  *
  *
  */
-public class DataPackageException extends RuntimeException {
+public class DataPackageValidationException extends DataPackageException {
 
     /**
      * Creates a new instance of <code>DataPackageException</code> without
      * detail message.
      */
-    public DataPackageException() {
+    public DataPackageValidationException() {
     }
 
     /**
@@ -19,7 +19,7 @@ public class DataPackageException extends RuntimeException {
      *
      * @param msg the detail message.
      */
-    public DataPackageException(String msg) {
+    public DataPackageValidationException(String msg) {
         super(msg);
     }
 
@@ -28,16 +28,7 @@ public class DataPackageException extends RuntimeException {
      *
      * @param t the wrapped exception.
      */
-    public DataPackageException(String msg, Throwable t) {
-        super(msg, t);
-    }
-
-    /**
-     * Constructs an instance of <code>DataPackageException</code> by wrapping a Throwable
-     *
-     * @param t the wrapped exception.
-     */
-    public DataPackageException(Throwable t) {
+    public DataPackageValidationException(Throwable t) {
         super(t.getMessage(), t);
     }
 }

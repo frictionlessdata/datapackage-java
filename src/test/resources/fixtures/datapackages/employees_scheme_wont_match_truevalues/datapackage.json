@@ -4,7 +4,7 @@
     "resources": [{
         "name": "employee-data",
         "path": "data/employees.csv",
-        "schema": "schema.json",
+        "schema": "employee_schema.json",
         "profile": "tabular-data-resource"
     }
   ]
