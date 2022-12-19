@@ -13,6 +13,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException
 import io.frictionlessdata.datapackage.resource.AbstractDataResource;
 import io.frictionlessdata.datapackage.resource.AbstractReferencebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
+import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.io.LocalFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
@@ -111,7 +112,12 @@ public class Package extends JSONBase{
         this.basePath = basePath;
 
     	// Create and set the JsonNode for the String representation of descriptor JSON object.
-        this.setJson((ObjectNode) JsonUtil.getInstance().createNode(jsonStringSource));
+        try {
+            this.setJson((ObjectNode) JsonUtil.getInstance().createNode(jsonStringSource));
+        } catch(JsonParsingException ex) {
+            throw new DataPackageException(ex.getMessage(), ex);
+        }
+
     }
 
     /**
@@ -796,7 +802,7 @@ public class Package extends JSONBase{
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getName() == null){
-            dpe = new DataPackageException("Invalid Resource, it does not have a name property.");
+            dpe = new DataPackageValidationException("Invalid Resource, it does not have a name property.");
         }
         if (resource instanceof AbstractDataResource)
             addResource((AbstractDataResource) resource, validate);
@@ -811,7 +817,7 @@ public class Package extends JSONBase{
         DataPackageException dpe = null;
         // If a name property isn't given...
         if ((resource.getDataProperty() == null) || (resource).getFormat() == null) {
-            dpe = new DataPackageException("Invalid Resource. The data and format properties cannot be null.");
+            dpe = new DataPackageValidationException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
         }
@@ -825,7 +831,7 @@ public class Package extends JSONBase{
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         if (resource.getPaths() == null) {
-            dpe = new DataPackageException("Invalid Resource. The path property cannot be null.");
+            dpe = new DataPackageValidationException("Invalid Resource. The path property cannot be null.");
         } else {
             dpe = checkDuplicates(resource);
         }

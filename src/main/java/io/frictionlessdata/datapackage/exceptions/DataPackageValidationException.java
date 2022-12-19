@@ -31,4 +31,12 @@ public class DataPackageValidationException extends DataPackageException {
     public DataPackageValidationException(Throwable t) {
         super(t.getMessage(), t);
     }
+    /**
+     * Constructs an instance of <code>DataPackageException</code> by wrapping a Throwable
+     *
+     * @param t the wrapped exception.
+     */
+    public DataPackageValidationException(String msg, Throwable t) {
+        super(msg, t);
+    }
 }

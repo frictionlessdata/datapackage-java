@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.iterator.TableIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
@@ -417,7 +418,7 @@ public interface Resource<T,C> {
                     // from the spec: " a JSON string - in this case the format or
                     // mediatype properties MUST be provided
                     // https://specs.frictionlessdata.io/data-resource/#data-inline-data
-                    throw new DataPackageException(
+                    throw new DataPackageValidationException(
                             "Invalid Resource. The format property cannot be null for inlined CSV data.");
                 }
                 resource = new JSONDataResource(name, data.toString());
@@ -426,7 +427,7 @@ public interface Resource<T,C> {
             else if (format.equals(Resource.FORMAT_CSV))
                 resource = new CSVDataResource(name, data.toString());
         } else {
-            throw new DataPackageException(
+            throw new DataPackageValidationException(
                     "Invalid Resource. The path property or the data and format properties cannot be null.");
         }
         resource.setDialect(dialect);

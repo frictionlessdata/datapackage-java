@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 
@@ -39,7 +40,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         super(name, paths);
         this.encoding = encoding.name();
         if (null == paths) {
-            throw new DataPackageException("Invalid Resource. " +
+            throw new DataPackageValidationException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
         this.setSerializationFormat(sniffFormat(paths));
@@ -52,7 +53,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                https://frictionlessdata.io/specs/data-resource/index.html#url-or-path
              */
             if (path.isAbsolute()) {
-                throw new DataPackageException("Path entries for file-based Resources cannot be absolute");
+                throw new DataPackageValidationException("Path entries for file-based Resources cannot be absolute");
             }
         }
         serializeToFile = true;

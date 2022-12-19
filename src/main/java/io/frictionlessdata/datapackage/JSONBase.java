@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.io.FileReference;
@@ -291,6 +292,8 @@ public abstract class JSONBase {
         try {
             return getFileContentAsString(url.openStream());
         } catch (Exception ex) {
+            if (ex instanceof FileNotFoundException)
+                throw new DataPackageValidationException(ex.getMessage(), ex);
             throw new DataPackageException(ex);
         }
     }
