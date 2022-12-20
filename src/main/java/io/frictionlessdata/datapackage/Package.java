@@ -90,8 +90,9 @@ public class Package extends JSONBase{
     }
     
     /**
-     * Load from String representation of JSON object. To prevent file system traversal attacks,
-     * the basePath must be explicitly set here, the `basePath` variable cannot be null.
+     * Load from String representation of JSON object. To prevent file system traversal attacks
+     * while loading Resources, the basePath must be explicitly set here, the `basePath`
+     * variable cannot be null.
      *
      * The basePath is the path that is used as a jail root for Resource creation -
      * no absolute paths for Resources are allowed, they must all be relative to and
@@ -263,8 +264,24 @@ public class Package extends JSONBase{
         return homepage;
     }
 
-    public String getImage() {
+    /**
+     * Returns the path or URL for the image according to the spec:
+     * https://specs.frictionlessdata.io/data-package/#image
+     *
+     * @return path or URL to the image data
+     */
+    public String getImagePath() {
         return image;
+    }
+
+    /**
+     * Returns the image data if the image is stored inside the data package, null if {@link #getImagePath()}
+     * would return a URLL
+     *
+     * @return binary image data
+     */
+    public byte[] getImage() {
+        return imageData;
     }
 
     public ZonedDateTime getCreated() {
