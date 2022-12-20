@@ -450,7 +450,6 @@ public class PackageTest {
     // the `datapackage.json` is in a folder `countries-and-currencies` on the top
     // level of the zip file.
     @Test
-    @Disabled
     public void testReadFromZipFileWithDirectoryHierarchy() throws Exception{
         String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
         String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
@@ -483,7 +482,6 @@ public class PackageTest {
 
     // Archive file name doesn't end with ".zip"
     @Test
-    @Disabled
     public void testReadFromZipFileWithDifferentSuffix() throws Exception{
         String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
         String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
