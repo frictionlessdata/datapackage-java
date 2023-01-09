@@ -525,11 +525,8 @@ public class Package extends JSONBase{
         writeDescriptor(outFs, parentDirName);
 
         if (null != imageData) {
-            if (null == getBasePath()) {
-                if (null != getBaseUrl()) {
-                    throw new DataPackageException("Cannot add image data to a package read from an URL");
-                }
-                throw new DataPackageException("Invalid package, base path is null");
+            if (null != getBaseUrl()) {
+                throw new DataPackageException("Cannot add image data to a package read from an URL");
             }
             String fileName = (!StringUtils.isEmpty(this.image)) ? this.image : "image-file";
             String sanitizedFileName = fileName.replaceAll("[\\s/\\\\]+", "_");
@@ -546,8 +543,10 @@ public class Package extends JSONBase{
                 }
             }
         }
-        // ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
-        // like to get closed...
+        /* ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
+         like to get closed...
+         The empty catch block is intentional.
+         */
         try {
             outFs.close();
         } catch (UnsupportedOperationException es) {};
