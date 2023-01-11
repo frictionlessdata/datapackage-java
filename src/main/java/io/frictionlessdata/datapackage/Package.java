@@ -530,7 +530,7 @@ public class Package extends JSONBase{
             }
             String fileName = (!StringUtils.isEmpty(this.image)) ? this.image : "image-file";
             String sanitizedFileName = fileName.replaceAll("[\\s/\\\\]+", "_");
-            if (isArchivePackage) {
+            if (zipCompressed) {
                 Path imagePath = outFs.getPath(sanitizedFileName);
                 OutputStream out = Files.newOutputStream(imagePath);
                 out.write(imageData);
