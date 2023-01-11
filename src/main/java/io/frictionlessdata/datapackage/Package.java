@@ -493,6 +493,7 @@ public class Package extends JSONBase{
      * @throws Exception thrown if something goes wrong writing
      */
     public void write (File outputDir, boolean zipCompressed) throws Exception {
+        this.isArchivePackage = zipCompressed;
         FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
         String parentDirName = "";
         if (!zipCompressed) {
