@@ -61,7 +61,7 @@ public class Validator {
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }else{
-            throw new DataPackageException("Invalid profile id: " + profileId);
+            throw new ValidationException("Invalid profile id: " + profileId);
         }
         
     }
@@ -81,7 +81,7 @@ public class Validator {
             schema.validate(jsonObjectToValidate); // throws a ValidationException if this object is invalid
             
         }catch(FileNotFoundException e){
-             throw new DataPackageException("Invalid profile schema URL: " + schemaUrl);   
+             throw new ValidationException("Invalid profile schema URL: " + schemaUrl);
         }  
     }
     
