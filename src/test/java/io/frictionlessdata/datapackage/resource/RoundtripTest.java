@@ -57,7 +57,7 @@ public class RoundtripTest {
                 new File(TestUtil.getBasePath().toFile(), "/schema/population_schema.json"), true);
         res.setSchema(schema);
         res.setShouldSerializeToFile(true);
-        res.setSerializationFormat(Resource.FORMAT_CSV);
+        res.setSerializationFormat(TableDataSource.Format.FORMAT_CSV.getLabel());
         res.setDialect(Dialect.fromCsvFormat(csvFormat));
         pkg.addResource(res);
 

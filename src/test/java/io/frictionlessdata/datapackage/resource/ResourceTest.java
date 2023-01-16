@@ -220,7 +220,7 @@ public class ResourceTest {
     @Test
     public void testIterateDataFromCsvFormat() throws Exception{
         String dataString = "city,year,population\nlondon,2017,8780000\nparis,2017,2240000\nrome,2017,2860000";
-        Resource resource = new CSVDataResource("population", dataString);
+        Resource resource = new CSVTabularDataResource("population", dataString);
         
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);

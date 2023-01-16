@@ -9,6 +9,7 @@ public class JSONDataResource<C> extends AbstractDataResource<ArrayNode,C> {
     public JSONDataResource(String name, String json) {
         super(name, JsonUtil.getInstance().createArrayNode(json));
         super.format = getResourceFormat();
+        super.profile = "data-resource";
     }
 
     @Override

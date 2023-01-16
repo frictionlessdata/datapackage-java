@@ -16,9 +16,11 @@ import io.frictionlessdata.tableschema.io.LocalFileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -188,7 +190,7 @@ public abstract class JSONBase {
         return originalReferences;
     }
 
-    public static Schema buildSchema(JsonNode resourceJson, Object basePath, boolean isArchivePackage)
+    public static Schema buildSchema(JsonNode resourceJson, Object basePath, Charset encoding, boolean isArchivePackage)
             throws Exception {
         FileReference ref = referenceFromJson(resourceJson, JSON_KEY_SCHEMA, basePath);
         if (null != ref) {
@@ -199,7 +201,13 @@ public abstract class JSONBase {
                 : null;
         if (null == schemaObj)
             return null;
-        return Schema.fromJson(dereference(schemaObj, basePath, isArchivePackage).toString(), true);
+        return Schema.fromJson(dereference(schemaObj, basePath, encoding, isArchivePackage).toString(), true);
+    }
+
+
+    public static Schema buildSchema(JsonNode resourceJson, Object basePath, boolean isArchivePackage)
+            throws Exception {
+        return buildSchema(resourceJson, basePath, StandardCharsets.UTF_8, isArchivePackage);
     }
 
     public static Dialect buildDialect (JsonNode resourceJson, Object basePath, boolean isArchivePackage)
@@ -213,7 +221,7 @@ public abstract class JSONBase {
                 : null;
         if (null == dialectObj)
             return null;
-        return Dialect.fromJson(dereference(dialectObj, basePath, isArchivePackage).toString());
+        return Dialect.fromJson(dereference(dialectObj, basePath, StandardCharsets.UTF_8, isArchivePackage).toString());
     }
 
     private static FileReference referenceFromJson(JsonNode resourceJson, String key, Object basePath)
@@ -276,9 +284,9 @@ public abstract class JSONBase {
     }
 
 
-    static String getFileContentAsString(InputStream stream) {
+    static String getFileContentAsString(InputStream stream, Charset cs) {
         try (BufferedReader rdr = new BufferedReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                new InputStreamReader(stream, cs))) {
             List<String> lines = rdr
                     .lines()
                     .collect(Collectors.toList());
@@ -288,9 +296,9 @@ public abstract class JSONBase {
         }
     }
 
-    static String getFileContentAsString(URL url) {
+    static String getFileContentAsString(URL url, Charset cs) {
         try {
-            return getFileContentAsString(url.openStream());
+            return getFileContentAsString(url.openStream(), cs);
         } catch (Exception ex) {
             if (ex instanceof FileNotFoundException)
                 throw new DataPackageValidationException(ex.getMessage(), ex);
@@ -298,9 +306,9 @@ public abstract class JSONBase {
         }
     }
 
-    static String getFileContentAsString(File file) {
+    static String getFileContentAsString(File file, Charset cs) {
         try (InputStream is = new FileInputStream(file)){
-            return getFileContentAsString(is);
+            return getFileContentAsString(is, cs);
         } catch (Exception ex) {
 
             if ((ex instanceof NoSuchFileException
@@ -311,9 +319,9 @@ public abstract class JSONBase {
         }
     }
 
-    static String getFileContentAsString(Path filePath) {
+    static String getFileContentAsString(Path filePath, Charset encoding) {
         try (InputStream is = Files.newInputStream(filePath)){
-            return getFileContentAsString(is);
+            return getFileContentAsString(is, encoding);
         } catch (Exception ex) {
             if ((ex instanceof NoSuchFileException
             || (ex instanceof FileNotFoundException))) {
@@ -349,7 +357,10 @@ public abstract class JSONBase {
         return null;
     }
 
-    protected static String getZipFileContentAsString(Path inFilePath, String fileName) throws IOException {
+    protected static String getZipFileContentAsString(
+            Path inFilePath,
+            String fileName,
+            Charset encoding) throws IOException {
         // Read in memory the file inside the zip.
         ZipFile zipFile = new ZipFile(inFilePath.toFile());
         ZipEntry entry = findZipEntry(zipFile, fileName);
@@ -362,20 +373,24 @@ public abstract class JSONBase {
         String content;
         // Read the datapackage.json file inside the zip
         try (InputStream stream = zipFile.getInputStream(entry)) {
-            content = getFileContentAsString(stream);
+            content = getFileContentAsString(stream, encoding);
         }
         zipFile.close();
         return content;
     }
 
-    public static ObjectNode dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {
+    public static ObjectNode dereference(
+            File fileObj,
+            Path basePath,
+            Charset encoding,
+            boolean isArchivePackage) throws IOException {
         String jsonContentString;
         if (isArchivePackage) {
             String filePath = fileObj.getPath();
             if (File.separator.equals("\\")) {
                 filePath = filePath.replaceAll("\\\\", "/");
             }
-            jsonContentString = getZipFileContentAsString(basePath, filePath);
+            jsonContentString = getZipFileContentAsString(basePath, filePath, encoding);
         } else {
             /* If reference is file path.
                from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
@@ -387,7 +402,7 @@ public abstract class JSONBase {
             Path securePath = Resource.toSecure(fileObj.toPath(), basePath);
             if (securePath.toFile().exists()) {
                 // Create the dereferenced schema object from the local file.
-                jsonContentString = getFileContentAsString(securePath.toFile());
+                jsonContentString = getFileContentAsString(securePath.toFile(), encoding);
             } else {
                 throw new DataPackageFileOrUrlNotFoundException("Local file not found: " + fileObj);
             }
@@ -405,17 +420,17 @@ public abstract class JSONBase {
      * @throws IOException if fetching the contents of the URL goes wrong
      */
 
-    private static ObjectNode dereference(String url, URL basePath) throws IOException {
+    private static ObjectNode dereference(String url, URL basePath, Charset encoding) throws IOException {
         JsonNode dereferencedObj;
 
         if (isValidUrl(url)) {
             // Create the dereferenced object from the remote file.
-            String jsonContentString = getFileContentAsString(new URL(url));
+            String jsonContentString = getFileContentAsString(new URL(url), encoding);
             dereferencedObj = createNode(jsonContentString);
         } else {
             URL lURL = new URL(basePath.toExternalForm()+url);
             if (isValidUrl(lURL)) {
-                String jsonContentString = getFileContentAsString(lURL);
+                String jsonContentString = getFileContentAsString(lURL, encoding);
                 dereferencedObj = createNode(jsonContentString);
             } else {
                 throw new DataPackageFileOrUrlNotFoundException("URL not found"+lURL);
@@ -424,7 +439,11 @@ public abstract class JSONBase {
         return (ObjectNode) dereferencedObj;
     }
 
-    public static ObjectNode dereference(Object obj, Object basePath, boolean isArchivePackage) throws IOException {
+    public static ObjectNode dereference
+            (Object obj,
+             Object basePath,
+             Charset encoding,
+             boolean isArchivePackage) throws IOException {
         if (null == obj)
             return null;
         // Object is already a dereferenced object.
@@ -432,22 +451,22 @@ public abstract class JSONBase {
             // Don't need to do anything, just cast and return.
             return (ObjectNode)obj;
         } else if (obj instanceof TextNode) {
-        	return dereference(((TextNode) obj).asText(), basePath, isArchivePackage);
+        	return dereference(((TextNode) obj).asText(), basePath, encoding, isArchivePackage);
         } else if(obj instanceof String){
             String reference = (String)obj;
             if (isValidUrl(reference))
                 if (basePath instanceof File) {
-                    String jsonString = getFileContentAsString(new URL(reference));
+                    String jsonString = getFileContentAsString(new URL(reference), encoding);
                     return (ObjectNode) createNode(jsonString);
                 }
                 else {
-                    String jsonString = getFileContentAsString(new URL(reference));
+                    String jsonString = getFileContentAsString(new URL(reference), encoding);
                     return (ObjectNode) createNode(jsonString);
                 }
             else if (basePath instanceof URL) {
-                return dereference(reference, (URL) basePath);
+                return dereference(reference, (URL) basePath, encoding);
             } else
-                return dereference(new File(reference), (Path)basePath, isArchivePackage);
+                return dereference(new File(reference), (Path)basePath, encoding, isArchivePackage);
         }
 
         return null;

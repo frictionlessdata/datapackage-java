@@ -16,8 +16,8 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
     }
 
     @Override
-    Table createTable(URL reference) throws Exception {
-        return Table.fromSource(reference, schema, getCsvFormat());
+    Table createTable(URL reference, Charset encoding) throws Exception {
+        return Table.fromSource(reference, schema, getCsvFormat(), encoding);
     }
 
     @Override
@@ -28,10 +28,11 @@ public class URLbasedResource<C> extends AbstractReferencebasedResource<URL, C> 
     @Override
     List<Table> readData () throws Exception{
         List<Table> tables = new ArrayList<>();
+        Charset cs = getEncodingOrDefault();
         // If the path of a data file has been set.
         if (super.paths != null){
             for (URL url : paths) {
-                Table table = createTable(url);
+                Table table = createTable(url, cs);
                 tables.add(table);
             }
         }

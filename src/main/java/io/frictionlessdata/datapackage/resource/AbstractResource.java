@@ -21,12 +21,14 @@ import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -478,6 +480,19 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     @Override
     public void setSchema(Schema schema) {
         this.schema = schema;
+    }
+
+
+    public Charset getEncodingOrDefault() {
+        String encoding = super.getEncoding();
+        Charset cs;
+        if (!StringUtils.isEmpty(encoding)) {
+            cs = Charset.forName(encoding);
+        } else {
+            cs =  StandardCharsets.UTF_8;
+            super.setEncoding(cs.name());
+        }
+        return cs;
     }
 
     @JsonIgnore

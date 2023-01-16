@@ -7,9 +7,11 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -92,7 +94,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     }
 
     @Override
-    Table createTable(File reference) throws Exception {
+    Table createTable(File reference, Charset encoding) {
         return Table.fromSource(reference, basePath, schema, getCsvFormat());
     }
 
@@ -116,9 +118,10 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
 
     private List<Table> readfromZipFile() throws Exception {
         List<Table> tables = new ArrayList<>();
+        Charset cs = getEncodingOrDefault();
         for (File file : paths) {
             String fileName = file.getPath().replaceAll("\\\\", "/");
-            String content = getZipFileContentAsString (basePath.toPath(), fileName);
+            String content = getZipFileContentAsString (basePath.toPath(), fileName, cs);
             Table table = Table.fromSource(content, schema, getCsvFormat());
             tables.add(table);
         }
@@ -135,38 +138,14 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
                  */
             Path securePath = Resource.toSecure(file.toPath(), basePath.toPath());
             Path relativePath = basePath.toPath().relativize(securePath);
-            Table table = createTable(relativePath.toFile());
+            Charset cs = getEncodingOrDefault();
+
+            Table table = createTable(relativePath.toFile(), cs);
             tables.add(table);
         }
         return tables;
     }
-/*
-    @Override
-    public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
-        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
-        List<String> paths = new ArrayList<>(getReferencesAsStrings());
-        int cnt = 0;
-        for (String fileName : paths) {
-            List<Table> tables = getTables();
-            Table t  = tables.get(cnt++);
-            Path p;
-            if (outputDir.toString().isEmpty()) {
-                p = outputDir.getFileSystem().getPath(fileName);
-                if (!Files.exists(p)) {
-                    Files.createDirectories(p);
-                }
-            } else {
-                if (!Files.exists(outputDir)) {
-                    Files.createDirectories(outputDir);
-                }
-                p = outputDir.resolve(fileName);
-            }
 
-            Files.deleteIfExists(p);
-            writeTableAsCsv(t, lDialect, p);
-        }
-    }
-    */
     public void setIsInArchive(boolean isInArchive) {
         this.isInArchive = isInArchive;
     }

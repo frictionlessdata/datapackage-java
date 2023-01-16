@@ -65,7 +65,7 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
         }).collect(Collectors.toSet());
     }
 
-    abstract Table createTable(T reference) throws Exception;
+    abstract Table createTable(T reference, Charset encoding) throws Exception;
 
     abstract String getStringRepresentation(T reference);
 

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
+import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
@@ -15,7 +16,6 @@ import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.locationtech.jts.io.OutStream;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -35,9 +35,6 @@ import static io.frictionlessdata.datapackage.Validator.isValidUrl;
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
 public interface Resource<T,C> {
-
-    String FORMAT_CSV = "csv";
-    String FORMAT_JSON = "json";
 
     /**
      * Return the {@link Table} objects underlying the Resource.
@@ -395,12 +392,14 @@ public interface Resource<T,C> {
         Object data = resourceJson.get(JSONBase.JSON_KEY_DATA);
         String format = textValueOrNull(resourceJson, JSONBase.JSON_KEY_FORMAT);
         Dialect dialect = JSONBase.buildDialect (resourceJson, basePath, isArchivePackage);
-        Schema schema = JSONBase.buildSchema(resourceJson, basePath, isArchivePackage);
         String encoding = textValueOrNull(resourceJson, JSONBase.JSON_KEY_ENCODING);
         Charset charset = TableDataSource.getDefaultEncoding();
         if (StringUtils.isNotEmpty(encoding)) {
             charset = Charset.forName(encoding);
         }
+        Schema schema = JSONBase.buildSchema(resourceJson, basePath, charset, isArchivePackage);
+        String profile = textValueOrNull(resourceJson, JSONBase.JSON_KEY_PROFILE);
+
 
         // Now we can build the resource objects
         AbstractResource resource = null;
@@ -408,6 +407,13 @@ public interface Resource<T,C> {
         if (path != null){
             Collection paths = fromJSON(path, basePath);
             resource = build(name, paths, basePath, charset);
+            if ((null != resource.getSerializationFormat())
+                    && (resource.getSerializationFormat().equals(TableDataSource.Format.FORMAT_CSV.getLabel()))
+            ) {
+                resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+            } else {
+                resource.setProfile(profile);
+            }
             if (resource instanceof FilebasedResource) {
                 ((FilebasedResource)resource).setIsInArchive(isArchivePackage);
             }
@@ -422,10 +428,14 @@ public interface Resource<T,C> {
                             "Invalid Resource. The format property cannot be null for inlined CSV data.");
                 }
                 resource = new JSONDataResource(name, data.toString());
-            } else if (format.equals(Resource.FORMAT_JSON))
+                resource.setProfile(profile);
+            } else if (format.equals(TableDataSource.Format.FORMAT_JSON.getLabel())) {
                 resource = new JSONDataResource(name, data.toString());
-            else if (format.equals(Resource.FORMAT_CSV))
-                resource = new CSVDataResource(name, data.toString());
+                resource.setProfile(profile);
+            }else if (format.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
+                //CSV resources are always tabular.
+                resource = new CSVTabularDataResource(name, data.toString());
+            }
         } else {
             throw new DataPackageValidationException(
                     "Invalid Resource. The path property or the data and format properties cannot be null.");

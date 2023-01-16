@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,7 +25,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     AbstractDataResource(String name, T data) {
         super(name);
         this.data = data;
-        super.format = Resource.FORMAT_JSON;
+        super.format = TableDataSource.Format.FORMAT_JSON.getLabel();
         serializeToFile = false;
         if (data == null)
             throw new DataPackageException("Invalid Resource. The data property cannot be null for a Data-based Resource.");
@@ -45,7 +47,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
     }
 
     @Override
-    List<Table> readData () throws Exception{
+    List<Table> readData () {
         List<Table> tables = new ArrayList<>();
         if (data != null){
             if (format.equalsIgnoreCase(getResourceFormat())){

@@ -145,8 +145,8 @@ public class Package extends JSONBase{
         if (!isValidUrl(urlSource.toExternalForm())) {
             throw new DataPackageException("URL form not valid: "+urlSource.toExternalForm());
         }
-        // Get string content of given remove file.
-        String jsonString = getFileContentAsString(urlSource);
+        // Get string content of given remote file.
+        String jsonString = getFileContentAsString(urlSource, StandardCharsets.UTF_8);
 
         // Create JsonNode and validate.
         try {
@@ -193,10 +193,12 @@ public class Package extends JSONBase{
         if (isArchive(descriptorFile.toFile())) {
             isArchivePackage = true;
             basePath = descriptorFile;
-        	sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
+        	sourceJsonNode = createNode(
+                    JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME, StandardCharsets.UTF_8)
+            );
         } else {
             basePath = descriptorFile.getParent();
-            String sourceJsonString = getFileContentAsString(descriptorFile);
+            String sourceJsonString = getFileContentAsString(descriptorFile, StandardCharsets.UTF_8);
             sourceJsonNode = createNode(sourceJsonString);
         }
         this.setJson((ObjectNode) sourceJsonNode);
