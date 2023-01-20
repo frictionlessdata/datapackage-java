@@ -5,6 +5,7 @@ import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,7 +34,8 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
      * @return the data
      */
     @JsonIgnore
-    public T getDataProperty() {
+    @Override
+    public Object getRawData() throws IOException {
         return data;
     }
 

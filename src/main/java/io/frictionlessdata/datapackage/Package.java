@@ -185,7 +185,7 @@ public class Package extends JSONBase{
      *
      * @param descriptorFile local file path that points to the DataPackage Descriptor (if it's in
      *                  a local directory) or the ZIP file if it's a ZIP-based
-     *                  package.
+     *                  package or to the parent directory
      * @param strict whether to use strict schema parsing
      * @throws DataPackageFileOrUrlNotFoundException if the path is invalid
      * @throws IOException thrown if I/O operations fail
@@ -197,14 +197,21 @@ public class Package extends JSONBase{
         if (!descriptorFile.toFile().exists()) {
             throw new DataPackageFileOrUrlNotFoundException("File " + descriptorFile + "does not exist");
         }
-        if (isArchive(descriptorFile.toFile())) {
-            isArchivePackage = true;
+        if (descriptorFile.toFile().isDirectory()) {
             basePath = descriptorFile;
-        	sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
-        } else {
-            basePath = descriptorFile.getParent();
-            String sourceJsonString = getFileContentAsString(descriptorFile);
+            File realDescriptor = new File(descriptorFile.toFile(), DATAPACKAGE_FILENAME);
+            String sourceJsonString = getFileContentAsString(realDescriptor.toPath());
             sourceJsonNode = createNode(sourceJsonString);
+        } else {
+            if (isArchive(descriptorFile.toFile())) {
+                isArchivePackage = true;
+                basePath = descriptorFile;
+                sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
+            } else {
+                basePath = descriptorFile.getParent();
+                String sourceJsonString = getFileContentAsString(descriptorFile);
+                sourceJsonNode = createNode(sourceJsonString);
+            }
         }
         this.setJson((ObjectNode) sourceJsonNode);
     }
@@ -854,7 +861,7 @@ public class Package extends JSONBase{
             throws IOException, ValidationException, DataPackageException{
         DataPackageException dpe = null;
         // If a name property isn't given...
-        if ((resource.getDataProperty() == null) || (resource).getFormat() == null) {
+        if ((resource.getRawData() == null) || (resource).getFormat() == null) {
             dpe = new DataPackageValidationException("Invalid Resource. The data and format properties cannot be null.");
         } else {
             dpe = checkDuplicates(resource);

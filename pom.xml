@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.frictionlessdata</groupId>
     <artifactId>datapackage-java</artifactId>
-    <version>0.6.9-SNAPSHOT</version>
+    <version>0.6.10-SNAPSHOT</version>
     <packaging>jar</packaging>
     <issueManagement>
         <url>https://github.com/frictionlessdata/datapackage-java/issues</url>

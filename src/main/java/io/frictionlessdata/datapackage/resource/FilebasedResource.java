@@ -3,13 +3,16 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.google.common.io.ByteStreams;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 
-import java.io.File;
+import java.io.*;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -92,6 +95,14 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     }
 
     @Override
+    byte[] getRawData(File input)  throws IOException {
+        File f = new File(this.basePath, input.getPath());
+        try (InputStream inputStream = Files.newInputStream(f.toPath())) {
+            return getRawData(inputStream);
+        }
+    }
+
+    @Override
     Table createTable(File reference) throws Exception {
         return Table.fromSource(reference, basePath, schema, getCsvFormat());
     }
@@ -140,33 +151,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         }
         return tables;
     }
-/*
-    @Override
-    public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
-        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
-        List<String> paths = new ArrayList<>(getReferencesAsStrings());
-        int cnt = 0;
-        for (String fileName : paths) {
-            List<Table> tables = getTables();
-            Table t  = tables.get(cnt++);
-            Path p;
-            if (outputDir.toString().isEmpty()) {
-                p = outputDir.getFileSystem().getPath(fileName);
-                if (!Files.exists(p)) {
-                    Files.createDirectories(p);
-                }
-            } else {
-                if (!Files.exists(outputDir)) {
-                    Files.createDirectories(outputDir);
-                }
-                p = outputDir.resolve(fileName);
-            }
 
-            Files.deleteIfExists(p);
-            writeTableAsCsv(t, lDialect, p);
-        }
-    }
-    */
     public void setIsInArchive(boolean isInArchive) {
         this.isInArchive = isInArchive;
     }

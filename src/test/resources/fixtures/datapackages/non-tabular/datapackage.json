@@ -1,0 +1,14 @@
+{
+  "name": "non-tabular",
+  "creator": "Horst",
+  "profile": "data-package",
+  "resources": [
+    {
+      "path": "data/frictionless-color-full-logo.svg",
+      "name": "logo-svg",
+      "format": "svg",
+      "mediatype": "image/svg+xml",
+      "profile": "data-resource"
+    }
+  ]
+}

@@ -1,7 +1,11 @@
 package io.frictionlessdata.datapackage;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -37,4 +41,22 @@ public class TestUtil {
             throw new RuntimeException(ex);
         }
     }
+
+    public static byte[] getResourceContent (String fileName) throws IOException {
+        String locFileName = fileName;
+        if (fileName.startsWith("/")){
+            locFileName = fileName.substring(1);
+        }
+
+        try (InputStream inputStream = Package.class.getClassLoader().getResourceAsStream(locFileName);
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            for (int b; (b = inputStream.read()) != -1; ) {
+                out.write(b);
+            }
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
 }

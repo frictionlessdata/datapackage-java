@@ -370,6 +370,40 @@ public class PackageTest {
         Assertions.assertNotNull(gotResource);
     }
 
+    @Test
+    @DisplayName("Test getting resource data from a non-tabular datapackage, file based")
+    public void testNonTabularPackage() throws Exception{
+        String pathName = "/fixtures/datapackages/non-tabular";
+        Path resourcePath = TestUtil.getResourcePath(pathName);
+        Package dp = new Package(resourcePath, true);
+
+        Resource<?,?> resource = dp.getResource("logo-svg");
+        Assertions.assertTrue(resource instanceof FilebasedResource);
+        Object rawData = resource.getRawData();
+
+        byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
+        Assertions.assertArrayEquals(testData, (byte[])rawData);
+    }
+
+/*
+    @Test
+    @DisplayName("Test getting resource data from a non-tabular datapackage, URL based")
+    public void testNonTabularPackageUrl() throws Exception{
+        URL input = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
+                "/master/src/test/resources//fixtures/datapackages/non-tabular/datapackage.json");
+
+        Package dp = new Package(input, true);
+
+        Resource<?,?> resource = dp.getResource("logo-svg");
+        Assertions.assertTrue(resource instanceof FilebasedResource);
+        Object rawData = resource.getRawData();
+
+        byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
+        Assertions.assertArrayEquals(testData, (byte[])rawData);
+    }
+
+ */
+
 
     @Test
     @DisplayName("Test setting the 'profile' property")
@@ -816,11 +850,7 @@ public class PackageTest {
 
     private static String getFileContents(String fileName) {
         try {
-            // Create file-URL of source file:
-            URL sourceFileUrl = PackageTest.class.getResource(fileName);
-            // Get path of URL
-            Path path = Paths.get(sourceFileUrl.toURI());
-            return new String(Files.readAllBytes(path));
+            return new String(TestUtil.getResourceContent(fileName));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

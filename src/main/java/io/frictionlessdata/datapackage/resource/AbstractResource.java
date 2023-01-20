@@ -298,14 +298,18 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
                     }
                     json.set(JSON_KEY_DATA, data);
                 } catch (Exception ex) {
-                    throw new RuntimeException(ex);
+                    throw new DataPackageException(ex);
                 }
             }
         } else if ((this instanceof AbstractDataResource)) {
             if (this.shouldSerializeToFile()) {
                 //TODO implement storing only the path - and where to get it
             } else {
-                json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(((AbstractDataResource) this).getDataProperty()));
+                try {
+                    json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(this.getRawData()));
+                } catch (IOException e) {
+                    throw new DataPackageException(e);
+                }
             }
         }
 

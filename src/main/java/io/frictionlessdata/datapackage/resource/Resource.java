@@ -51,6 +51,15 @@ public interface Resource<T,C> {
     String getJson();
 
     /**
+     * Read all data from a Resource, unmapped and not transformed. This is useful for non-tabular resources
+     *
+     * @return Contents of the resource file or URL.
+     * @throws IOException if reading the data fails
+     *
+     */
+    public Object getRawData() throws IOException;
+
+    /**
      * Read all data from a Resource, each row as String arrays. This can be used for smaller datapackages,
      * but for huge or unknown sizes, reading via iterator  is preferred, as this method loads all data into RAM.
      *

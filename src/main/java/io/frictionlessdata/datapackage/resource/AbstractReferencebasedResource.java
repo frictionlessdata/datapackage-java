@@ -6,10 +6,11 @@ import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T,C> {
@@ -27,6 +28,27 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
             paths.forEach((p) -> strings.add(getStringRepresentation(p)));
         }
         return strings;
+    }
+
+    @JsonIgnore
+    @Override
+    public Object getRawData() throws IOException {
+        // If the path(s) of data file/URLs has been set.
+        if (paths != null){
+            Iterator<T> iter = paths.iterator();
+            if (paths.size() == 1) {
+                return getRawData(iter.next());
+            } else {
+                // this is probably not very useful, but it's the spec...
+                byte[][] retVal = new byte[paths.size()][];
+                for (int i = 0; i < paths.size(); i++) {
+                    byte[] bytes = getRawData(iter.next());
+                    retVal[i] = bytes;
+                }
+                return retVal;
+            }
+        }
+        return null;
     }
 
     /*
@@ -67,5 +89,17 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
     abstract Table createTable(T reference) throws Exception;
 
     abstract String getStringRepresentation(T reference);
+
+    abstract byte[] getRawData(T input) throws IOException;
+    byte[] getRawData(InputStream inputStream) throws IOException {
+        byte[] retVal = null;
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            for (int b; (b = inputStream.read()) != -1; ) {
+                out.write(b);
+            }
+            retVal = out.toByteArray();
+        }
+        return retVal;
+    }
 
 }
