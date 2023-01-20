@@ -6,10 +6,7 @@ import io.frictionlessdata.datapackage.beans.EmployeeBean;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
-import io.frictionlessdata.datapackage.resource.FilebasedResource;
-import io.frictionlessdata.datapackage.resource.JSONDataResource;
-import io.frictionlessdata.datapackage.resource.Resource;
-import io.frictionlessdata.datapackage.resource.ResourceTest;
+import io.frictionlessdata.datapackage.resource.*;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
@@ -379,31 +376,32 @@ public class PackageTest {
 
         Resource<?,?> resource = dp.getResource("logo-svg");
         Assertions.assertTrue(resource instanceof FilebasedResource);
-        Object rawData = resource.getRawData();
+        byte[] rawData = (byte[])resource.getRawData();
+        String s = new String (rawData).replaceAll("[\n\r]+", "\n");
 
         byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
-        Assertions.assertArrayEquals(testData, (byte[])rawData);
+        String t = new String (testData).replaceAll("[\n\r]+", "\n");
+        Assertions.assertEquals(t, s);
     }
 
-/*
+
     @Test
     @DisplayName("Test getting resource data from a non-tabular datapackage, URL based")
     public void testNonTabularPackageUrl() throws Exception{
-        URL input = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java" +
-                "/master/src/test/resources//fixtures/datapackages/non-tabular/datapackage.json");
+        URL input = new URL("https://raw.githubusercontent.com/frictionlessdata/datapackage-java/master" +
+                "/src/test/resources/fixtures/datapackages/non-tabular/datapackage.json");
 
         Package dp = new Package(input, true);
 
         Resource<?,?> resource = dp.getResource("logo-svg");
-        Assertions.assertTrue(resource instanceof FilebasedResource);
-        Object rawData = resource.getRawData();
+        Assertions.assertTrue(resource instanceof URLbasedResource);
+        byte[] rawData = (byte[])resource.getRawData();
+        String s = new String (rawData).replaceAll("[\n\r]+", "\n");
 
         byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
-        Assertions.assertArrayEquals(testData, (byte[])rawData);
+        String t = new String (testData).replaceAll("[\n\r]+", "\n");
+        Assertions.assertEquals(t, s);
     }
-
- */
-
 
     @Test
     @DisplayName("Test setting the 'profile' property")
