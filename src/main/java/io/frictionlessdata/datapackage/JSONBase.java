@@ -99,7 +99,16 @@ public abstract class JSONBase {
     /**
      * @param profile the profile to set
      */
-    public void setProfile(String profile){this.profile = profile;}
+    public void setProfile(String profile){
+        if (profile.equals(Profile.PROFILE_TABULAR_DATA_PACKAGE)) {
+            if (this instanceof Package) {
+
+            } else if (this instanceof Resource) {
+                throw new DataPackageValidationException("Cannot set "+Profile.PROFILE_TABULAR_DATA_PACKAGE+" on a resource");
+            }
+        }
+        this.profile = profile;
+    }
 
     /**
      * @return the title

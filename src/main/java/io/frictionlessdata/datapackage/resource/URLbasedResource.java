@@ -3,7 +3,6 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.tableschema.Table;
 
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

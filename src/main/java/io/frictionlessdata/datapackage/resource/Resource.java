@@ -15,9 +15,11 @@ import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.locationtech.jts.io.OutStream;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;

@@ -55,6 +55,13 @@ public class Package extends JSONBase{
     private static final String JSON_KEY_CREATED = "created";
     private static final String JSON_KEY_CONTRIBUTORS = "contributors";
 
+    private static final List<String> wellKnownKeys = Arrays.asList(
+            JSON_KEY_NAME, JSON_KEY_RESOURCES, JSON_KEY_ID, JSON_KEY_VERSION,
+            JSON_KEY_HOMEPAGE, JSON_KEY_IMAGE, JSON_KEY_CREATED, JSON_KEY_CONTRIBUTORS,
+            JSON_KEY_KEYWORDS, JSONBase.JSON_KEY_SCHEMA, JSONBase.JSON_KEY_NAME, JSONBase.JSON_KEY_DATA,
+            JSONBase.JSON_KEY_DIALECT, JSONBase.JSON_KEY_LICENSES, JSONBase.JSON_KEY_SOURCES, JSONBase.JSON_KEY_PROFILE);
+
+
     // Filesystem path pointing to the Package; either ZIP file or directory
     private Object basePath = null;
     private String id;
@@ -222,7 +229,7 @@ public class Package extends JSONBase{
     }
 
     /**
-     * Return a List of of all Resources.
+     * Return a List of all Resources.
      *
      * @return the resource names as a List.
      */
@@ -402,6 +409,18 @@ public class Package extends JSONBase{
         this.keywords = new LinkedHashSet<>(keywords);
     }
 
+    /**
+     * @param profile the profile to set
+     */
+    public void setProfile(String profile){
+        if (null != profile) {
+            if ((profile.equals(Profile.PROFILE_DATA_RESOURCE_DEFAULT))
+                    || (profile.equals(Profile.PROFILE_TABULAR_DATA_RESOURCE))) {
+                throw new DataPackageValidationException("Cannot set profile " + profile + " on a data package");
+            }
+        }
+        this.profile = profile;
+    }
 
     /**
      * Set a property and value on the Package.  The value will be converted to a JsonObject and added to the
@@ -416,7 +435,6 @@ public class Package extends JSONBase{
     public void setProperty(String key, JsonNode value) throws DataPackageException{
     	this.jsonObject.set(key, value);
     }
-
 
     /**
      * Set a number of properties at once. The `mapping` holds the properties as
@@ -622,7 +640,10 @@ public class Package extends JSONBase{
     	ObjectNode objectNode = (ObjectNode) JsonUtil.getInstance().createNode(this);
     	// update any manually set properties
     	this.jsonObject.fields().forEachRemaining(f->{
-    		objectNode.set(f.getKey(), f.getValue());
+            // but do not overwrite properties set via the API
+            if (!wellKnownKeys.contains(f.getKey())) {
+                objectNode.set(f.getKey(), f.getValue());
+            }
     	});
 
     	Iterator<Resource> resourceIter = resources.iterator();

@@ -23,7 +23,6 @@ import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -458,6 +457,20 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     @Override
     public void setDialect(Dialect dialect) {
         this.dialect = dialect;
+    }
+
+    /**
+     * @param profile the profile to set
+     */
+    @Override
+    public void setProfile(String profile){
+        if (null != profile) {
+            if ((profile.equals(Profile.PROFILE_TABULAR_DATA_PACKAGE))
+                    || (profile.equals(Profile.PROFILE_DATA_PACKAGE_DEFAULT))) {
+                throw new DataPackageValidationException("Cannot set profile " + profile + " on a resource");
+            }
+        }
+        this.profile = profile;
     }
 
     @Override

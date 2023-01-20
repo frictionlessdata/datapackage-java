@@ -15,7 +15,10 @@ import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,6 +32,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
 import java.util.*;
 
+import static io.frictionlessdata.datapackage.Profile.*;
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -359,13 +363,49 @@ public class PackageTest {
         }
         Resource resource = Resource.build("new-resource", files, basePath, TableDataSource.getDefaultEncoding());
         Assertions.assertTrue(resource instanceof FilebasedResource);
-        dp.addResource((FilebasedResource)resource);
+        dp.addResource(resource);
         Assertions.assertEquals(6, dp.getResources().size());
         
         Resource gotResource = dp.getResource("new-resource");
         Assertions.assertNotNull(gotResource);
     }
-    
+
+
+    @Test
+    @DisplayName("Test setting the 'profile' property")
+    public void testSetProfile() throws Exception {
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        String fName = "/fixtures/datapackages/employees/datapackage.json";
+        Path resourcePath = TestUtil.getResourcePath(fName);
+        Package dp = new Package(resourcePath, true);
+
+        Assertions.assertEquals(Profile.PROFILE_TABULAR_DATA_PACKAGE, dp.getProfile());
+
+        dp.setProfile(PROFILE_DATA_PACKAGE_DEFAULT);
+        Assertions.assertEquals(Profile.PROFILE_DATA_PACKAGE_DEFAULT, dp.getProfile());
+
+        File outFile = new File (tempDirPath.toFile(), "datapackage.json");
+        dp.writeJson(outFile);
+        String content = String.join("\n", Files.readAllLines(outFile.toPath()));
+        JsonNode jsonNode = JsonUtil.getInstance().readValue(content);
+        String profile = jsonNode.get("profile").asText();
+        Assertions.assertEquals(Profile.PROFILE_DATA_PACKAGE_DEFAULT, profile);
+        Assertions.assertEquals(Profile.PROFILE_DATA_PACKAGE_DEFAULT, dp.getProfile());
+    }
+
+    @Test
+    @DisplayName("Test setting invalid 'profile' property, must throw")
+    public void testSetInvalidProfile() throws Exception {
+        String fName = "/fixtures/datapackages/employees/datapackage.json";
+        Path resourcePath = TestUtil.getResourcePath(fName);
+        Package dp = new Package(resourcePath, true);
+
+        Assertions.assertThrows(DataPackageValidationException.class,
+                () -> dp.setProfile(PROFILE_DATA_RESOURCE_DEFAULT));
+        Assertions.assertThrows(DataPackageValidationException.class,
+                () -> dp.setProfile(PROFILE_TABULAR_DATA_RESOURCE));
+    }
+
     @Test
     public void testCreateInvalidJSONResource() throws Exception {
         Package dp = this.getDataPackageFromFilePath(true);

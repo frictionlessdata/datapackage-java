@@ -6,6 +6,7 @@ import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.PackageTest;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.Year;
 import java.util.*;
 
+import static io.frictionlessdata.datapackage.Profile.*;
 import static io.frictionlessdata.datapackage.TestUtil.getTestDataDirectory;
 
 /**
@@ -451,6 +453,16 @@ public class ResourceTest {
         Resource r = dp.getResource("currencies");
 
         List<Object[]> data = r.getData(false, false, false, false);
+        Assertions.assertEquals(2, data.size());
+        Object[] row1 = data.get(0);
+        Assertions.assertEquals("USD", row1[0]);
+        Assertions.assertEquals("US Dollar", row1[1]);
+        Assertions.assertEquals("$", row1[2]);
+
+        Object[] row2 = data.get(1);
+        Assertions.assertEquals("GBP", row2[0]);
+        Assertions.assertEquals("Pound Sterling", row2[1]);
+        Assertions.assertEquals("£", row2[2]);
     }
     
     @Test
@@ -487,7 +499,7 @@ public class ResourceTest {
         files.add(sourceFileAbsPathU2);
 
         Exception dpe = Assertions.assertThrows(DataPackageException.class, () -> {
-            FilebasedResource r = new FilebasedResource("resource-one", files, getBasePath());
+            new FilebasedResource("resource-one", files, getBasePath());
         });
         Assertions.assertEquals("Path entries for file-based Resources cannot be absolute", dpe.getMessage());
     }
@@ -501,7 +513,7 @@ public class ResourceTest {
                 {"london","2017","8780000"},
                 {"paris","2017","2240000"},
                 {"rome","2017","2860000"}};
-        Resource resource = buildResource("/fixtures/data/population.csv");
+        Resource<?, ?> resource = buildResource("/fixtures/data/population.csv");
         Schema schema = Schema.fromJson(new File(getTestDataDirectory()
                 , "/fixtures/schema/population_schema.json"), true);
         // Set the profile to tabular data resource.
@@ -530,8 +542,20 @@ public class ResourceTest {
             Assertions.assertEquals(refRow[2], testData.get(testDataColKeys.get(2)).toString());//BigInteger value for population
         }
     }
+    @Test
+    @DisplayName("Test setting invalid 'profile' property, must throw")
+    public void testSetInvalidProfile() throws Exception {
+        Resource<?,?> resource = buildResource("/fixtures/data/population.csv");
 
-    private static Resource buildResource(String relativeInPath) throws URISyntaxException {
+        Assertions.assertThrows(DataPackageValidationException.class,
+                () -> resource.setProfile(PROFILE_DATA_PACKAGE_DEFAULT));
+        Assertions.assertThrows(DataPackageValidationException.class,
+                () -> resource.setProfile(PROFILE_TABULAR_DATA_PACKAGE));
+        Assertions.assertDoesNotThrow(() -> resource.setProfile(PROFILE_DATA_RESOURCE_DEFAULT));
+        Assertions.assertDoesNotThrow(() -> resource.setProfile(PROFILE_TABULAR_DATA_RESOURCE));
+    }
+
+    private static Resource<?,?> buildResource(String relativeInPath) throws URISyntaxException {
         URL sourceFileUrl = ResourceTest.class.getResource(relativeInPath);
         Path path = Paths.get(sourceFileUrl.toURI());
         Path parent = path.getParent();
@@ -561,7 +585,7 @@ public class ResourceTest {
     }
 
     private List<String[]> getExpectedPopulationData(){
-        List<String[]> expectedData  = new ArrayList();
+        List<String[]> expectedData  = new ArrayList<>();
         //expectedData.add(new String[]{"city", "year", "population"});
         expectedData.add(new String[]{"london", "2017", "8780000"});
         expectedData.add(new String[]{"paris", "2017", "2240000"});
@@ -571,7 +595,7 @@ public class ResourceTest {
     }
 
     private List<String[]> getExpectedAlternatePopulationData(){
-        List<String[]> expectedData  = new ArrayList();
+        List<String[]> expectedData  = new ArrayList<>();
         expectedData.add(new String[]{"2017", "london", "8780000"});
         expectedData.add(new String[]{"2017", "paris", "2240000"});
         expectedData.add(new String[]{"2017", "rome", "2860000"});
