@@ -96,14 +96,20 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
 
     @Override
     byte[] getRawData(File input)  throws IOException {
-        File f = new File(this.basePath, input.getPath());
-        try (InputStream inputStream = Files.newInputStream(f.toPath())) {
-            return getRawData(inputStream);
+        if (this.isInArchive) {
+            String fileName = input.getPath().replaceAll("\\\\", "/");
+            return getZipFileContentAsString (basePath.toPath(), fileName).getBytes();
+        } else {
+            File file = new File(this.basePath, input.getPath());
+            try (InputStream inputStream = Files.newInputStream(file.toPath())) {
+                return getRawData(inputStream);
+            }
         }
+
     }
 
     @Override
-    Table createTable(File reference) throws Exception {
+    Table createTable(File reference) {
         return Table.fromSource(reference, basePath, schema, getCsvFormat());
     }
 
@@ -125,7 +131,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         return tables;
     }
 
-    private List<Table> readfromZipFile() throws Exception {
+    private List<Table> readfromZipFile() throws IOException {
         List<Table> tables = new ArrayList<>();
         for (File file : paths) {
             String fileName = file.getPath().replaceAll("\\\\", "/");
@@ -135,7 +141,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         }
         return tables;
     }
-    private List<Table> readfromOrdinaryFile() throws Exception {
+    private List<Table> readfromOrdinaryFile() throws IOException {
         List<Table> tables = new ArrayList<>();
         for (File file : paths) {
                 /* from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)

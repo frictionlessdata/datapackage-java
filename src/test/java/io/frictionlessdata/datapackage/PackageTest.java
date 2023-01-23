@@ -384,6 +384,23 @@ public class PackageTest {
         Assertions.assertEquals(t, s);
     }
 
+    @Test
+    @DisplayName("Test getting resource data from a non-tabular datapackage, ZIP based")
+    public void testNonTabularPackageFromZip() throws Exception{
+        String pathName = "/fixtures/zip/non-tabular.zip";
+        Path resourcePath = TestUtil.getResourcePath(pathName);
+        Package dp = new Package(resourcePath, true);
+
+        Resource<?,?> resource = dp.getResource("logo-svg");
+        Assertions.assertTrue(resource instanceof FilebasedResource);
+        byte[] rawData = (byte[])resource.getRawData();
+        String s = new String (rawData).replaceAll("[\n\r]+", "\n");
+
+        byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
+        String t = new String (testData).replaceAll("[\n\r]+", "\n");
+        Assertions.assertEquals(t, s);
+    }
+
 
     @Test
     @DisplayName("Test getting resource data from a non-tabular datapackage, URL based")

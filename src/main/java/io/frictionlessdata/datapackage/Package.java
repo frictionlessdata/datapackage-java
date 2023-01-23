@@ -666,11 +666,11 @@ public class Package extends JSONBase{
                 Set<String> datafileNames = resource.getDatafileNamesForWriting();
                 Set<String> outPaths = datafileNames.stream().map((r) -> r+"."+resource.getSerializationFormat()).collect(Collectors.toSet());
                 if (outPaths.size() == 1) {
-                    obj.put("path", outPaths.iterator().next());
+                    obj.put(JSON_KEY_PATH, outPaths.iterator().next());
                 } else {
-                    obj.set("path", JsonUtil.getInstance().createArrayNode(outPaths));
+                    obj.set(JSON_KEY_PATH, JsonUtil.getInstance().createArrayNode(outPaths));
                 }
-                obj.put("format", resource.getSerializationFormat());
+                obj.put(JSON_KEY_FORMAT, resource.getSerializationFormat());
             }
             obj.remove("originalReferences");
             resourcesJsonArray.add(obj);
@@ -848,11 +848,17 @@ public class Package extends JSONBase{
         DataPackageException dpe = null;
         if (resource.getName() == null){
             dpe = new DataPackageValidationException("Invalid Resource, it does not have a name property.");
+            if (validate)
+                validate(dpe);
         }
         if (resource instanceof AbstractDataResource)
             addResource((AbstractDataResource) resource, validate);
         else if (resource instanceof AbstractReferencebasedResource)
             addResource((AbstractReferencebasedResource) resource, validate);
+        else {
+            dpe = checkDuplicates(resource);
+        }
+        this.resources.add(resource);
         if (validate)
             validate(dpe);
     }
@@ -868,8 +874,6 @@ public class Package extends JSONBase{
         }
         if (validate)
             validate(dpe);
-
-        this.resources.add(resource);
     }
 
     private void addResource(AbstractReferencebasedResource resource, boolean validate)
@@ -882,8 +886,6 @@ public class Package extends JSONBase{
         }
         if (validate)
             validate(dpe);
-
-        this.resources.add(resource);
     }
 
     private void validate(DataPackageException dpe) throws IOException {
@@ -898,7 +900,6 @@ public class Package extends JSONBase{
             }
         }
 
-        // Validate.
         this.validate();
     }
 
