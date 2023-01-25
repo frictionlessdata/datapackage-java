@@ -230,19 +230,21 @@
         </dependency>
 
         <!-- tableschema-java -->
+        <!--
         <dependency>
             <groupId>com.github.frictionlessdata</groupId>
             <artifactId>tableschema-java</artifactId>
             <version>${tableschema-java-version}</version>
         </dependency>
-<!--
+        -->
+
                 <dependency>
                     <groupId>io.frictionlessdata</groupId>
                     <artifactId>tableschema-java</artifactId>
-                    <version>0.6.2-SNAPSHOT</version>
+                    <version>0.6.12-SNAPSHOT</version>
                     <scope>compile</scope>
                 </dependency>
--->
+
 
         <!-- Unit Testing -->
         <dependency>

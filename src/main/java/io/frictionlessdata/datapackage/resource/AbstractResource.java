@@ -276,12 +276,19 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
                                 }
                                 Object targetVal = targetRow.get((String)targetFields);
                                 Object val = row.get((String)fk.getFields());
-                                found = found | (targetVal.equals(val));
+                                found = targetVal.equals(val);
                                 if (found)
                                     break;
-                            } else if (targetFields instanceof String[]) {
-                                for (String targetField : (String[])targetFields) {
-
+                            } else if (targetFields instanceof List) {
+                                List<String> stringFields = (List<String>) targetFields;
+                                found = true;
+                                for (int idx = 0; idx < stringFields.size(); idx++) {
+                                    String targetKey = stringFields.get(idx);
+                                    String fkKey = ((List<String>)fk.getFields()).get(idx);
+                                    found = found & (targetRow.get(targetKey).toString().equals(row.get(fkKey).toString()));
+                                }
+                                if (found){
+                                    break;
                                 }
                             }
                             cnt++;
