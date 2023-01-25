@@ -38,16 +38,25 @@ import static io.frictionlessdata.datapackage.Validator.isValidUrl;
  */
 public interface Resource<T,C> {
 
-    String FORMAT_CSV = "csv";
-    String FORMAT_JSON = "json";
+    String FORMAT_CSV = TableDataSource.Format.FORMAT_CSV.getLabel();
+    String FORMAT_JSON = TableDataSource.Format.FORMAT_JSON.getLabel();;
 
     /**
      * Return the {@link Table} objects underlying the Resource.
+     *
      * @return Table(s)
      * @throws Exception if reading the tables fails.
      */
     List<Table> getTables() throws Exception ;
 
+    /**
+     * Return a JSON representation of the Resource descriptor for use in a datapackage.json,
+     * i.e. not the JSON data
+     *
+     * See https://specs.frictionlessdata.io/data-resource/#descriptor
+     *
+     * @return JSON of the Resource description
+     */
     String getJson();
 
     /**
@@ -386,7 +395,7 @@ public interface Resource<T,C> {
 
     String getSerializationFormat();
 
-    void checkRelations() throws Exception;
+    void checkRelations(List<Resource<?,?>> resources) throws Exception;
 
     /**
      * Recreate a Resource object from a JSON descriptor, a base path to resolve relative file paths against

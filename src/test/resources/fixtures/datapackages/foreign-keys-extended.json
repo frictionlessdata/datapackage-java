@@ -42,10 +42,10 @@
         ],
         "foreignKeys": [
           {
-            "fields": "city",
+            "fields": ["id", "city"],
             "reference": {
               "resource": "cities",
-              "fields": "name"
+              "fields": ["id","name"]
             }
           }
         ]
@@ -55,18 +55,22 @@
       "name": "cities",
       "data": [
         [
+          "id",
           "name",
           "country"
         ],
         [
+          "1",
           "London",
           "England"
         ],
         [
+          "2",
           "Madrid",
           "Spain"
         ],
         [
+          "3",
           "Munich",
           "Germany"
         ]

@@ -45,7 +45,7 @@
             "fields": "city",
             "reference": {
               "resource": "cities",
-              "fields": "name"
+              "fields": ["name", "country"]
             }
           }
         ]

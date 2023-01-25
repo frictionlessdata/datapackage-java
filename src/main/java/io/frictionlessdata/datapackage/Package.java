@@ -535,7 +535,10 @@ public class Package extends JSONBase{
 
         for (Resource r : resourceList) {
             r.writeData(outFs.getPath(parentDirName ));
-            r.writeSchema(outFs.getPath(parentDirName));
+
+            if (null != r.getSchema()) {
+                r.writeSchema(outFs.getPath(parentDirName));
+            }
 
             // write out dialect file only if not null or URL
             String dialectP = r.getPathForWritingDialect();

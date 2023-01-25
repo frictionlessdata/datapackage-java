@@ -11,6 +11,7 @@ import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.exception.ForeignKeyException;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
@@ -243,16 +244,52 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return tables;
     }
 
-    public void checkRelations() {
+    public void checkRelations(List<Resource<?,?>> resources) throws Exception {
         if (null != schema) {
             for (ForeignKey fk : schema.getForeignKeys()) {
                 fk.validate();
                 fk.getReference().validate();
             }
-            for (ForeignKey fk : schema.getForeignKeys()) {
-                if (null != fk.getReference().getResource()) {
-                    //Package pkg = new Package(fk.getReference().getDatapackage(), true);
-                    // TODO fix this
+            Iterator<Map<String, Object>> iterator = this.mappingIterator(false);
+            while (iterator.hasNext()) {
+                Map<String, Object> row = iterator.next();
+                for (ForeignKey fk : schema.getForeignKeys()) {
+                    if (null != fk.getReference().getResource()) {
+                        String targetResourceName = fk.getReference().getResource();
+                        Resource targetResoure = resources
+                                .stream()
+                                .filter((r) -> r.getName().equals(targetResourceName))
+                                .findFirst()
+                                .orElse(null);
+                        if (null == targetResoure) {
+                            throw new ForeignKeyException("Target resource " + targetResourceName + " for foreign key not found");
+                        }
+                        Iterator<Map<String, Object>> targetIterator = targetResoure.mappingIterator(false);
+                        int cnt = 0;
+                        boolean found = false;
+                        while (targetIterator.hasNext()) {
+                            Map<String, Object> targetRow = targetIterator.next();
+                            Object targetFields = fk.getReference().getFields();
+                            if (targetFields instanceof String) {
+                                if (null == targetRow.get((String) targetFields)) {
+                                    throw new ForeignKeyException("Foreign key '" + targetFields + "' violation in row \"" + cnt + "\"");
+                                }
+                                Object targetVal = targetRow.get((String)targetFields);
+                                Object val = row.get((String)fk.getFields());
+                                found = found | (targetVal.equals(val));
+                                if (found)
+                                    break;
+                            } else if (targetFields instanceof String[]) {
+                                for (String targetField : (String[])targetFields) {
+
+                                }
+                            }
+                            cnt++;
+                        }
+                        if (!found) {
+                            throw new ForeignKeyException("Foreign key '" + fk.getFields() + "' violation.");
+                        }
+                    }
                 }
             }
         }
@@ -264,7 +301,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         try {
             // will validate schema against data
             tables.forEach(Table::validate);
-            checkRelations();
         } catch (Exception ex) {
             if (ex instanceof DataPackageValidationException) {
                 errors.add((DataPackageValidationException) ex);

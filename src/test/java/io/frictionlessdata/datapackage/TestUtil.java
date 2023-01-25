@@ -1,9 +1,6 @@
 package io.frictionlessdata.datapackage;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +32,9 @@ public class TestUtil {
             }
             // Create file-URL of source file:
             URL sourceFileUrl = TestUtil.class.getResource(locFileName);
+            if (null == sourceFileUrl) {
+                throw new FileNotFoundException("Resource "+fileName+" not found");
+            }
             // Get path of URL
             return Paths.get(sourceFileUrl.toURI());
         } catch (Exception ex) {

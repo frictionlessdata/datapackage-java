@@ -42,7 +42,7 @@
         ],
         "foreignKeys": [
           {
-            "fields": "city",
+            "fields": ["id", "city"],
             "reference": {
               "resource": "cities",
               "fields": "name"
