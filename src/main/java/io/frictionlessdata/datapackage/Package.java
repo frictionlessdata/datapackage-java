@@ -240,6 +240,7 @@ public class Package extends JSONBase{
      *
      * @return the resource names as a List.
      */
+    @JsonIgnore
     public List<String> getResourceNames(){
         return resources.stream().map(Resource::getName).collect(Collectors.toList());
     }
