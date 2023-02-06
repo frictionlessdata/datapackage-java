@@ -284,6 +284,9 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
                                 found = true;
                                 for (int idx = 0; idx < stringFields.size(); idx++) {
                                     String targetKey = stringFields.get(idx);
+                                    if (null == targetRow.get(targetKey)) {
+                                        throw new ForeignKeyException("Foreign key '" + targetKey + "' violation in row \"" + cnt + "\"");
+                                    }
                                     String fkKey = ((List<String>)fk.getFields()).get(idx);
                                     found = found & (targetRow.get(targetKey).toString().equals(row.get(fkKey).toString()));
                                 }
