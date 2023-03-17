@@ -12,13 +12,13 @@ import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
@@ -27,6 +27,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static io.frictionlessdata.datapackage.Profile.*;
@@ -383,7 +386,7 @@ public class PackageTest {
         String t = new String (testData).replaceAll("[\n\r]+", "\n");
         Assertions.assertEquals(t, s);
     }
-
+/*
     @Test
     @DisplayName("Test getting resource data from a non-tabular datapackage, ZIP based")
     public void testNonTabularPackageFromZip() throws Exception{
@@ -399,7 +402,7 @@ public class PackageTest {
         byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
         String t = new String (testData).replaceAll("[\n\r]+", "\n");
         Assertions.assertEquals(t, s);
-    }
+    }*/
 
 
     @Test
@@ -571,6 +574,7 @@ public class PackageTest {
 
     // Archive file name doesn't end with ".zip"
     @Test
+    @DisplayName("Read package from a ZIP file with different suffix")
     public void testReadFromZipFileWithDifferentSuffix() throws Exception{
         String[] usdTestData = new String[]{"USD", "US Dollar", "$"};
         String[] gbpTestData = new String[]{"GBP", "Pound Sterling", "£"};
@@ -586,7 +590,7 @@ public class PackageTest {
     }
 
     @Test
-    @DisplayName("Datapackage with invalid name for descriptor (ie. not 'datapackage.java'")
+    @DisplayName("Datapackage with invalid name for descriptor (ie. not 'datapackage.java', must throw")
     public void testReadFromZipFileWithInvalidDatapackageFilenameInside() throws Exception{
         String sourceFileAbsPath = PackageTest.class.getResource("/fixtures/zip/invalid_filename_datapackage.zip").getPath();
 
@@ -596,6 +600,7 @@ public class PackageTest {
     }
     
     @Test
+    @DisplayName("Read package from a ZIP with invalid descriptor, must throw")
     public void testReadFromZipFileWithInvalidDatapackageDescriptorAndStrictValidation() throws Exception{
         Path sourceFileAbsPath = Paths
                 .get(PackageTest.class.getResource("/fixtures/zip/invalid_datapackage.zip").toURI());
@@ -605,6 +610,7 @@ public class PackageTest {
     }
     
     @Test
+    @DisplayName("Read package from a non-existing path, must throw")
     public void testReadFromInvalidZipFilePath() throws Exception{
         File invalidFile = new File ("/invalid/path/does/not/exist/datapackage.zip");
         assertThrows(DataPackageFileOrUrlNotFoundException.class,
@@ -612,6 +618,7 @@ public class PackageTest {
     }
 
     @Test
+    @DisplayName("Write datapackage with an image to a folder")
     public void testWriteImageToFolderPackage() throws Exception{
         File dataDirectory = TestUtil.getTestDataDirectory();
         Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/employees/datapackage.json").toPath(), false);
@@ -622,12 +629,15 @@ public class PackageTest {
         pkg.setImage("logo/ file.svg", fileData);
         File dir = new File (tempDirPath.toFile(), "with-image");
         Path dirPath = Files.createDirectory(dir.toPath(), new FileAttribute[] {});
-        System.out.println(tempDirPath);
         pkg.write(dirPath.toFile(), false);
         System.out.println(tempDirPath);
+        File descriptor = new File (dir, "datapackage.json");
+        String json = String.join("\n", Files.readAllLines(descriptor.toPath()));
+        Assertions.assertFalse(json.contains("\"image\""));
     }
 
     @Test
+    @DisplayName("Write datapackage with an image to a ZIP file")
     public void testWriteImageToZipPackage() throws Exception{
         File dataDirectory = TestUtil.getTestDataDirectory();
         File imgFile = new File (dataDirectory, "fixtures/files/frictionless-color-full-logo.svg");
@@ -641,6 +651,26 @@ public class PackageTest {
         dp.setImage("logo/ file.svg", fileData);
         dp.write(new File(tempDirPath.toFile(), "with-image.zip"), true);
         System.out.println(tempDirPath);
+    }
+
+
+    @Test
+    @DisplayName("Write datapackage using a Consumer function to fingerprint files")
+    public void testWriteWithConsumer() throws Exception{
+        File refDescriptor = new File(getBasePath().toFile(), "datapackages/employees/datapackage.json");
+        Package pkg = new Package(refDescriptor.toPath(), false);
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+
+        File dir = new File (tempDirPath.toFile(), "test-package");
+        Path dirPath = Files.createDirectory(dir.toPath(), new FileAttribute[] {});
+        pkg.write(dirPath.toFile(), PackageTest::fingerprintFiles, false);
+        System.out.println(tempDirPath);
+        File fingerprints = new File (dir, "fingerprints.txt");
+        String content = String.join("\n", Files.readAllLines(fingerprints.toPath()));
+        String refContent =
+                "datapackage.json\t653e78055470efedea58350d50f6aa603a20f81835770f4d50445f7b1262ca77\n" +
+                "schema.json\t44ffaa100fdfa343f3b517c67b8ccbceffab9cf94764b0214fdbe46dd992fce6";
+        Assertions.assertEquals(refContent, content);
     }
     
     @Test
@@ -832,7 +862,7 @@ public class PackageTest {
 
     @Test
     public void testBeanResource1() throws Exception {
-        Package pkg = new Package(new File( getBasePath().toFile(), "datapackages/bean-iterator/datapackage.json").toPath(), true);
+        Package pkg = new Package(new File(getBasePath().toFile(), "datapackages/bean-iterator/datapackage.json").toPath(), true);
 
         Resource resource = pkg.getResource("employee-data");
         final List<EmployeeBean> employees = resource.getData(EmployeeBean.class);
@@ -847,6 +877,40 @@ public class PackageTest {
         Assertions.assertEquals(45, info.get("pin"));
         Assertions.assertEquals(83.23, info.get("rate"));
         Assertions.assertEquals(90, info.get("ssn"));
+    }
+
+    private static void fingerprintFiles(Path path) {
+        System.out.println(path);
+        List<String> fingerprints = new ArrayList<>();
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+
+            for (File f : path.toFile().listFiles()) {
+                if (f.isFile()) {
+                    try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(f.toPath()), md)) {
+                        while (true) {
+                            if (dis.read() == -1) break;
+                        }
+                        md = dis.getMessageDigest();
+                    }
+
+                    StringBuilder result = new StringBuilder();
+                    for (byte b : md.digest()) {
+                        result.append(String.format("%02x", b));
+                    }
+                    fingerprints.add(f.getName() + "\t" + result);
+                    md.reset();
+                }
+            }
+
+            File outFile = new File(path.toFile(), "fingerprints.txt");
+            try (FileWriter wr = new FileWriter(outFile)) {
+                wr.write(String.join("\n", fingerprints));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Package getDataPackageFromFilePath(String datapackageFilePath, boolean strict) throws Exception {

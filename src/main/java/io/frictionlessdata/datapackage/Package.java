@@ -34,6 +34,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static io.frictionlessdata.datapackage.Validator.isValidUrl;
@@ -519,6 +520,22 @@ public class Package extends JSONBase{
      * @throws Exception thrown if something goes wrong writing
      */
     public void write (File outputDir, boolean zipCompressed) throws Exception {
+        write (outputDir, null, zipCompressed);
+    }
+
+    /**
+     * Write this datapackage to an output directory or ZIP file. Creates at least a
+     * datapackage.json file and if this Package object holds file-based
+     * resources, dialect, or schemas, creates them as files. Takes a Consumer-function to allow
+     * for usecase-specific manipulation of the package contents.
+     *
+     * @param outputDir the directory or ZIP file to write the files to
+     * @param zipCompressed whether we are writing to a ZIP archive
+     * @param callback Callback interface that can be used to manipulate the Package contents after Resources and
+     *                 Descriptor have been written.
+     * @throws Exception thrown if something goes wrong writing
+     */
+    public void write (File outputDir, Consumer<Path> callback, boolean zipCompressed) throws Exception {
         this.isArchivePackage = zipCompressed;
         FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
         String parentDirName = "";
@@ -570,6 +587,11 @@ public class Package extends JSONBase{
                 }
             }
         }
+
+        if (null != callback) {
+            callback.accept(outFs.getPath(parentDirName));
+        }
+
         /* ZIP-FS needs close, but WindowsFileSystem unsurprisingly doesn't
          like to get closed...
          The empty catch block is intentional.
@@ -939,7 +961,9 @@ public class Package extends JSONBase{
     private void writeDescriptor (FileSystem outFs, String parentDirName) throws IOException {
         Path nf = outFs.getPath(parentDirName+File.separator+DATAPACKAGE_FILENAME);
         try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
-            writer.write(this.getJsonNode().toPrettyString());
+            ObjectNode jsonNode = this.getJsonNode();
+            jsonNode.remove(JSON_KEY_IMAGE);
+            writer.write(jsonNode.toPrettyString());
         }
     }
 
