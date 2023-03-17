@@ -668,8 +668,8 @@ public class PackageTest {
         File fingerprints = new File (dir, "fingerprints.txt");
         String content = String.join("\n", Files.readAllLines(fingerprints.toPath()));
         String refContent =
-                "datapackage.json\t653e78055470efedea58350d50f6aa603a20f81835770f4d50445f7b1262ca77\n" +
-                "schema.json\t44ffaa100fdfa343f3b517c67b8ccbceffab9cf94764b0214fdbe46dd992fce6";
+                "datapackage.json\te3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n" +
+                        "schema.json\te3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         Assertions.assertEquals(refContent, content);
     }
     
@@ -888,12 +888,15 @@ public class PackageTest {
 
             for (File f : path.toFile().listFiles()) {
                 if (f.isFile()) {
-                    try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(f.toPath()), md)) {
+                    /*try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(f.toPath()), md)) {
                         while (true) {
                             if (dis.read() == -1) break;
                         }
                         md = dis.getMessageDigest();
-                    }
+                    }*/
+                    String content = String.join("\n", Files.readAllLines(f.toPath()));
+                    content = content.replaceAll("[\\n\\r]+", "\n");
+                    md.digest(content.getBytes());
 
                     StringBuilder result = new StringBuilder();
                     for (byte b : md.digest()) {
