@@ -377,6 +377,24 @@ public abstract class JSONBase {
         return content;
     }
 
+    protected static byte[] getZipFileContentAsByteArray(Path inFilePath, String fileName) throws IOException {
+        // Read in memory the file inside the zip.
+        ZipFile zipFile = new ZipFile(inFilePath.toFile());
+        ZipEntry entry = findZipEntry(zipFile, fileName);
+
+        // Throw exception if expected datapackage.json file not found.
+        if(entry == null){
+            throw new DataPackageException("The zip file does not contain the expected file: " + fileName);
+        }
+        try (InputStream inputStream = zipFile.getInputStream(entry);
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            for (int b; (b = inputStream.read()) != -1; ) {
+                out.write(b);
+            }
+            return out.toByteArray();
+        }
+    }
+
     public static ObjectNode dereference(File fileObj, Path basePath, boolean isArchivePackage) throws IOException {
         String jsonContentString;
         if (isArchivePackage) {

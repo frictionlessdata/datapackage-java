@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -286,18 +287,36 @@ public class Package extends JSONBase{
      *
      * @return path or URL to the image data
      */
+    @JsonProperty("image")
     public String getImagePath() {
         return image;
     }
 
     /**
      * Returns the image data if the image is stored inside the data package, null if {@link #getImagePath()}
-     * would return a URLL
+     * would return a URL
      *
      * @return binary image data
      */
-    public byte[] getImage() {
-        return imageData;
+    @JsonIgnore
+    public byte[] getImage() throws IOException {
+        if (null != imageData)
+            return imageData;
+        if (!StringUtils.isEmpty(image)) {
+            if (isArchivePackage) {
+                return getZipFileContentAsByteArray((Path)basePath, image);
+            } else {
+                File imgFile = new File (((Path)basePath).toFile(), image);
+                try (InputStream inputStream = new FileInputStream(imgFile);
+                     ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                    for (int b; (b = inputStream.read()) != -1; ) {
+                        out.write(b);
+                    }
+                    return out.toByteArray();
+                }
+            }
+        }
+        return null;
     }
 
     public ZonedDateTime getCreated() {
@@ -382,6 +401,7 @@ public class Package extends JSONBase{
      * an invalid Package would throw an exception.
      * @return true if either `strictValidation` is true or no errors were encountered
      */
+    @JsonIgnore
     public boolean isValid() {
         if (strictValidation){
             return true;
@@ -837,7 +857,8 @@ public class Package extends JSONBase{
     }
 
     public void setImage(String fileName, byte[]data) throws IOException {
-        this.image = fileName;
+        String sanitizedFileName = fileName.replaceAll("[\\s/\\\\]+", "_");
+        this.image = sanitizedFileName;
         this.imageData = data;
     }
 
@@ -962,7 +983,6 @@ public class Package extends JSONBase{
         Path nf = outFs.getPath(parentDirName+File.separator+DATAPACKAGE_FILENAME);
         try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
             ObjectNode jsonNode = this.getJsonNode();
-            jsonNode.remove(JSON_KEY_IMAGE);
             writer.write(jsonNode.toPrettyString());
         }
     }

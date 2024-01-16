@@ -12,7 +12,6 @@ import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -446,6 +445,46 @@ public class PackageTest {
     }
 
     @Test
+    @DisplayName("Test setting the 'image' propertye")
+    public void testSetImage() throws Exception {
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        String fName = "/fixtures/datapackages/with-image";
+        Path resourcePath = TestUtil.getResourcePath(fName);
+        Package dp = new Package(resourcePath, true);
+
+        byte[] imageData = TestUtil.getResourceContent("/fixtures/files/test.png");
+        dp.setImage("test.png", imageData);
+
+        File tmpFile = new File(tempDirPath.toFile(), "saved-pkg.zip");
+        dp.write(tmpFile, true);
+
+        // Read the datapckage we just saved in the temp dir.
+        Package readPackage = new Package(tmpFile.toPath(), false);
+        byte[] readImageData = readPackage.getImage();
+        Assertions.assertArrayEquals(imageData, readImageData);
+    }
+
+    @Test
+    @DisplayName("Test setting the 'image' property, ZIP file")
+    public void testSetImageZip() throws Exception {
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        String fName = "/fixtures/datapackages/employees/datapackage.json";
+        Path resourcePath = TestUtil.getResourcePath(fName);
+        Package dp = new Package(resourcePath, true);
+
+        byte[] imageData = TestUtil.getResourceContent("/fixtures/files/test.png");
+        dp.setImage("test.png", imageData);
+
+        File tmpFile = new File(tempDirPath.toFile(), "saved-pkg.zip");
+        dp.write(tmpFile, true);
+
+        // Read the datapckage we just saved in the zip file.
+        Package readPackage = new Package(tmpFile.toPath(), false);
+        byte[] readImageData = readPackage.getImage();
+        Assertions.assertArrayEquals(imageData, readImageData);
+    }
+
+    @Test
     @DisplayName("Test setting invalid 'profile' property, must throw")
     public void testSetInvalidProfile() throws Exception {
         String fName = "/fixtures/datapackages/employees/datapackage.json";
@@ -633,7 +672,7 @@ public class PackageTest {
         System.out.println(tempDirPath);
         File descriptor = new File (dir, "datapackage.json");
         String json = String.join("\n", Files.readAllLines(descriptor.toPath()));
-        Assertions.assertFalse(json.contains("\"image\""));
+        Assertions.assertFalse(json.contains("\"imageData\""));
     }
 
     @Test
