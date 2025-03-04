@@ -218,8 +218,8 @@ Get started:
 ```sh
 # install jabba and maven2
 $ cd tableschema-java
-$ jabba install 1.8
-$ jabba use 1.8
+$ jabba install 17
+$ jabba use 17
 $ mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 $ mvn test -B
 ```
