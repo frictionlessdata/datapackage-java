@@ -924,15 +924,10 @@ public class PackageTest {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-256");
-
-            for (File f : path.toFile().listFiles()) {
+            File[] files = path.toFile().listFiles();
+            TreeSet<File> sortedFiles = new TreeSet<>(Arrays.asList(files));
+            for (File f : sortedFiles) {
                 if (f.isFile()) {
-                    /*try (DigestInputStream dis = new DigestInputStream(Files.newInputStream(f.toPath()), md)) {
-                        while (true) {
-                            if (dis.read() == -1) break;
-                        }
-                        md = dis.getMessageDigest();
-                    }*/
                     String content = String.join("\n", Files.readAllLines(f.toPath()));
                     content = content.replaceAll("[\\n\\r]+", "\n");
                     md.digest(content.getBytes());
