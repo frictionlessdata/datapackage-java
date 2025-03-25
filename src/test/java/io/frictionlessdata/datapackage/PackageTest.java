@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * 
  */
 public class PackageTest {
+    private static boolean verbose = false;
     private static URL validUrl;
     static String resource1String = "{\"name\": \"first-resource\", \"path\": " +
             "[\"data/cities.csv\", \"data/cities2.csv\", \"data/cities3.csv\"]}";
@@ -669,7 +670,9 @@ public class PackageTest {
         File dir = new File (tempDirPath.toFile(), "with-image");
         Path dirPath = Files.createDirectory(dir.toPath(), new FileAttribute[] {});
         pkg.write(dirPath.toFile(), false);
-        System.out.println(tempDirPath);
+        if (verbose) {
+            System.out.println(tempDirPath);
+        }
         File descriptor = new File (dir, "datapackage.json");
         String json = String.join("\n", Files.readAllLines(descriptor.toPath()));
         Assertions.assertFalse(json.contains("\"imageData\""));
@@ -689,7 +692,9 @@ public class PackageTest {
         Package dp = new Package(createdFile.toPath(), true);
         dp.setImage("logo/ file.svg", fileData);
         dp.write(new File(tempDirPath.toFile(), "with-image.zip"), true);
-        System.out.println(tempDirPath);
+        if (verbose) {
+            System.out.println(tempDirPath);
+        }
     }
 
 
@@ -703,7 +708,9 @@ public class PackageTest {
         File dir = new File (tempDirPath.toFile(), "test-package");
         Path dirPath = Files.createDirectory(dir.toPath(), new FileAttribute[] {});
         pkg.write(dirPath.toFile(), PackageTest::fingerprintFiles, false);
-        System.out.println(tempDirPath);
+        if (verbose) {
+            System.out.println(tempDirPath);
+        }
         File fingerprints = new File (dir, "fingerprints.txt");
         String content = String.join("\n", Files.readAllLines(fingerprints.toPath()));
         String refContent =
@@ -919,7 +926,6 @@ public class PackageTest {
     }
 
     private static void fingerprintFiles(Path path) {
-        System.out.println(path);
         List<String> fingerprints = new ArrayList<>();
         MessageDigest md;
         try {

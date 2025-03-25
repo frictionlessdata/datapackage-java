@@ -14,7 +14,6 @@ public class ForeignKeysTest {
     void testValidationURLAsSchemaReference() throws Exception{
         Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/foreign-keys.json");
         Package pkg = new Package(resourcePath, true);
-        System.out.println(pkg);
         Resource teams = pkg.getResource("teams");
         teams.checkRelations();
     }

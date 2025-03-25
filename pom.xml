@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.frictionlessdata</groupId>
     <artifactId>datapackage-java</artifactId>
-    <version>0.7.2-SNAPSHOT</version>
+    <version>0.7.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <issueManagement>
         <url>https://github.com/frictionlessdata/datapackage-java/issues</url>
@@ -23,7 +23,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.compiler>${java.version}</maven.compiler.compiler>
-        <tableschema-java-version>0.7.2</tableschema-java-version>
+        <tableschema-java-version>0.7.3</tableschema-java-version>
         <junit.version>5.12.0</junit.version>
         <slf4j-simple.version>2.0.17</slf4j-simple.version>
         <apache-commons-collections4.version>4.4</apache-commons-collections4.version>

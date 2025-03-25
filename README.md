@@ -217,7 +217,7 @@ This project follows the [Open Knowledge International coding standards](https:/
 Get started:
 ```sh
 # install jabba and maven2
-$ cd tableschema-java
+$ cd datapackage-java
 $ jabba install 17
 $ jabba use 17
 $ mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
