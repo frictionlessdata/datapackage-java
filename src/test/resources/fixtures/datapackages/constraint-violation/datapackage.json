@@ -1,0 +1,52 @@
+{
+    "name":"csv-validation-using-ig",
+    "description":"Validates Person",
+    "dialect":{
+        "delimiter":","
+    },
+    "resources":[
+        {
+            "name":"person_data",
+            "path":"datapackages/constraint-violation/data/person.csv",
+            "schema":{
+                "fields":[
+                    {
+                        "name":"firstname",
+                        "type":"string",
+                        "description":"The first name of the person.",
+                        "constraints":{
+                            "required":true
+                        }
+                    },
+                    {
+                        "name":"lastname",
+                        "type":"string",
+                        "description":"The last name of the person.",
+                        "constraints":{
+                            "required":true
+                        }
+                    },
+                    {
+                        "name":"gender",
+                        "type":"string",
+                        "description":"Gender of the person. Valid values are 'male' or 'female'.",
+                        "constraints":{
+                            "enum":[
+                                "male",
+                                "female"
+                            ]
+                        }
+                    },
+                    {
+                        "name":"age",
+                        "type":"integer",
+                        "description":"The age of the person. Must be greater than 18.",
+                        "constraints":{
+                            "minimum":19
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

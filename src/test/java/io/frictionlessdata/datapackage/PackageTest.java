@@ -7,6 +7,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.resource.*;
+import io.frictionlessdata.tableschema.exception.ConstraintsException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
@@ -966,6 +967,20 @@ public class PackageTest {
         Assertions.assertEquals("https://www.example.com", c.getPath().toString());
         Assertions.assertEquals("wrangler", c.getRole());
         Assertions.assertEquals("Example Corp", c.getOrganization());
+    }
+
+    @Test
+    // check for https://github.com/frictionlessdata/datapackage-java/issues/46
+    @DisplayName("Show that minimum constraints work")
+    void validateDataPackage() throws Exception {
+        Package dp = this.getDataPackageFromFilePath(
+                "/fixtures/datapackages/constraint-violation/datapackage.json", true);
+        Resource resource = dp.getResource("person_data");
+        ConstraintsException exception = assertThrows(ConstraintsException.class, () -> resource.getData(false, false, true, false));
+
+        // Assert the validation messages
+        Assertions.assertNotNull(exception.getMessage());
+        Assertions.assertFalse(exception.getMessage().isEmpty());
     }
 
     private static void fingerprintFiles(Path path) {
