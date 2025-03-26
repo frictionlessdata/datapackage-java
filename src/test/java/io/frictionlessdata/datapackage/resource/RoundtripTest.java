@@ -21,8 +21,7 @@ import java.util.List;
  */
 public class RoundtripTest {
     private static final CSVFormat csvFormat = TableDataSource
-            .getDefaultCsvFormat()
-            .withDelimiter('\t');
+            .getDefaultCsvFormat().builder().setDelimiter('\t').get();
 
     private static final String resourceContent = "[\n" +
             "    {\n" +

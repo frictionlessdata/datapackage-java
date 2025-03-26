@@ -1,0 +1,50 @@
+{
+  "id": "9e2429be-a43e-4051-aab5-981eb27fe2e8",
+  "name": "world-full",
+  "title": "world population data",
+  "profile": "tabular-data-package",
+  "licenses": [
+    {
+      "name": "ODC-PDDL-1.0",
+      "path": "http://opendatacommons.org/licenses/pddl/",
+      "title": "Open Data Commons Public Domain Dedication and License v1.0"
+    }
+  ],
+  "description": "A datapackage for world population data, featuring all fields from https://specs.frictionlessdata.io/data-package/#language",
+  "homepage": "https://example.com/world-population-data",
+  "version": "1.0.1",
+  "sources": [{
+    "title": "World Bank and OECD",
+    "path": "http://data.worldbank.org/indicator/NY.GDP.MKTP.CD"
+  }],
+  "contributors": [{
+    "title": "Joe Bloggs",
+    "email": "joe@bloggs.com",
+    "path": "https://www.bloggs.com",
+    "role": "author"
+    },
+    {
+      "title": "Jim Beam",
+      "email": "jim@example.com",
+      "path": "https://www.example.com",
+      "role": "wrangler",
+      "organization": "Example Corp"
+    }],
+  "keywords": ["world", "population", "world bank"],
+  "image": "https://github.com/frictionlessdata/datapackage-java/tree/main/src/test/resources/fixtures/datapackages/with-image/test.png",
+  "created": "1985-04-12T23:20:50.52Z",
+  "resources": [
+    {
+      "name": "population",
+      "path": "data/population.csv",
+      "profile":"tabular-data-resource",
+      "schema": {
+        "fields": [
+          {"name": "city", "type": "string"},
+          {"name": "year", "type": "integer"},
+          {"name": "population", "type": "integer"}
+        ]
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ package io.frictionlessdata.datapackage;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -74,8 +75,8 @@ public abstract class JSONBase {
     protected String hash = null;
 
     Dialect dialect;
-    private ArrayNode sources = null;
-    private ArrayNode licenses = null;
+    private List<Source> sources = null;
+    private List<License> licenses = null;
 
     // Schema
     private Schema schema = null;
@@ -175,22 +176,22 @@ public abstract class JSONBase {
 
     public void setSchema(Schema schema){this.schema = schema;}
 
-    public ArrayNode getSources(){
+    public List<Source> getSources(){
         return sources;
     }
 
-    public void setSources(ArrayNode sources){
+    public void setSources(List<Source> sources){
         this.sources = sources;
     }
     /**
      * @return the licenses
      */
-    public ArrayNode getLicenses(){return  licenses;}
+    public List<License> getLicenses(){return  licenses;}
 
     /**
      * @param licenses the licenses to set
      */
-    public void setLicenses(ArrayNode licenses){this.licenses = licenses;}
+    public void setLicenses(List<License> licenses){this.licenses = licenses;}
 
 
     public Map<String, String> getOriginalReferences() {
@@ -258,13 +259,13 @@ public abstract class JSONBase {
         Integer bytes = resourceJson.has(JSONBase.JSON_KEY_BYTES) ? resourceJson.get(JSONBase.JSON_KEY_BYTES).asInt() : null;
         String hash = textValueOrNull(resourceJson, JSONBase.JSON_KEY_HASH);
 
-        ArrayNode sources = null;
+        List<Source> sources = null;
         if(resourceJson.has(JSONBase.JSON_KEY_SOURCES) && resourceJson.get(JSON_KEY_SOURCES).isArray()) {
-        	sources = (ArrayNode) resourceJson.get(JSON_KEY_SOURCES);
+        	sources = JsonUtil.getInstance().deserialize(resourceJson.get(JSONBase.JSON_KEY_SOURCES), new TypeReference<>() {});
         }
-        ArrayNode licenses = null;
+        List<License> licenses = null;
         if(resourceJson.has(JSONBase.JSON_KEY_LICENSES) && resourceJson.get(JSONBase.JSON_KEY_LICENSES).isArray()){
-        	licenses = (ArrayNode) resourceJson.get(JSONBase.JSON_KEY_LICENSES);
+            licenses = JsonUtil.getInstance().deserialize(resourceJson.get(JSONBase.JSON_KEY_LICENSES), new TypeReference<>() {});
         }
 
         retVal.setName(name);

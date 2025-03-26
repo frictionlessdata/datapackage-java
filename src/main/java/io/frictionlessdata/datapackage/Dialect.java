@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Dialect {
 
-    private FileReference reference;
+    private FileReference<?> reference;
 
     // we construct one instance that will always keep the default values
     public static Dialect DEFAULT = new Dialect(){
@@ -133,11 +133,11 @@ public class Dialect {
     private Map<String, Object> additionalProperties = new HashMap<>();
 
     @JsonIgnore
-    public FileReference getReference() {
+    public FileReference<?> getReference() {
         return reference;
     }
 
-    public void setReference (FileReference ref){
+    public void setReference (FileReference<?> ref){
         reference = ref;
     }
 
@@ -159,23 +159,24 @@ public class Dialect {
 
     // will fail for multi-character delimiters. Oh my...
     public CSVFormat toCsvFormat() {
-        CSVFormat format = CSVFormat.DEFAULT
-                .withDelimiter(delimiter.charAt(0))
-                .withEscape(escapeChar)
-                .withIgnoreSurroundingSpaces(skipInitialSpace)
-                .withNullString(nullSequence)
-                .withCommentMarker(commentChar)
-                .withSkipHeaderRecord(!hasHeaderRow)
-                .withQuote(quoteChar)
-                .withQuoteMode(doubleQuote ? QuoteMode.MINIMAL : QuoteMode.NONE);
+        CSVFormat format = CSVFormat.DEFAULT.builder()
+                .setDelimiter(delimiter.charAt(0))
+                .setEscape(escapeChar)
+                .setIgnoreSurroundingSpaces(skipInitialSpace)
+                .setNullString(nullSequence)
+                .setCommentMarker(commentChar)
+                .setSkipHeaderRecord(!hasHeaderRow)
+                .setQuote(quoteChar)
+                .setQuoteMode(doubleQuote ? QuoteMode.MINIMAL : QuoteMode.NONE)
+                .get();
         if (hasHeaderRow)
-            format = format.withHeader();
+            format = format.builder().setHeader().get();
         return format;
     }
 
     public static Dialect fromCsvFormat(CSVFormat format) {
         Dialect dialect = new Dialect();
-        dialect.setDelimiter(format.getDelimiter()+"");
+        dialect.setDelimiter(format.getDelimiterString());
         dialect.setEscapeChar(format.getEscapeCharacter());
         dialect.setSkipInitialSpace(format.getIgnoreSurroundingSpaces());
         dialect.setNullSequence(format.getNullString());
@@ -194,7 +195,7 @@ public class Dialect {
      * @param reference the File or URL to read dialect JSON data from
      * @throws Exception thrown if reading from the stream or parsing throws an exception
      */
-    public static Dialect fromJson (FileReference reference) throws Exception {
+    public static Dialect fromJson (FileReference<?> reference) throws Exception {
         String dialectString = null;
         try (InputStreamReader ir = new InputStreamReader(reference.getInputStream(), StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(ir)){

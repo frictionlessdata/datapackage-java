@@ -68,9 +68,8 @@ public class Package extends JSONBase{
     private Object basePath = null;
     private String id;
     private String version;
-    private int[] versionParts;
     private URL homepage;
-    private Set<String> keywords = new TreeSet<>();
+    private Set<String> keywords = new LinkedHashSet<>();
     private String image;
     private byte[] imageData;
     private ZonedDateTime created;
@@ -264,19 +263,19 @@ public class Package extends JSONBase{
         return id;
     }
 
+    @JsonProperty("keywords")
     public Set<String> getKeywords() {
         if (null == keywords)
             return null;
         return UnmodifiableSet.decorate(keywords);
     }
 
+    @JsonProperty("version")
     public String getVersion() {
-        if (versionParts != null) {
-            return versionParts[0]+"."+versionParts[1]+"."+versionParts[2];
-        } else
-            return version;
+        return version;
     }
 
+    @JsonProperty("homepage")
     public URL getHomepage() {
         return homepage;
     }
@@ -792,8 +791,8 @@ public class Package extends JSONBase{
         this.setImagePath(textValueOrNull(jsonNodeSource, Package.JSON_KEY_IMAGE));
         this.setCreated(textValueOrNull(jsonNodeSource, Package.JSON_KEY_CREATED));
         if (jsonNodeSource.has(Package.JSON_KEY_CONTRIBUTORS) &&
-                StringUtils.isNotEmpty(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText())) {
-            setContributors(Contributor.fromJson(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).asText()));
+                !jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS).isEmpty()) {
+            setContributors(Contributor.fromJson(jsonNodeSource.get(Package.JSON_KEY_CONTRIBUTORS)));
         }
         if (jsonNodeSource.has(Package.JSON_KEY_KEYWORDS)) {
             ArrayNode arr = (ArrayNode) jsonObject.get(Package.JSON_KEY_KEYWORDS);
@@ -821,26 +820,6 @@ public class Package extends JSONBase{
      * @param version the version of the DataPackage
      */
     private void setVersion(String version) {
-        this.version = version;
-        if (StringUtils.isEmpty(version))
-            return;
-        String[] parts = version.replaceAll("\\w", "").split("\\.");
-        if (parts.length == 3) {
-            try {
-                for (String part : parts) {
-                    Integer.parseInt(part);
-                }
-                // do nothing if an exception is thrown, it's just
-                // a datapacke with sloppy version.
-            } catch (Exception ex) { }
-            // we have a SemVer version scheme
-            this.versionParts = new int[3];
-            int cnt = 0;
-            for (String part : parts) {
-                int i = Integer.parseInt(part);
-                versionParts[cnt++] = i;
-            }
-        }
         this.version = version;
     }
 

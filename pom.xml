@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.frictionlessdata</groupId>
     <artifactId>datapackage-java</artifactId>
-    <version>0.7.3-SNAPSHOT</version>
+    <version>0.7.5-SNAPSHOT</version>
     <packaging>jar</packaging>
     <issueManagement>
         <url>https://github.com/frictionlessdata/datapackage-java/issues</url>
@@ -23,7 +23,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.compiler>${java.version}</maven.compiler.compiler>
-        <tableschema-java-version>0.7.3</tableschema-java-version>
+        <tableschema-java-version>0.7.5</tableschema-java-version>
         <junit.version>5.12.0</junit.version>
         <slf4j-simple.version>2.0.17</slf4j-simple.version>
         <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
@@ -213,7 +213,7 @@
     </build>
     <dependencies>
 
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
+        <!-- logging -->
 		<dependency>
 		    <groupId>org.slf4j</groupId>
 		    <artifactId>slf4j-simple</artifactId>
@@ -221,6 +221,7 @@
 		    <scope>test</scope>
 		</dependency>
 
+        <!-- collection helpers -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
@@ -233,14 +234,6 @@
             <artifactId>tableschema-java</artifactId>
             <version>${tableschema-java-version}</version>
         </dependency>
-<!--
-                <dependency>
-                    <groupId>io.frictionlessdata</groupId>
-                    <artifactId>tableschema-java</artifactId>
-                    <version>0.6.2-SNAPSHOT</version>
-                    <scope>compile</scope>
-                </dependency>
--->
 
         <!-- Unit Testing -->
         <dependency>
@@ -250,11 +243,5 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

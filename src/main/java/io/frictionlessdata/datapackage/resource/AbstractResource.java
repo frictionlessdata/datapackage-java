@@ -369,7 +369,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         }
         Files.deleteIfExists(parentFilePath);
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(schema.getJson());
+            wr.write(schema.asJson());
         }
     }
 

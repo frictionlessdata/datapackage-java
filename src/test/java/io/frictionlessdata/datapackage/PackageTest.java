@@ -29,6 +29,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import static io.frictionlessdata.datapackage.Profile.*;
@@ -386,7 +387,7 @@ public class PackageTest {
         String t = new String (testData).replaceAll("[\n\r]+", "\n");
         Assertions.assertEquals(t, s);
     }
-/*
+
     @Test
     @DisplayName("Test getting resource data from a non-tabular datapackage, ZIP based")
     public void testNonTabularPackageFromZip() throws Exception{
@@ -395,14 +396,14 @@ public class PackageTest {
         Package dp = new Package(resourcePath, true);
 
         Resource<?,?> resource = dp.getResource("logo-svg");
-        Assertions.assertTrue(resource instanceof FilebasedResource);
+        Assertions.assertInstanceOf(FilebasedResource.class, resource);
         byte[] rawData = (byte[])resource.getRawData();
         String s = new String (rawData).replaceAll("[\n\r]+", "\n");
 
         byte[] testData = TestUtil.getResourceContent("/fixtures/files/frictionless-color-full-logo.svg");
         String t = new String (testData).replaceAll("[\n\r]+", "\n");
         Assertions.assertEquals(t, s);
-    }*/
+    }
 
 
     @Test
@@ -414,7 +415,7 @@ public class PackageTest {
         Package dp = new Package(input, true);
 
         Resource<?,?> resource = dp.getResource("logo-svg");
-        Assertions.assertTrue(resource instanceof URLbasedResource);
+        Assertions.assertInstanceOf(URLbasedResource.class, resource);
         byte[] rawData = (byte[])resource.getRawData();
         String s = new String (rawData).replaceAll("[\n\r]+", "\n");
 
@@ -521,7 +522,7 @@ public class PackageTest {
             files.add(new File(s));
         }
         Resource resource = Resource.build("third-resource", files, basePath, TableDataSource.getDefaultEncoding());
-        Assertions.assertTrue(resource instanceof FilebasedResource);
+        Assertions.assertInstanceOf(FilebasedResource.class, resource);
 
         DataPackageException dpe = assertThrows(DataPackageException.class, () -> dp.addResource(resource));
         Assertions.assertEquals("A resource with the same name already exists.", dpe.getMessage());
@@ -539,8 +540,8 @@ public class PackageTest {
             files.add(new File(s));
         }
         Resource resource = Resource.build("third-resource", files, basePath, TableDataSource.getDefaultEncoding());
-        Assertions.assertTrue(resource instanceof FilebasedResource);
-        dp.addResource((FilebasedResource)resource);
+        Assertions.assertInstanceOf(FilebasedResource.class, resource);
+        dp.addResource(resource);
         
         Assertions.assertEquals(1, dp.getErrors().size());
         Assertions.assertEquals("A resource with the same name already exists.", dp.getErrors().get(0).getMessage());
@@ -557,7 +558,7 @@ public class PackageTest {
         Package readPackage = new Package(tempDirPath.resolve(Package.DATAPACKAGE_FILENAME),false);
         JsonNode readPackageJson = createNode(readPackage.getJson()) ;
         JsonNode savedPackageJson = createNode(savedPackage.getJson()) ;
-        Assertions.assertTrue(readPackageJson.equals(savedPackageJson));
+        Assertions.assertEquals(readPackageJson, savedPackageJson);
     }
     
     @Test
@@ -695,6 +696,11 @@ public class PackageTest {
         if (verbose) {
             System.out.println(tempDirPath);
         }
+
+        File withImageFile = new File(tempDirPath.toFile(), "with-image.zip");
+        Package withImageDp = new Package(withImageFile.toPath(), true);
+        byte[] readImageData = withImageDp.getImage();
+        Assertions.assertArrayEquals(fileData, readImageData);
     }
 
 
@@ -706,7 +712,7 @@ public class PackageTest {
         Path tempDirPath = Files.createTempDirectory("datapackage-");
 
         File dir = new File (tempDirPath.toFile(), "test-package");
-        Path dirPath = Files.createDirectory(dir.toPath(), new FileAttribute[] {});
+        Path dirPath = Files.createDirectory(dir.toPath());
         pkg.write(dirPath.toFile(), PackageTest::fingerprintFiles, false);
         if (verbose) {
             System.out.println(tempDirPath);
@@ -787,8 +793,8 @@ public class PackageTest {
         Assertions.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
-        JsonNode expectedSchemaJson = createNode(expectedSchema.getJson());
-        JsonNode testSchemaJson = createNode(resource.getSchema().getJson());
+        JsonNode expectedSchemaJson = createNode(expectedSchema.asJson());
+        JsonNode testSchemaJson = createNode(resource.getSchema().asJson());
         // Compare JSON objects
         Assertions.assertEquals(expectedSchemaJson, testSchemaJson, "Schemas don't match");
     }
@@ -805,8 +811,8 @@ public class PackageTest {
         Assertions.assertEquals(expectedSchema, resource.getSchema());
 
         // Get JSON Object
-        JsonNode expectedSchemaJson = createNode(expectedSchema.getJson());
-        JsonNode testSchemaJson = createNode(resource.getSchema().getJson());
+        JsonNode expectedSchemaJson = createNode(expectedSchema.asJson());
+        JsonNode testSchemaJson = createNode(resource.getSchema().asJson());
         // Compare JSON objects
         Assertions.assertEquals(expectedSchemaJson, testSchemaJson, "Schemas don't match");
     }
@@ -923,6 +929,43 @@ public class PackageTest {
         Assertions.assertEquals(45, info.get("pin"));
         Assertions.assertEquals(83.23, info.get("rate"));
         Assertions.assertEquals(90, info.get("ssn"));
+    }
+
+    @Test
+    @DisplayName("Test read a Package with all fields defined in https://specs.frictionlessdata.io/data-package/#metadata")
+    public void testReadPackageAllFields() throws Exception{
+        Path pkgFile =  TestUtil.getResourcePath("/fixtures/full_spec_datapackage.json");
+        Package p = new Package(pkgFile, false);
+        Assertions.assertEquals( "9e2429be-a43e-4051-aab5-981eb27fe2e8", p.getId());
+        Assertions.assertEquals( "world-full", p.getName());
+        Assertions.assertEquals( "world population data", p.getTitle());
+        Assertions.assertEquals( "tabular-data-package", p.getProfile());
+        Assertions.assertEquals("A datapackage for world population data, featuring all fields from https://specs.frictionlessdata.io/data-package/#language", p.getDescription());
+        Assertions.assertEquals("1.0.1", p.getVersion());
+        Assertions.assertEquals( "https://example.com/world-population-data", p.getHomepage().toString());
+        Assertions.assertEquals(1, p.getLicenses().size());
+        Assertions.assertEquals(1, p.getSources().size());
+        Assertions.assertEquals(2, p.getContributors().size());
+        Assertions.assertArrayEquals(new String[] {"world", "population", "world bank"}, p.getKeywords().toArray());
+        Assertions.assertEquals( "https://github.com/frictionlessdata/datapackage-java/tree/main/src/test/resources/fixtures/datapackages/with-image/test.png", p.getImagePath());
+        Assertions.assertEquals(ZonedDateTime.parse("1985-04-12T23:20:50.52Z"), p.getCreated());
+        Assertions.assertEquals(1, p.getResources().size());
+
+        License license = p.getLicenses().get(0);
+        Assertions.assertEquals("ODC-PDDL-1.0", license.getName());
+        Assertions.assertEquals("http://opendatacommons.org/licenses/pddl/", license.getPath());
+        Assertions.assertEquals("Open Data Commons Public Domain Dedication and License v1.0", license.getTitle());
+
+        Source source = p.getSources().get(0);
+        Assertions.assertEquals("http://data.worldbank.org/indicator/NY.GDP.MKTP.CD", source.getPath());
+        Assertions.assertEquals("World Bank and OECD", source.getTitle());
+
+        Contributor c = p.getContributors().get(1);
+        Assertions.assertEquals("Jim Beam", c.getTitle());
+        Assertions.assertEquals("jim@example.com", c.getEmail());
+        Assertions.assertEquals("https://www.example.com", c.getPath().toString());
+        Assertions.assertEquals("wrangler", c.getRole());
+        Assertions.assertEquals("Example Corp", c.getOrganization());
     }
 
     private static void fingerprintFiles(Path path) {

@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
+import io.frictionlessdata.datapackage.License;
+import io.frictionlessdata.datapackage.Source;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
@@ -356,22 +358,22 @@ public interface Resource<T,C> {
     /**
      * @return the sources
      */
-    ArrayNode getSources();
+    List<Source> getSources();
 
     /**
      * @param sources the sources to set
      */
-    void setSources(ArrayNode sources);
+    void setSources(List<Source> sources);
 
     /**
      * @return the licenses
      */
-    ArrayNode getLicenses();
+    List<License> getLicenses();
 
     /**
      * @param licenses the licenses to set
      */
-    void setLicenses(ArrayNode licenses);
+    void setLicenses(List<License> licenses);
 
     boolean shouldSerializeToFile();
 
