@@ -1,0 +1,43 @@
+{
+  "name": "foreign-keys",
+  "resources": [
+    {
+      "name": "test2",
+      "path": "data/test2.csv",
+      "schema": {
+        "fields": [
+          {
+            "name":"cola",
+            "type":"string",
+            "format":"default"
+          },
+          {
+            "name":"colb",
+            "type":"string",
+            "format":"default"
+          },
+          {
+            "name":"colc",
+            "type":"string",
+            "format":"default"
+          },
+          {
+            "name":"cold",
+            "type":"integer",
+            "format":"default"
+          },
+          {
+            "name":"cole",
+            "type":"string",
+            "format":"default"
+          },
+          {
+            "name":"colf",
+            "type":"string",
+            "format":"default"
+          }
+        ]
+      }
+    }
+  ]
+}

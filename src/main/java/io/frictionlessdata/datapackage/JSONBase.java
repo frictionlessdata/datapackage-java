@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
@@ -35,8 +34,7 @@ import java.util.zip.ZipFile;
 import static io.frictionlessdata.datapackage.Validator.isValidUrl;
 
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
-public abstract class JSONBase {
-    static final int JSON_INDENT_FACTOR = 4;// JSON keys.
+public abstract class JSONBase implements BaseInterface {
     public static final String JSON_KEY_NAME = "name";
     public static final String JSON_KEY_PROFILE = "profile";
     public static final String JSON_KEY_PATH = "path";
@@ -68,13 +66,11 @@ public abstract class JSONBase {
     protected String title = null;
     protected String description = null;
 
-    String format = null;
     protected String mediaType = null;
     protected String encoding = null;
     protected Integer bytes = null;
     protected String hash = null;
 
-    Dialect dialect;
     private List<Source> sources = null;
     private List<License> licenses = null;
 
@@ -96,20 +92,6 @@ public abstract class JSONBase {
      * @return the profile
      */
     public String getProfile(){return profile;}
-
-    /**
-     * @param profile the profile to set
-     */
-    public void setProfile(String profile){
-        if (profile.equals(Profile.PROFILE_TABULAR_DATA_PACKAGE)) {
-            if (this instanceof Package) {
-
-            } else if (this instanceof Resource) {
-                throw new DataPackageValidationException("Cannot set "+Profile.PROFILE_TABULAR_DATA_PACKAGE+" on a resource");
-            }
-        }
-        this.profile = profile;
-    }
 
     /**
      * @return the title

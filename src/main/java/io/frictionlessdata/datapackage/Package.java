@@ -652,7 +652,11 @@ public class Package extends JSONBase{
      */
     final void validate() throws IOException, DataPackageException{
         try{
-            Validator.validate(this.getJsonNode());
+            ObjectNode jsonNode = this.getJsonNode();
+            for (Resource r : this.getResources()) {
+                r.validate(this);
+            }
+            Validator.validate(jsonNode);
         } catch(ValidationException | DataPackageException ve){
             if (this.strictValidation){
                 throw ve;
@@ -809,7 +813,7 @@ public class Package extends JSONBase{
                 this.setProperty(k, obj);
             }
         });
-        resources.forEach(Resource::validate);
+        resources.forEach((r) -> r.validate(this));
         validate();
     }
 

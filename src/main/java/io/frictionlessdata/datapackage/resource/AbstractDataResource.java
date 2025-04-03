@@ -18,7 +18,7 @@ import java.util.Set;
  *
  * @param <T> the data format, either CSV or JSON array
  */
-public abstract class AbstractDataResource<T,C> extends AbstractResource<T,C> {
+public abstract class AbstractDataResource<T,C> extends AbstractResource<T> {
     T data;
 
     AbstractDataResource(String name, T data) {

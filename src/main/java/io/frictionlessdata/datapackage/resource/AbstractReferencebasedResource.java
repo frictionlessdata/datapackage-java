@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T,C> {
+public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T> {
     Collection<T> paths;
 
     AbstractReferencebasedResource(String name, Collection<T> paths) {

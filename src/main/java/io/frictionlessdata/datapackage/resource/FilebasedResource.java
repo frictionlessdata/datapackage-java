@@ -22,23 +22,6 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     private File basePath;
     private boolean isInArchive;
 
-    public FilebasedResource(Resource fromResource, Collection<File> paths) throws Exception {
-        super(fromResource.getName(), paths);
-        if (null == paths) {
-            throw new DataPackageException("Invalid Resource. " +
-                    "The path property cannot be null for file-based Resources.");
-        }
-        encoding = fromResource.getEncoding();
-        this.setSerializationFormat(sniffFormat(paths));
-        schema = fromResource.getSchema();
-        dialect = fromResource.getDialect();
-        List<String[]> data = fromResource.getData(false, false, false, false);
-        Table table = new Table(data, fromResource.getHeaders(), fromResource.getSchema());
-        tables = new ArrayList<>();
-        tables.add(table);
-        serializeToFile = true;
-    }
-
     public FilebasedResource(String name, Collection<File> paths, File basePath, Charset encoding) {
         super(name, paths);
         this.encoding = encoding.name();

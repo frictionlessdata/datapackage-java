@@ -48,12 +48,12 @@ public class Validator {
         }
 
         if (!errors.isEmpty()) {
-            throw new ValidationException("Error validating Schema", "profile id: " + profileId, errors);
+            throw new ValidationException(profileId, errors);
         }
     }
 
     /**
-     * Validates a given JSON Object against the a given profile schema.
+     * Validates a given JSON Object against a given profile schema.
      *
      * @param jsonObjectToValidate
      * @param profileId

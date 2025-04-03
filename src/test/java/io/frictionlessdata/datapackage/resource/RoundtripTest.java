@@ -3,6 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.TestUtil;
+import io.frictionlessdata.tableschema.field.Field;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import org.apache.commons.csv.CSVFormat;
@@ -14,7 +15,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Ensure datapackages are written in a valid format and can be read back. Compare data to see it matches
@@ -80,4 +83,33 @@ public class RoundtripTest {
         }
     }
 
+    @Test
+    @DisplayName("Roundtrip resource")
+    void validateResourceRoundtrip() throws Exception {
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/roundtrip/datapackage.json");
+        Package dp = new Package(resourcePath, true);
+        StringBuffer buf = new StringBuffer();
+        Resource v4Resource = dp.getResource("test2");
+        List<Object[]> testData = v4Resource.getData(false, false, true, false);
+        String data = createCSV(v4Resource.getHeaders(), testData);
+        Resource v5Resource = new CSVDataResource(v4Resource.getName(),data);
+        v5Resource.setDescription(v4Resource.getDescription());
+        v5Resource.setSchema(v4Resource.getSchema());
+        v5Resource.setSerializationFormat(Resource.FORMAT_CSV);
+        List data1 = v5Resource.getData(false, false, true, false);
+        Assertions.assertArrayEquals(testData.toArray(), data1.toArray());
+    }
+
+    private static String createCSV(String[] headers, List<Object[]> data) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.join(",", Arrays.asList(headers)));
+        sb.append("\n");
+        for (Object[] row : data) {
+            sb.append(Arrays.stream(row)
+                    .map((o)-> (o == null) ? "" : o.toString())
+                    .collect(Collectors.joining(",")));
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
 }

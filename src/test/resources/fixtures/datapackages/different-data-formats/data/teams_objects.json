@@ -1,0 +1,17 @@
+[
+  {
+    "id":1,
+    "name":"Arsenal",
+    "city":"London"
+  },
+  {
+    "id":2,
+    "name":"Real",
+    "city":"Madrid"
+  },
+  {
+    "id":3,
+    "name":"Bayern",
+    "city":"Munich"
+  }
+]

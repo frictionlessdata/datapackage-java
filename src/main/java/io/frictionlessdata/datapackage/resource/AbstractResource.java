@@ -5,12 +5,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
+import io.frictionlessdata.datapackage.fk.PackageForeignKey;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.exception.TypeInferringException;
+import io.frictionlessdata.tableschema.field.Field;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.io.FileReference;
 import io.frictionlessdata.tableschema.io.URLFileReference;
@@ -36,7 +40,7 @@ import java.util.*;
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
-public abstract class AbstractResource<T,C> extends JSONBase implements Resource<T,C> {
+public abstract class AbstractResource<T> extends JSONBase implements Resource<T> {
 
     // Data properties.
     protected List<Table> tables;
@@ -44,8 +48,6 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     String format = null;
 
     Dialect dialect;
-    ArrayNode sources = null;
-    ArrayNode licenses = null;
 
     // Schema
     Schema schema = null;
@@ -109,7 +111,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     @Override
-    public Iterator<C> beanIterator(Class<C> beanType, boolean relations) throws Exception {
+    public <C> Iterator<C> beanIterator(Class<C> beanType, boolean relations) throws Exception {
         ensureDataLoaded();
         IteratorChain<C> ic = new IteratorChain<>();
         for (Table table : tables) {
@@ -217,7 +219,7 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
     }
 
     @Override
-    public List<C> getData(Class<C> beanClass)  throws Exception {
+    public <C> List<C> getData(Class<C> beanClass)  throws Exception {
         List<C> retVal = new ArrayList<C>();
         ensureDataLoaded();
         for (Table t : tables) {
@@ -243,28 +245,38 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         return tables;
     }
 
-    public void checkRelations() {
+    public void checkRelations(Package pkg) {
         if (null != schema) {
             for (ForeignKey fk : schema.getForeignKeys()) {
-                fk.validate();
-                fk.getReference().validate();
-            }
-            for (ForeignKey fk : schema.getForeignKeys()) {
-                if (null != fk.getReference().getResource()) {
-                    //Package pkg = new Package(fk.getReference().getDatapackage(), true);
-                    // TODO fix this
+                String resourceName = fk.getReference().getResource();
+                Resource referencedResource;
+                if (null != resourceName) {
+                    if (resourceName.isEmpty()) {
+                        referencedResource = this;
+                    } else {
+                        referencedResource = pkg.getResource(resourceName);
+                    }
+                    if (null == referencedResource) {
+                        throw new DataPackageValidationException("Foreign key references non-existent referencedResource: " + resourceName);
+                    }
+                    try {
+                        PackageForeignKey pFK = new PackageForeignKey(fk, this, pkg);
+                        pFK.validate();
+                    } catch (Exception e) {
+                        throw new DataPackageValidationException("Foreign key validation failed: " + resourceName, e);
+                    }
                 }
             }
         }
     }
 
-    public void validate()  {
+    public void validate(Package pkg)  {
         if (null == tables)
             return;
         try {
             // will validate schema against data
             tables.forEach(Table::validate);
-            checkRelations();
+            checkRelations(pkg);
         } catch (Exception ex) {
             if (ex instanceof DataPackageValidationException) {
                 errors.add((DataPackageValidationException) ex);
@@ -382,6 +394,27 @@ public abstract class AbstractResource<T,C> extends JSONBase implements Resource
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
             wr.write(dialect.getJson());
         }
+    }
+
+    @Override
+    public Schema inferSchema() throws TypeInferringException {
+        Schema schema;
+        try {
+            List<Table> tables = getTables();
+            String[] headers = getHeaders();
+            schema = tables.get(0).inferSchema(headers, -1);
+            for (int i = 1; i < tables.size(); i++) {
+                Schema schema2 = tables.get(i).inferSchema();
+                for (Field<?> field : schema2.getFields()) {
+                    if (null == schema.getField(field.getName())) {
+                        throw new TypeInferringException("Found field mismatch in Tables of Resource: " + getName());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new DataPackageException("Error inferring schema", e);
+        }
+        return schema;
     }
 
     /**

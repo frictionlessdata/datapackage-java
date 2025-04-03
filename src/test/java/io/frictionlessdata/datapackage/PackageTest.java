@@ -13,10 +13,7 @@ import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -32,6 +29,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.frictionlessdata.datapackage.Profile.*;
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
@@ -379,7 +377,7 @@ public class PackageTest {
         Path resourcePath = TestUtil.getResourcePath(pathName);
         Package dp = new Package(resourcePath, true);
 
-        Resource<?,?> resource = dp.getResource("logo-svg");
+        Resource<?> resource = dp.getResource("logo-svg");
         Assertions.assertTrue(resource instanceof FilebasedResource);
         byte[] rawData = (byte[])resource.getRawData();
         String s = new String (rawData).replaceAll("[\n\r]+", "\n");
@@ -396,7 +394,7 @@ public class PackageTest {
         Path resourcePath = TestUtil.getResourcePath(pathName);
         Package dp = new Package(resourcePath, true);
 
-        Resource<?,?> resource = dp.getResource("logo-svg");
+        Resource<?> resource = dp.getResource("logo-svg");
         Assertions.assertInstanceOf(FilebasedResource.class, resource);
         byte[] rawData = (byte[])resource.getRawData();
         String s = new String (rawData).replaceAll("[\n\r]+", "\n");
@@ -415,7 +413,7 @@ public class PackageTest {
 
         Package dp = new Package(input, true);
 
-        Resource<?,?> resource = dp.getResource("logo-svg");
+        Resource<?> resource = dp.getResource("logo-svg");
         Assertions.assertInstanceOf(URLbasedResource.class, resource);
         byte[] rawData = (byte[])resource.getRawData();
         String s = new String (rawData).replaceAll("[\n\r]+", "\n");
@@ -982,6 +980,58 @@ public class PackageTest {
         Assertions.assertNotNull(exception.getMessage());
         Assertions.assertFalse(exception.getMessage().isEmpty());
     }
+
+    @Test
+    @Disabled
+    @DisplayName("Datapackage with same data in different formats")
+    void validateDataPackageDifferentFormats() throws Exception {
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/different-data-formats/datapackage.json");
+        Package dp = new Package(resourcePath, true);
+        List<Object[]> teamsWithHeaders = dp.getResource("teams_with_headers_csv_file").getData(false, false, true, false);
+        List<Object[]> teamsNoHeaders = dp.getResource("teams_arrays_no_headers_inline").getData(false, false, true, false);
+        List<Object[]> teamsNoHeadersCsv = dp.getResource("teams_no_headers_inline_csv").getData(false, false, true, false);
+        List<Object[]> teamsNoHeadersFile = dp.getResource("teams_no_headers_csv_file").getData(false, false, true, false);
+        List<Object[]> teamsArraysInline = dp.getResource("teams_arrays_inline").getData(false, false, true, false);
+        List<Object[]> teamsObjectsInline = dp.getResource("teams_objects_inline").getData(false, false, true, false);
+        List<Object[]> teamsArrays = dp.getResource("teams_arrays_file").getData(false, false, true, false);
+        List<Object[]> teamsObjects = dp.getResource("teams_objects_file").getData(false, false, true, false);
+
+        // Assert the validation messages
+        System.out.println(teamsWithHeaders.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsNoHeaders.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsNoHeadersCsv.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsNoHeadersFile.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsArraysInline.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsObjectsInline.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsArrays.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+        System.out.println(teamsObjects.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
+
+        Assertions.assertArrayEquals(teamsWithHeaders.toArray(), getFullTeamsData().toArray());
+        Assertions.assertArrayEquals(teamsArraysInline.toArray(), getFullTeamsData().toArray());
+        Assertions.assertArrayEquals(teamsObjectsInline.toArray(), getFullTeamsData().toArray());
+        Assertions.assertArrayEquals(teamsArrays.toArray(), getFullTeamsData().toArray());
+        Assertions.assertArrayEquals(teamsObjects.toArray(), getFullTeamsData().toArray());
+
+        // those without a header row will lose the first row of data. Seems wrong but that's what the python port does
+        Assertions.assertArrayEquals(teamsNoHeaders.toArray(), getTeamsDataMissingFirstRow().toArray());
+        Assertions.assertArrayEquals(teamsNoHeadersFile.toArray(), getTeamsDataMissingFirstRow().toArray());
+    }
+
+    private static List<Object[]> getFullTeamsData() {
+        List<Object[]> expectedData = new ArrayList<>();
+        expectedData.add(new Object[]{BigInteger.valueOf(1), "Arsenal", "London"});
+        expectedData.add(new Object[]{BigInteger.valueOf(2), "Real", "Madrid"});
+        expectedData.add(new Object[]{BigInteger.valueOf(3), "Bayern", "Munich"});
+        return expectedData;
+    }
+
+    private static List<Object[]> getTeamsDataMissingFirstRow() {
+        List<Object[]> expectedData = new ArrayList<>();
+        expectedData.add(new Object[]{BigInteger.valueOf(2), "Real", "Madrid"});
+        expectedData.add(new Object[]{BigInteger.valueOf(3), "Bayern", "Munich"});
+        return expectedData;
+    }
+
 
     private static void fingerprintFiles(Path path) {
         List<String> fingerprints = new ArrayList<>();

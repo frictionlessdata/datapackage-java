@@ -31,7 +31,7 @@ import static io.frictionlessdata.datapackage.TestUtil.getTestDataDirectory;
  *
  * 
  */
-public class ResourceTest {
+public class JsonDataResourceTest {
     static ObjectNode resource1 = (ObjectNode) JsonUtil.getInstance().createNode("{\"name\": \"first-resource\", \"path\": " +
             "[\"data/cities.csv\", \"data/cities2.csv\", \"data/cities3.csv\"]}");
     static ObjectNode resource2 = (ObjectNode) JsonUtil.getInstance().createNode("{\"name\": \"second-resource\", \"path\": " +
@@ -447,7 +447,7 @@ public class ResourceTest {
 
     @Test
     public void testReadFromZipFile() throws Exception{
-        String sourceFileAbsPath = ResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zip").getPath();
+        String sourceFileAbsPath = JsonDataResourceTest.class.getResource("/fixtures/zip/countries-and-currencies.zip").getPath();
 
         Package dp = new Package(new File(sourceFileAbsPath).toPath(), true);
         Resource r = dp.getResource("currencies");
@@ -556,7 +556,7 @@ public class ResourceTest {
     }
 
     private static Resource<?> buildResource(String relativeInPath) throws URISyntaxException {
-        URL sourceFileUrl = ResourceTest.class.getResource(relativeInPath);
+        URL sourceFileUrl = JsonDataResourceTest.class.getResource(relativeInPath);
         Path path = Paths.get(sourceFileUrl.toURI());
         Path parent = path.getParent();
         Path relativePath = parent.relativize(path);
@@ -567,7 +567,7 @@ public class ResourceTest {
     }
 
     private static File getBasePath() throws URISyntaxException {
-        URL sourceFileUrl = ResourceTest.class.getResource("/fixtures/data");
+        URL sourceFileUrl = JsonDataResourceTest.class.getResource("/fixtures/data");
         Path path = Paths.get(sourceFileUrl.toURI());
         return path.getParent().toFile();
     }
@@ -575,7 +575,7 @@ public class ResourceTest {
     private static String getFileContents(String fileName) {
         try {
             // Create file-URL of source file:
-            URL sourceFileUrl = ResourceTest.class.getResource(fileName);
+            URL sourceFileUrl = JsonDataResourceTest.class.getResource(fileName);
             // Get path of URL
             Path path = Paths.get(sourceFileUrl.toURI());
             return new String(Files.readAllBytes(path));
@@ -586,6 +586,7 @@ public class ResourceTest {
 
     private List<String[]> getExpectedPopulationData(){
         List<String[]> expectedData  = new ArrayList<>();
+        //expectedData.add(new String[]{"city", "year", "population"});
         expectedData.add(new String[]{"london", "2017", "8780000"});
         expectedData.add(new String[]{"paris", "2017", "2240000"});
         expectedData.add(new String[]{"rome", "2017", "2860000"});

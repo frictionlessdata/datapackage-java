@@ -1,0 +1,232 @@
+{
+  "name": "different-data-formats",
+  "profile":"tabular-data-package",
+  "resources": [
+    {
+      "name": "teams_with_headers_csv_file",
+      "comment": "File-based CSV data, with headers",
+      "path": "data/teams_with_headers.csv",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_no_headers_csv_file",
+      "comment": "File-based CSV data, no headers, this will lead to the first row being dropped",
+      "path": "data/teams_no_headers.csv",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    ,
+    {
+      "name": "teams_no_headers_inline_csv",
+      "comment": "File-based CSV data, no headers, this will lead to the first row being dropped",
+      "data": "1, Arsenal, London\n2, Real, Madrid\n3, Bayern, Munich",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_arrays_no_headers_inline",
+      "comment": "Inline JSON array data, no headers, this will lead to the first row being dropped",
+      "data": [
+        [1, "Arsenal", "London"],
+        [2, "Real", "Madrid"],
+        [3, "Bayern", "Munich"]
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_arrays_inline",
+      "comment": "Inline JSON array data, with headers",
+      "data": [
+        ["id", "name", "city"],
+        [1, "Arsenal", "London"],
+        [2, "Real", "Madrid"],
+        [3, "Bayern", "Munich"]
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "teams_arrays_file",
+      "comment": "File-based JSON array data, with headers. This is not strictly supported according to the spec",
+      "path": "data/teams_arrays.json",
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "teams_objects_inline",
+      "comment": "Inline JSON object data, no headers needed",
+      "data": [
+        {
+          "id":1,
+          "name":"Arsenal",
+          "city":"London"
+        },
+        {
+          "id":2,
+          "name":"Real",
+          "city":"Madrid"
+        },
+        {
+          "id":3,
+          "name":"Bayern",
+          "city":"Munich"
+        }
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "teams_objects_file",
+      "comment": "File-based JSON object data, no headers needed. This is not strictly supported according to the spec",
+      "path": "data/teams_objects.json",
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
