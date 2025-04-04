@@ -1,5 +1,7 @@
 package io.frictionlessdata.datapackage.resource;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Package;
@@ -262,6 +264,9 @@ public class ResourceTest {
         Iterator<String[]> iter = resource.objectArrayIterator();
         int expectedDataIndex = 0;
 
+        // check that data was read
+        Assertions.assertTrue(iter.hasNext());
+
         // Assert data.
         while(iter.hasNext()){
             String[] record = iter.next();
@@ -412,7 +417,7 @@ public class ResourceTest {
         String dataString = getFileContents("/fixtures/resource/valid_json_array_resource.json");
         Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
-        // Expected data.
+                // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
 
         // Get Iterator.

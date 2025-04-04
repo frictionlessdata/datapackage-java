@@ -1,0 +1,272 @@
+{
+  "name": "different-data-formats",
+  "profile":"tabular-data-package",
+  "resources": [
+    {
+      "name": "teams_with_headers_csv_file_with_schema",
+      "comment": "File-based CSV data, with headers and schema, this will read OK and return 3 rows",
+      "path": "data/teams_with_headers.csv",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_with_headers_csv_file_no_schema",
+      "comment": "File-based CSV data, with headers",
+      "path": "data/teams_with_headers.csv",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_no_headers_csv_file_with_schema",
+      "comment": "File-based CSV data, no headers, with Schema, this will lead an error on read, as Schema and first row do not match",
+      "path": "data/teams_no_headers.csv",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_no_headers_csv_file_no_schema",
+      "comment": "File-based CSV data, no headers, this will lead to the first row being dropped",
+      "path": "data/teams_no_headers.csv",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_no_headers_inline_csv_with_schema",
+      "comment": "Inline CSV data, no headers, with Schema, this will lead an error on read, as Schema and first row do not match",
+      "data": "1, Arsenal, London\n2, Real, Madrid\n3, Bayern, Munich",
+      "format": "csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_arrays_no_headers_inline_with_schema",
+      "comment": "Inline JSON array data, no headers, with Schema, this will lead an error on read, as Schema and first row do not match",
+      "data": [
+        [1, "Arsenal", "London"],
+        [2, "Real", "Madrid"],
+        [3, "Bayern", "Munich"]
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_arrays_inline_with_headers_with_schema",
+      "comment": "Inline JSON array data, with headers, this will read OK and return 3 rows",
+      "data": [
+        ["id", "name", "city"],
+        [1, "Arsenal", "London"],
+        [2, "Real", "Madrid"],
+        [3, "Bayern", "Munich"]
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "teams_arrays_inline_with_headers_no_schema",
+      "comment": "Inline JSON array data, with headers and no Schema, this will read OK and return 3 string rows",
+      "data": [
+        ["id", "name", "city"],
+        [1, "Arsenal", "London"],
+        [2, "Real", "Madrid"],
+        [3, "Bayern", "Munich"]
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource"
+    },
+    {
+      "name": "teams_no_headers_inline_csv_no_schema",
+      "comment": "Inline CSV data, no headers, no Schema, this will read OK and return 2 string rows",
+      "data": "1, Arsenal, London\n2, Real, Madrid\n3, Bayern, Munich",
+      "format": "csv",
+      "profile": "tabular-data-resource"
+    },
+    {
+      "name": "teams_arrays_file_with_headers_with_schema",
+      "comment": "File-based JSON array data, with headers. This is not strictly supported according to the spec, this will read OK and return 3 rows",
+      "path": "data/teams_arrays.json",
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "teams_objects_inline_with_schema",
+      "comment": "Inline JSON object data, with Schema no headers needed, this will read OK and return 3 rows",
+      "data": [
+        {
+          "id":1,
+          "name":"Arsenal",
+          "city":"London"
+        },
+        {
+          "id":2,
+          "name":"Real",
+          "city":"Madrid"
+        },
+        {
+          "id":3,
+          "name":"Bayern",
+          "city":"Munich"
+        }
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "teams_objects_file_with_schema",
+      "comment": "File-based JSON object data, no headers needed. This is not strictly supported according to the spec, this will read OK and return 3 rows",
+      "path": "data/teams_objects.json",
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

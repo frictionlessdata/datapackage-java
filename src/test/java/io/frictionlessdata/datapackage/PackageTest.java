@@ -8,6 +8,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundEx
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.resource.*;
 import io.frictionlessdata.tableschema.exception.ConstraintsException;
+import io.frictionlessdata.tableschema.exception.TableValidationException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
@@ -24,12 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
-import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.frictionlessdata.datapackage.Profile.*;
 import static io.frictionlessdata.datapackage.TestUtil.getBasePath;
@@ -982,39 +980,66 @@ public class PackageTest {
     }
 
     @Test
-    @Disabled
-    @DisplayName("Datapackage with same data in different formats")
+    @DisplayName("Datapackage with same data in different formats, lenient validation")
     void validateDataPackageDifferentFormats() throws Exception {
-        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/different-data-formats/datapackage.json");
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/different-data-formats_incl_invalid/datapackage.json");
+        Package dp = new Package(resourcePath, false);
+        List<Object[]> teamsWithHeaders = dp.getResource("teams_with_headers_csv_file_with_schema").getData(false, false, true, false);
+        List<Object[]> teamsWithHeadersCsvFileNoSchema = dp.getResource("teams_with_headers_csv_file_no_schema").getData(false, false, true, false);
+        List<Object[]> teamsNoHeadersCsvFileNoSchema = dp.getResource("teams_no_headers_csv_file_no_schema").getData(false, false, true, false);
+        List<Object[]> teamsNoHeadersCsvInlineNoSchema = dp.getResource("teams_no_headers_inline_csv_no_schema").getData(false, false, true, false);
+
+        List<Object[]> teamsArraysInline = dp.getResource("teams_arrays_inline_with_headers_with_schema").getData(false, false, true, false);
+        List<Object[]> teamsObjectsInline = dp.getResource("teams_objects_inline_with_schema").getData(false, false, true, false);
+        List<Object[]> teamsArrays = dp.getResource("teams_arrays_file_with_headers_with_schema").getData(false, false, true, false);
+        List<Object[]> teamsObjects = dp.getResource("teams_objects_file_with_schema").getData(false, false, true, false);
+        List<Object[]> teamsArraysInlineNoSchema = dp.getResource("teams_arrays_inline_with_headers_no_schema").getData(false, false, true, false);
+
+        // ensure tables without headers throw errors on reading if a Schema is set
+        TableValidationException ex = assertThrows(TableValidationException.class,
+                () -> dp.getResource("teams_arrays_no_headers_inline_with_schema").getData(false, false, true, false));
+        Assertions.assertEquals("Field 'id' not found in table headers or table has no headers.", ex.getMessage());
+
+        TableValidationException ex2 = assertThrows(TableValidationException.class,
+                () -> dp.getResource("teams_no_headers_inline_csv_with_schema").getData(false, false, true, false));
+        Assertions.assertEquals("Field 'id' not found in table headers or table has no headers.", ex2.getMessage());
+
+        TableValidationException ex3 = assertThrows(TableValidationException.class,
+                () -> dp.getResource("teams_no_headers_csv_file_with_schema").getData(false, false, true, false));
+        Assertions.assertEquals("Field 'id' not found in table headers or table has no headers.", ex3.getMessage());
+
+        Assertions.assertArrayEquals(getFullTeamsData().toArray(), teamsWithHeaders.toArray());
+        Assertions.assertArrayEquals(getFullTeamsData().toArray(), teamsArraysInline.toArray());
+        Assertions.assertArrayEquals(getFullTeamsData().toArray(), teamsObjectsInline.toArray());
+        Assertions.assertArrayEquals(getFullTeamsData().toArray(), teamsArrays.toArray());
+        Assertions.assertArrayEquals(getFullTeamsData().toArray(), teamsObjects.toArray());
+
+        // those without Schema lose the type information. With header row means all data is there
+        Assertions.assertArrayEquals(getFullTeamsDataString().toArray(), teamsWithHeadersCsvFileNoSchema.toArray());
+        Assertions.assertArrayEquals(getFullTeamsDataString().toArray(), teamsArraysInlineNoSchema.toArray());
+
+        // those without a header row and with no Schema will lose the first row of data (skipped as a header row). Seems wrong but that's what the python port does
+        Assertions.assertArrayEquals(getTeamsDataStringMissingFirstRow().toArray(), teamsNoHeadersCsvFileNoSchema.toArray());
+        Assertions.assertArrayEquals(getTeamsDataStringMissingFirstRow().toArray(), teamsNoHeadersCsvInlineNoSchema.toArray());
+    }
+
+    @Test
+    @DisplayName("Datapackage with same data in different valid formats, strict validation")
+    void validateDataPackageDifferentFormatsStrict() throws Exception {
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/different-valid-data-formats/datapackage.json");
         Package dp = new Package(resourcePath, true);
+
         List<Object[]> teamsWithHeaders = dp.getResource("teams_with_headers_csv_file").getData(false, false, true, false);
-        List<Object[]> teamsNoHeaders = dp.getResource("teams_arrays_no_headers_inline").getData(false, false, true, false);
-        List<Object[]> teamsNoHeadersCsv = dp.getResource("teams_no_headers_inline_csv").getData(false, false, true, false);
-        List<Object[]> teamsNoHeadersFile = dp.getResource("teams_no_headers_csv_file").getData(false, false, true, false);
         List<Object[]> teamsArraysInline = dp.getResource("teams_arrays_inline").getData(false, false, true, false);
         List<Object[]> teamsObjectsInline = dp.getResource("teams_objects_inline").getData(false, false, true, false);
         List<Object[]> teamsArrays = dp.getResource("teams_arrays_file").getData(false, false, true, false);
         List<Object[]> teamsObjects = dp.getResource("teams_objects_file").getData(false, false, true, false);
-
-        // Assert the validation messages
-        System.out.println(teamsWithHeaders.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsNoHeaders.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsNoHeadersCsv.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsNoHeadersFile.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsArraysInline.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsObjectsInline.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsArrays.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
-        System.out.println(teamsObjects.stream().map(Arrays::toString).collect(Collectors.joining("\n")));
 
         Assertions.assertArrayEquals(teamsWithHeaders.toArray(), getFullTeamsData().toArray());
         Assertions.assertArrayEquals(teamsArraysInline.toArray(), getFullTeamsData().toArray());
         Assertions.assertArrayEquals(teamsObjectsInline.toArray(), getFullTeamsData().toArray());
         Assertions.assertArrayEquals(teamsArrays.toArray(), getFullTeamsData().toArray());
         Assertions.assertArrayEquals(teamsObjects.toArray(), getFullTeamsData().toArray());
-
-        // those without a header row will lose the first row of data. Seems wrong but that's what the python port does
-        Assertions.assertArrayEquals(teamsNoHeaders.toArray(), getTeamsDataMissingFirstRow().toArray());
-        Assertions.assertArrayEquals(teamsNoHeadersFile.toArray(), getTeamsDataMissingFirstRow().toArray());
     }
 
     private static List<Object[]> getFullTeamsData() {
@@ -1025,10 +1050,18 @@ public class PackageTest {
         return expectedData;
     }
 
-    private static List<Object[]> getTeamsDataMissingFirstRow() {
+    private static List<Object[]> getFullTeamsDataString() {
         List<Object[]> expectedData = new ArrayList<>();
-        expectedData.add(new Object[]{BigInteger.valueOf(2), "Real", "Madrid"});
-        expectedData.add(new Object[]{BigInteger.valueOf(3), "Bayern", "Munich"});
+        expectedData.add(new Object[]{"1", "Arsenal", "London"});
+        expectedData.add(new Object[]{"2", "Real", "Madrid"});
+        expectedData.add(new Object[]{"3", "Bayern", "Munich"});
+        return expectedData;
+    }
+
+    private static List<Object[]> getTeamsDataStringMissingFirstRow() {
+        List<Object[]> expectedData = new ArrayList<>();
+        expectedData.add(new Object[]{"2", "Real", "Madrid"});
+        expectedData.add(new Object[]{"3", "Bayern", "Munich"});
         return expectedData;
     }
 

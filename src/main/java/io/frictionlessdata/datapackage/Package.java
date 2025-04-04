@@ -754,7 +754,6 @@ public class Package extends JSONBase{
                     if(this.strictValidation){
                         this.jsonObject = null;
                         this.resources.clear();
-
                         throw dpe;
                     }else{
                         if (dpe instanceof DataPackageValidationException)

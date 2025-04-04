@@ -1,5 +1,7 @@
 package io.frictionlessdata.datapackage.resource;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -302,7 +304,11 @@ public interface Resource<T> extends BaseInterface {
      * @throws DataPackageException for invalid data
      * @throws Exception if other operation fails.
      */
-    static AbstractResource build(ObjectNode resourceJson, Object basePath, boolean isArchivePackage) throws IOException, DataPackageException, Exception {
+
+    static AbstractResource build(
+            ObjectNode resourceJson,
+            Object basePath,
+            boolean isArchivePackage) throws IOException, DataPackageException, Exception {
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
         Object path = resourceJson.get(JSONBase.JSON_KEY_PATH);
         Object data = resourceJson.get(JSONBase.JSON_KEY_DATA);
@@ -337,8 +343,11 @@ public interface Resource<T> extends BaseInterface {
                 resource = new JSONDataResource(name, data.toString());
             } else if (format.equals(Resource.FORMAT_JSON))
                 resource = new JSONDataResource(name, data.toString());
-            else if (format.equals(Resource.FORMAT_CSV))
-                resource = new CSVDataResource(name, data.toString());
+            else if (format.equals(Resource.FORMAT_CSV)) {
+                // data is in inline CSV format like "data": "A,B,C\n1,2,3\n4,5,6"
+                String dataString = ((TextNode)data).textValue().replaceAll("\\\\n", "\n");
+                resource = new CSVDataResource(name, dataString);
+            }
         } else {
             throw new DataPackageValidationException(
                     "Invalid Resource. The path property or the data and format properties cannot be null.");

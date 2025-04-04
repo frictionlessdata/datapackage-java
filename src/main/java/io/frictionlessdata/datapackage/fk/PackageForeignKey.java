@@ -69,4 +69,16 @@ public class PackageForeignKey {
 
         }
     }
+
+    public ForeignKey getForeignKey() {
+        return fk;
+    }
+
+    public Package getDatapackage() {
+        return datapackage;
+    }
+
+    public Resource<?> getResource() {
+        return resource;
+    }
 }

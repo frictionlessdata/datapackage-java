@@ -30,8 +30,8 @@
       }
     },
     {
-      "name": "teams_no_headers_csv_file",
-      "comment": "File-based CSV data, no headers, this will lead to the first row being dropped",
+      "name": "teams_no_headers_csv_file_with_schema",
+      "comment": "File-based CSV data, no headers, this will lead to an error as Schema and first row do not match",
       "path": "data/teams_no_headers.csv",
       "format": "csv",
       "profile": "tabular-data-resource",
@@ -56,10 +56,9 @@
         "doubleQuote": true
       }
     },
-    ,
     {
-      "name": "teams_no_headers_inline_csv",
-      "comment": "File-based CSV data, no headers, this will lead to the first row being dropped",
+      "name": "teams_no_headers_inline_csv_with_schema",
+      "comment": "Inline CSV data, no headers, this will lead an error, as Schema and first row do not match",
       "data": "1, Arsenal, London\n2, Real, Madrid\n3, Bayern, Munich",
       "format": "csv",
       "profile": "tabular-data-resource",
@@ -85,8 +84,39 @@
       }
     },
     {
-      "name": "teams_arrays_no_headers_inline",
-      "comment": "Inline JSON array data, no headers, this will lead to the first row being dropped",
+      "name": "teams_arrays_headers_no_schema_inline",
+      "comment": "Inline JSON array data, headers and no schema, this will lead to the three rows of data",
+      "data": [
+        [1, "Arsenal", "London"],
+        [2, "Real", "Madrid"],
+        [3, "Bayern", "Munich"]
+      ],
+      "format": "json",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      },
+      "dialect": {
+        "delimiter": ",",
+        "doubleQuote": true
+      }
+    },
+    {
+      "name": "teams_arrays_no_headers_inline_with_schema",
+      "comment": "Inline JSON array data, no headers, this will lead to an error as Schema and first row do not match",
       "data": [
         [1, "Arsenal", "London"],
         [2, "Real", "Madrid"],

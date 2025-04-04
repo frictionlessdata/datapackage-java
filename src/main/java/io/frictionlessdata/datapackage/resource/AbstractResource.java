@@ -13,6 +13,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.fk.PackageForeignKey;
 import io.frictionlessdata.tableschema.Table;
+import io.frictionlessdata.tableschema.exception.ForeignKeyException;
 import io.frictionlessdata.tableschema.exception.TypeInferringException;
 import io.frictionlessdata.tableschema.field.Field;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
@@ -34,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base implementation of a Resource.
@@ -247,6 +249,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
 
     public void checkRelations(Package pkg) {
         if (null != schema) {
+            List<PackageForeignKey> fks = new ArrayList<>();
             for (ForeignKey fk : schema.getForeignKeys()) {
                 String resourceName = fk.getReference().getResource();
                 Resource referencedResource;
@@ -261,11 +264,55 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                     }
                     try {
                         PackageForeignKey pFK = new PackageForeignKey(fk, this, pkg);
+                        fks.add(pFK);
                         pFK.validate();
                     } catch (Exception e) {
                         throw new DataPackageValidationException("Foreign key validation failed: " + resourceName, e);
                     }
                 }
+            }
+
+            try {
+                Map<PackageForeignKey, List<Object>> map = new HashMap<>();
+                for (PackageForeignKey fk : fks) {
+                    String refResourceName = fk.getForeignKey().getReference().getResource();
+                    Resource refResource = pkg.getResource(refResourceName);
+                    List<Object> data = refResource.getData(true, false, true, false);
+                    map.put(fk, data);
+                }
+                List<Object> data = this.getData(true, false, true, false);
+                for (Object d : data) {
+                    Map<String, Object> row = (Map<String, Object>) d;
+                    for (String key : row.keySet()) {
+                        for (PackageForeignKey fk : map.keySet()) {
+                            if (fk.getForeignKey().getFieldNames().contains(key)) {
+                                List<Object>refData = (List<Object>) map.get(fk);
+                                Map<String, String> fieldMapping = fk.getForeignKey().getFieldMapping();
+                                String refFieldName = fieldMapping.get(key);
+                                Object fkVal = row.get(key);
+                                boolean found = false;
+
+                                for (Object refRow : refData) {
+                                    Map<String, Object> refRowMap = (Map<String, Object>) refRow;
+                                    Object refVal = refRowMap.get(refFieldName);
+                                    if (Objects.equals(fkVal, refVal)) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    throw new ForeignKeyException("Foreign key validation failed: " + fk.getForeignKey().getFieldNames() + " -> " + fk.getForeignKey().getReference().getFieldNames() + ": '" + fkVal + "' not found in resource '"+fk.getForeignKey().getReference().getResource()+"'");
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+                System.out.println("Data: "+data);
+
+            } catch (Exception e) {
+                throw new DataPackageValidationException("Error reading data with relations: " + e.getMessage(), e);
             }
         }
     }
