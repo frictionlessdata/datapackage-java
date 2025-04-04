@@ -4,26 +4,10 @@
     {
       "name": "teams",
       "data": [
-        [
-          "id",
-          "name",
-          "city"
-        ],
-        [
-          "1",
-          "Arsenal",
-          "London"
-        ],
-        [
-          "2",
-          "Real",
-          "Madrid"
-        ],
-        [
-          "3",
-          "Bayern",
-          "Munich"
-        ]
+        ["id", "name", "city"],
+        ["1", "Arsenal", "London"],
+        ["2", "Real", "Madrid"],
+        ["3", "Bayern", "Munich"]
       ],
       "schema": {
         "fields": [
@@ -54,18 +38,9 @@
     {
       "name": "cities",
       "data": [
-        [
-          "name",
-          "country"
-        ],
-        [
-          "London",
-          "England"
-        ],
-        [
-          "Madrid",
-          "Spain"
-        ]
+        ["name", "country"],
+        ["London", "England"],
+        ["Madrid", "Spain"]
       ]
     }
   ]

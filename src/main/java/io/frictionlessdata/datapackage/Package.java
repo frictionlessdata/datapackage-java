@@ -98,7 +98,8 @@ public class Package extends JSONBase{
     }
     
     /**
-     * Load from String representation of JSON object. To prevent file system traversal attacks
+     * Load from String representation of JSON object. The resources of the package could be either inline JSON
+     * or relative path references to files.To prevent file system traversal attacks
      * while loading Resources, the basePath must be explicitly set here, the `basePath`
      * variable cannot be null.
      *

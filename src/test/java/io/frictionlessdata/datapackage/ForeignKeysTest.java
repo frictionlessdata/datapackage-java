@@ -34,6 +34,6 @@ public class ForeignKeysTest {
                 () -> teams.checkRelations(pkg));
         Throwable cause = ex.getCause();
         Assertions.assertInstanceOf(ForeignKeyException.class, cause);
-        Assertions.assertEquals("Foreign key validation failed: [city] -> [name]: 'Munich' not found in resource 'cities'", cause.getMessage());
+        Assertions.assertEquals("Foreign key validation failed: [city] -> [name]: 'Munich' not found in resource 'cities'.", cause.getMessage());
     }
 }

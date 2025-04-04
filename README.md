@@ -1,7 +1,5 @@
 # datapackage-java
 
-[![Build Status](https://travis-ci.org/frictionlessdata/datapackage-java.svg?branch=master)](https://travis-ci.org/frictionlessdata/datapackage-java)
-[![Coverage Status](https://coveralls.io/repos/github/frictionlessdata/datapackage-java/badge.svg?branch=master)](https://coveralls.io/github/frictionlessdata/datapackage-java?branch=master)
 [![License](https://img.shields.io/github/license/frictionlessdata/datapackage-java.svg)](https://github.com/frictionlessdata/datapackage-java/blob/master/LICENSE)
 [![Release](https://img.shields.io/jitpack/v/github/frictionlessdata/datapackage-java)](https://jitpack.io/#frictionlessdata/datapackage-java)
 [![Codebase](https://img.shields.io/badge/codebase-github-brightgreen)](https://github.com/frictionlessdata/datapackage-java)
@@ -16,6 +14,13 @@ formats, but lacks a robust query engine, instead focusing on exchanging bundles
 Please find releases on [Jitpack](https://jitpack.io/#frictionlessdata/datapackage-java)
 
 ## Usage
+
+- [Create a Data Package](#create_a_data_package) explains how to create a Data Package
+- [Iterate through Data](#iterate_through_data) explains how to iterate through data in Resources
+- [Edit a Data Package](#edit_a_data_package) explains how to add or remove Resources or properties to or from a Data Package
+- [Save to File](#save_to_file) explains how to save a Data Package to a file
+- [Working with Foreign Keys](docs/foreign-keys.md) explains how to set foreign key constraints in Data Packages
+- [Contributing](#contributing) contributions are welcome
 
 ### Create a Data Package
 
@@ -208,6 +213,7 @@ dp.save("/destination/path/datapackage.zip")
 
 Found a problem and would like to fix it? Have that great idea and would love to see it in the repository?
 
+> [!NOTE]
 > Please open an issue before you start working.
 
 It could save a lot of time for everyone and we are super happy to answer questions and help you along the way. Furthermore, feel free to join [frictionlessdata Gitter chat room](https://gitter.im/frictionlessdata/chat) and ask questions.

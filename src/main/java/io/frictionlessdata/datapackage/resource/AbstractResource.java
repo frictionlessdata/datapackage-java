@@ -301,7 +301,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                                     }
                                 }
                                 if (!found) {
-                                    throw new ForeignKeyException("Foreign key validation failed: " + fk.getForeignKey().getFieldNames() + " -> " + fk.getForeignKey().getReference().getFieldNames() + ": '" + fkVal + "' not found in resource '"+fk.getForeignKey().getReference().getResource()+"'");
+                                    throw new ForeignKeyException("Foreign key validation failed: " + fk.getForeignKey().getFieldNames() + " -> " + fk.getForeignKey().getReference().getFieldNames() + ": '" + fkVal + "' not found in resource '"+fk.getForeignKey().getReference().getResource()+"'.");
                                 }
                             }
                         }
