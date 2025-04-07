@@ -1,5 +1,6 @@
 package io.frictionlessdata.datapackage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -54,6 +55,7 @@ public abstract class JSONBase implements BaseInterface {
     /**
      * If true, we are reading from an archive format, eg. ZIP
      */
+    @JsonIgnore
     boolean isArchivePackage = false;
     // Metadata properties.
     // Required properties.
@@ -74,9 +76,7 @@ public abstract class JSONBase implements BaseInterface {
     private List<Source> sources = null;
     private List<License> licenses = null;
 
-    // Schema
-    private Schema schema = null;
-
+    @JsonIgnore
     protected Map<String, String> originalReferences = new HashMap<>();
     /**
      * @return the name
@@ -154,10 +154,6 @@ public abstract class JSONBase implements BaseInterface {
      */
     public void setHash(String hash){this.hash = hash;}
 
-    public Schema getSchema(){return schema;}
-
-    public void setSchema(Schema schema){this.schema = schema;}
-
     public List<Source> getSources(){
         return sources;
     }
@@ -175,7 +171,7 @@ public abstract class JSONBase implements BaseInterface {
      */
     public void setLicenses(List<License> licenses){this.licenses = licenses;}
 
-
+    @JsonIgnore
     public Map<String, String> getOriginalReferences() {
         return originalReferences;
     }
@@ -225,7 +221,7 @@ public abstract class JSONBase implements BaseInterface {
         return ref;
     }
 
-    public static void setFromJson(JsonNode resourceJson, JSONBase retVal, Schema schema) {
+    public static void setFromJson(JsonNode resourceJson, JSONBase retVal) {
         if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA) && resourceJson.get(JSONBase.JSON_KEY_SCHEMA).isTextual())
             retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA).asText());
         if (resourceJson.has(JSONBase.JSON_KEY_DIALECT) && resourceJson.get(JSONBase.JSON_KEY_DIALECT).isTextual())
@@ -251,7 +247,6 @@ public abstract class JSONBase implements BaseInterface {
         }
 
         retVal.setName(name);
-        retVal.setSchema(schema);
         retVal.setProfile(profile);
         retVal.setTitle(title);
         retVal.setDescription(description);

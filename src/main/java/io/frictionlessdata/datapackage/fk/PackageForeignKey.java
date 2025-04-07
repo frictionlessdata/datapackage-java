@@ -9,7 +9,8 @@ import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.fk.Reference;
 import io.frictionlessdata.tableschema.schema.Schema;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * PackageForeignKey is a wrapper around the ForeignKey class to validate foreign keys

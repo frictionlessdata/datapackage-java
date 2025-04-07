@@ -3,17 +3,22 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
+import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.fk.PackageForeignKey;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.exception.ForeignKeyException;
+import io.frictionlessdata.tableschema.exception.JsonSerializingException;
+import io.frictionlessdata.tableschema.exception.TableIOException;
 import io.frictionlessdata.tableschema.exception.TypeInferringException;
 import io.frictionlessdata.tableschema.field.Field;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
@@ -24,8 +29,10 @@ import io.frictionlessdata.tableschema.iterator.TableIterator;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
+import io.frictionlessdata.tableschema.util.TableSchemaUtil;
 import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -35,7 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Abstract base implementation of a Resource.
@@ -45,23 +51,43 @@ import java.util.stream.Collectors;
 public abstract class AbstractResource<T> extends JSONBase implements Resource<T> {
 
     // Data properties.
+    @JsonIgnore
     protected List<Table> tables;
 
+    @JsonProperty("format")
     String format = null;
 
+    @JsonProperty("dialect")
     Dialect dialect;
 
-    // Schema
+    @JsonProperty("schema")
     Schema schema = null;
 
+    @JsonIgnore
     boolean serializeToFile = true;
+
+    @JsonIgnore
     private String serializationFormat;
+
+    @JsonIgnore
     final List<DataPackageValidationException> errors = new ArrayList<>();
 
     AbstractResource(String name){
         this.name = name;
         if (null == name)
             throw new DataPackageException("Invalid Resource, it does not have a name property.");
+    }
+
+
+    @JsonProperty(JSON_KEY_SCHEMA)
+    public Object getSchemaForJson() {
+        if (originalReferences.containsKey(JSON_KEY_SCHEMA)) {
+            return originalReferences.get(JSON_KEY_SCHEMA);
+        }
+        if (null != schema) {
+            return schema;
+        }
+        return null;
     }
 
     @Override
@@ -220,6 +246,92 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         return retVal;
     }
 
+
+    @JsonIgnore
+    public String getDataAsJson() {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        Schema schema = (null != this.schema) ? this.schema : this.inferSchema();
+        try {
+            ensureDataLoaded();
+        } catch (Exception e) {
+            throw new DataPackageException(e);
+        }
+
+        for (Table table : tables) {
+            Iterator<Object> iter = table.iterator(false, false, true, false);
+            iter.forEachRemaining((rec) -> {
+                Object[] row = (Object[]) rec;
+                Map<String, Object> obj = new LinkedHashMap<>();
+                int i = 0;
+                for (Field field : schema.getFields()) {
+                    Object s = row[i];
+                    obj.put(field.getName(), field.formatValueForJson(s));
+                    i++;
+                }
+                rows.add(obj);
+            });
+        }
+
+        String retVal;
+        ObjectMapper mapper = JsonUtil.getInstance().getMapper();
+        try {
+            retVal = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(rows);
+        } catch (JsonProcessingException ex) {
+            throw new JsonSerializingException(ex);
+        }
+        return retVal;
+    }
+
+    @JsonIgnore
+    public String getDataAsCsv() {
+        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
+        Schema schema = (null != this.schema) ? this.schema : inferSchema();
+
+        return getDataAsCsv(lDialect, schema);
+    }
+
+    public String getDataAsCsv(Dialect dialect, Schema schema) {
+        StringBuilder out = new StringBuilder();
+        try {
+            ensureDataLoaded();
+            if (null == schema) {
+                return getDataAsCsv(dialect, inferSchema());
+            }
+            CSVFormat locFormat = dialect.toCsvFormat();
+            locFormat = locFormat.builder().setHeader(schema.getHeaders()).get();
+            CSVPrinter csvPrinter = new CSVPrinter(out, locFormat);
+            String[] headerNames = schema.getHeaders();
+
+            for (Table table : tables) {
+                String[] headers = table.getHeaders();
+                if (null == headerNames) {
+                    headerNames = headers;
+                }
+                Map<Integer, Integer> mapping = TableSchemaUtil.createSchemaHeaderMapping(
+                        headers,
+                        headerNames,
+                        table.getTableDataSource().hasReliableHeaders());
+
+                appendCSVDataToPrinter(table, mapping, schema, csvPrinter);
+            }
+
+            csvPrinter.close();
+        } catch (IOException ex) {
+            throw new TableIOException(ex);
+        } catch (Exception e) {
+            throw new DataPackageException(e);
+        }
+        String result = out.toString();
+        if (result.endsWith("\n")) {
+            result = result.substring(0, result.length() - 1);
+        }
+        if (result.endsWith("\r")) {
+            result = result.substring(0, result.length() - 1);
+        }
+        return result;
+    }
+
+
     @Override
     public <C> List<C> getData(Class<C> beanClass)  throws Exception {
         List<C> retVal = new ArrayList<C>();
@@ -308,9 +420,6 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                     }
 
                 }
-
-                System.out.println("Data: "+data);
-
             } catch (Exception e) {
                 throw new DataPackageValidationException("Error reading data with relations: " + e.getMessage(), e);
             }
@@ -393,7 +502,6 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         }
         return json.toString();
     }
-
 
 
     public void writeSchema(Path parentFilePath) throws IOException {
@@ -558,21 +666,25 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     }
 
     @Override
+    @JsonProperty(JSON_KEY_FORMAT)
     public String getFormat() {
         return format;
     }
 
     @Override
+    @JsonProperty(JSON_KEY_FORMAT)
     public void setFormat(String format) {
         this.format = format;
     }
 
     @Override
+    @JsonIgnore
     public Schema getSchema(){
         return this.schema;
     }
 
     @Override
+    @JsonIgnore
     public void setSchema(Schema schema) {
         this.schema = schema;
     }
@@ -691,5 +803,35 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         try (Writer wr = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8)) {
             t.writeCsv(wr, dialect.toCsvFormat());
         }
+    }
+
+    /**
+     * Append the data to a {@link org.apache.commons.csv.CSVPrinter}. Column sorting is according to the mapping
+     * @param mapping the mapping of the column numbers in the CSV file to the column numbers in the data source
+     * @param schema the Schema to use for formatting the data
+     * @param csvPrinter the CSVPrinter to write to
+     */
+    private void appendCSVDataToPrinter(Table table, Map<Integer, Integer> mapping, Schema schema, CSVPrinter csvPrinter) {
+        Iterator<Object> iter = table.iterator(false, false, true, false);
+        iter.forEachRemaining((rec) -> {
+            Object[] row = (Object[])rec;
+            Object[] sortedRec = new Object[row.length];
+            for (int i = 0; i < row.length; i++) {
+                sortedRec[mapping.get(i)] = row[i];
+            }
+            List<String> obj = new ArrayList<>();
+            int i = 0;
+            for (Field field : schema.getFields()) {
+                Object s = sortedRec[i];
+                obj.add(field.formatValueAsString(s));
+                i++;
+            }
+
+            try {
+                csvPrinter.printRecord(obj);
+            } catch (Exception ex) {
+                throw new TableIOException(ex);
+            }
+        });
     }
 }

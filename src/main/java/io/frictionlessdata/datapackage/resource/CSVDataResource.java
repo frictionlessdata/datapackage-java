@@ -1,6 +1,10 @@
 package io.frictionlessdata.datapackage.resource;
 
-public class CSVDataResource<C> extends AbstractDataResource<String,C> {
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.frictionlessdata.datapackage.Profile;
+
+@JsonInclude(value= JsonInclude.Include. NON_EMPTY, content= JsonInclude.Include. NON_NULL)
+public class CSVDataResource extends AbstractDataResource<String> {
 
     public CSVDataResource(String name, String data) {
         super(name, data);
@@ -10,5 +14,10 @@ public class CSVDataResource<C> extends AbstractDataResource<String,C> {
     @Override
     String getResourceFormat() {
         return Resource.FORMAT_CSV;
+    }
+
+    @Override
+    public String getProfile() {
+        return Profile.PROFILE_TABULAR_DATA_RESOURCE;
     }
 }

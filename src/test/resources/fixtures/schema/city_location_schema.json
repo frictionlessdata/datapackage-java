@@ -1,0 +1,17 @@
+{
+  "fields": [
+    {
+      "name": "city",
+      "format": "default",
+      "description": "The city.",
+      "type": "string",
+      "title": "city"
+    },
+    {
+      "name": "location",
+      "description": "The geographic location.",
+      "type": "geopoint",
+      "title": "location"
+    }
+  ]
+}

@@ -1,19 +1,21 @@
 package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AbstractReferencebasedResource<T,C> extends AbstractResource<T> {
+@JsonInclude(value= JsonInclude.Include. NON_EMPTY, content= JsonInclude.Include. NON_NULL)
+public abstract class AbstractReferencebasedResource<T> extends AbstractResource<T> {
     Collection<T> paths;
 
     AbstractReferencebasedResource(String name, Collection<T> paths) {
@@ -30,8 +32,8 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
         return strings;
     }
 
-    @JsonIgnore
     @Override
+    @JsonIgnore
     public Object getRawData() throws IOException {
         // If the path(s) of data file/URLs has been set.
         if (paths != null){
@@ -55,7 +57,7 @@ public abstract class AbstractReferencebasedResource<T,C> extends AbstractResour
      if more than one path in our paths object, return a JSON array,
      else just that one object.
      */
-    @JsonIgnore
+    @JsonProperty(JSON_KEY_PATH)
     JsonNode getPathJson() {
         List<String> path = new ArrayList<>(getReferencesAsStrings());
         if (path.size() == 1) {

@@ -3,13 +3,11 @@ package io.frictionlessdata.datapackage;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.exception.ForeignKeyException;
-import io.frictionlessdata.tableschema.exception.TableValidationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

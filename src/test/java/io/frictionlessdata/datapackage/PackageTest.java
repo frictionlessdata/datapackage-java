@@ -14,9 +14,14 @@ import io.frictionlessdata.tableschema.field.DateField;
 import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
@@ -726,10 +731,7 @@ public class PackageTest {
     public void testMultiPathIterationForLocalFiles() throws Exception{
         Package pkg = this.getDataPackageFromFilePath(true);
         Resource resource = pkg.getResource("first-resource");
-        
-        // Set the profile to tabular data resource.
-        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
-        
+
         // Expected data.
         List<String[]> expectedData = this.getAllCityData();
         

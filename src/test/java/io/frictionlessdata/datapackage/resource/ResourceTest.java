@@ -1,9 +1,8 @@
 package io.frictionlessdata.datapackage.resource;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.PackageTest;
 import io.frictionlessdata.datapackage.Profile;
@@ -25,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Year;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.frictionlessdata.datapackage.Profile.*;
 import static io.frictionlessdata.datapackage.TestUtil.getTestDataDirectory;
@@ -175,9 +175,11 @@ public class ResourceTest {
             urls.add(new URL (file));
         }
         Resource resource = new URLbasedResource("coordinates", urls);
-        
+        Schema schema = Schema.fromJson(new File(getTestDataDirectory()
+                , "/fixtures/schema/city_location_schema.json"), true);
         // Set the profile to tabular data resource.
         resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+
         
         Iterator<String[]> iter = resource.objectArrayIterator();
         int expectedDataIndex = 0;
@@ -329,7 +331,7 @@ public class ResourceTest {
             "}" +
         "]";
 
-        JSONDataResource<String[]> resource = new JSONDataResource<>("population", jsonData);
+        JSONDataResource resource = new JSONDataResource("population", jsonData);
 
         //set a schema to guarantee the ordering of properties
         Schema schema = Schema.fromJson(new File(getBasePath(), "/schema/population_schema.json"), true);
@@ -380,7 +382,7 @@ public class ResourceTest {
                 "}" +
                 "]";
 
-        JSONDataResource<String[]> resource = new JSONDataResource<>("population", jsonData);
+        JSONDataResource resource = new JSONDataResource("population", jsonData);
 
         //set a schema to guarantee the ordering of properties
         Schema schema = Schema.fromJson(new File(getBasePath(), "/schema/population_schema_alternate.json"), true);
@@ -541,12 +543,13 @@ public class ResourceTest {
 
             // validate values match and types are as expected
             Assertions.assertEquals(refRow[0], testData.get(testDataColKeys.get(0))); //String value for city name
-            Assertions.assertEquals(Year.class, testData.get(testDataColKeys.get(1)).getClass());
+            Assertions.assertInstanceOf(Year.class, testData.get(testDataColKeys.get(1)));
             Assertions.assertEquals(refRow[1], ((Year)testData.get(testDataColKeys.get(1))).toString());//Year value for year
-            Assertions.assertEquals(BigInteger.class, testData.get(testDataColKeys.get(2)).getClass()); //String value for city name
+            Assertions.assertInstanceOf(BigInteger.class, testData.get(testDataColKeys.get(2))); //String value for city name
             Assertions.assertEquals(refRow[2], testData.get(testDataColKeys.get(2)).toString());//BigInteger value for population
         }
     }
+
     @Test
     @DisplayName("Test setting invalid 'profile' property, must throw")
     public void testSetInvalidProfile() throws Exception {
@@ -558,6 +561,97 @@ public class ResourceTest {
                 () -> resource.setProfile(PROFILE_TABULAR_DATA_PACKAGE));
         Assertions.assertDoesNotThrow(() -> resource.setProfile(PROFILE_DATA_RESOURCE_DEFAULT));
         Assertions.assertDoesNotThrow(() -> resource.setProfile(PROFILE_TABULAR_DATA_RESOURCE));
+    }
+
+    @Test
+    @DisplayName("Read a resource with 3 tables and get data as CSV")
+    public void testResourceToCsvDataFromMultipartFilePath() throws Exception {
+        String refStr = "city,location\n" +
+                "libreville,\"0.41,9.29\"\n" +
+                "dakar,\"14.71,-17.53\"\n" +
+                "ouagadougou,\"12.35,-1.67\"\n" +
+                "barranquilla,\"10.98,-74.88\"\n" +
+                "rio de janeiro,\"-22.91,-43.72\"\n" +
+                "cuidad de guatemala,\"14.62,-90.56\"\n" +
+                "london,\"51.5,-0.11\"\n" +
+                "paris,\"48.85,2.3\"\n" +
+                "rome,\"41.89,12.51\"";
+
+        String[] paths = new String[]{
+                "data/cities.csv",
+                "data/cities2.csv",
+                "data/cities3.csv"};
+        List<File> files = new ArrayList<>();
+        for (String file : paths) {
+            files.add(new File(file));
+        }
+        Resource resource = new FilebasedResource("coordinates", files, getBasePath());
+        Schema schema = Schema.fromJson(new File(getTestDataDirectory()
+                , "/fixtures/schema/city_location_schema.json"), true);
+        Dialect dialect = Dialect.DEFAULT;
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        resource.setSchema(schema);
+        resource.setDialect(dialect);
+
+        String dataAsCsv = resource.getDataAsCsv(dialect, schema);
+        Assertions.assertEquals(refStr.replaceAll("[\n\r]+", "\n"),
+                dataAsCsv.replaceAll("[\n\r]+", "\n"));
+    }
+
+
+    @Test
+    @DisplayName("Read a resource with 3 tables and get data as Json")
+    public void testResourceToJsonDataFromMultipartFilePath() throws Exception {
+        String refStr = "[ {\n" +
+                "  \"city\" : \"libreville\",\n" +
+                "  \"location\" : \"0.41,9.29\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"dakar\",\n" +
+                "  \"location\" : \"14.71,-17.53\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"ouagadougou\",\n" +
+                "  \"location\" : \"12.35,-1.67\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"barranquilla\",\n" +
+                "  \"location\" : \"10.98,-74.88\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"rio de janeiro\",\n" +
+                "  \"location\" : \"-22.91,-43.72\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"cuidad de guatemala\",\n" +
+                "  \"location\" : \"14.62,-90.56\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"london\",\n" +
+                "  \"location\" : \"51.5,-0.11\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"paris\",\n" +
+                "  \"location\" : \"48.85,2.3\"\n" +
+                "}, {\n" +
+                "  \"city\" : \"rome\",\n" +
+                "  \"location\" : \"41.89,12.51\"\n" +
+                "} ]";
+
+        String[] paths = new String[]{
+                "data/cities.csv",
+                "data/cities2.csv",
+                "data/cities3.csv"};
+        List<File> files = new ArrayList<>();
+        for (String file : paths) {
+            files.add(new File(file));
+        }
+        Resource resource = new FilebasedResource("coordinates", files, getBasePath());
+        Schema schema = Schema.fromJson(new File(getTestDataDirectory()
+                , "/fixtures/schema/city_location_schema.json"), true);
+        Dialect dialect = Dialect.DEFAULT;
+        // Set the profile to tabular data resource.
+        resource.setProfile(Profile.PROFILE_TABULAR_DATA_RESOURCE);
+        resource.setSchema(schema);
+        resource.setDialect(dialect);
+
+        String dataAsCsv = resource.getDataAsJson();
+        Assertions.assertEquals(refStr.replaceAll("[\n\r]+", "\n"),
+                dataAsCsv.replaceAll("[\n\r]+", "\n"));
     }
 
     private static Resource<?> buildResource(String relativeInPath) throws URISyntaxException {

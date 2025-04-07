@@ -3,14 +3,14 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.google.common.io.ByteStreams;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
 
-import java.io.*;
-import java.net.URL;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,8 +18,11 @@ import java.util.*;
 
 
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
-public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C> {
+public class FilebasedResource extends AbstractReferencebasedResource<File> {
+    @JsonIgnore
     private File basePath;
+
+    @JsonIgnore
     private boolean isInArchive;
 
     public FilebasedResource(String name, Collection<File> paths, File basePath, Charset encoding) {
@@ -78,6 +81,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     }
 
     @Override
+    @JsonIgnore
     byte[] getRawData(File input)  throws IOException {
         if (this.isInArchive) {
             String fileName = input.getPath().replaceAll("\\\\", "/");
@@ -104,6 +108,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
     }
 
     @Override
+    @JsonIgnore
     List<Table> readData () throws Exception{
         List<Table> tables;
         if (this.isInArchive) {
@@ -141,6 +146,7 @@ public class FilebasedResource<C> extends AbstractReferencebasedResource<File,C>
         return tables;
     }
 
+    @JsonIgnore
     public void setIsInArchive(boolean isInArchive) {
         this.isInArchive = isInArchive;
     }

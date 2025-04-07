@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
@@ -708,7 +709,8 @@ public class Package extends JSONBase{
             // this is ugly. If we encounter a DataResource which should be written to a file via
             // manual setting, do some trickery to not write the DataResource, but a curated version
             // to the package descriptor.
-            ObjectNode obj = (ObjectNode) JsonUtil.getInstance().createNode(resource.getJson());
+            ObjectMapper mapper = JsonUtil.getInstance().getMapper();
+            ObjectNode obj = mapper.convertValue(resource, ObjectNode.class);
             if ((resource instanceof AbstractDataResource) && (resource.shouldSerializeToFile())) {
                 Set<String> datafileNames = resource.getDatafileNamesForWriting();
                 Set<String> outPaths = datafileNames.stream().map((r) -> r+"."+resource.getSerializationFormat()).collect(Collectors.toSet());
@@ -781,8 +783,7 @@ public class Package extends JSONBase{
                 this.errors.add(dpe);
             }
         }
-        Schema schema = buildSchema (jsonNodeSource, basePath, isArchivePackage);
-        setFromJson(jsonNodeSource, this, schema);
+        setFromJson(jsonNodeSource, this);
         this.setId(textValueOrNull(jsonNodeSource, Package.JSON_KEY_ID));
         this.setName(textValueOrNull(jsonNodeSource, Package.JSON_KEY_NAME));
         this.setVersion(textValueOrNull(jsonNodeSource, Package.JSON_KEY_VERSION));

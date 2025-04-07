@@ -1,21 +1,18 @@
 package io.frictionlessdata.datapackage;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
-import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
-
-import static io.frictionlessdata.datapackage.Validator.isValidUrl;
+import java.util.Collection;
+import java.util.Objects;
 
 @JsonPropertyOrder({
 	"title",

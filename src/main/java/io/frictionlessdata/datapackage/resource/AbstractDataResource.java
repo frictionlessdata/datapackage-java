@@ -1,6 +1,8 @@
 package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.Table;
@@ -18,7 +20,9 @@ import java.util.Set;
  *
  * @param <T> the data format, either CSV or JSON array
  */
-public abstract class AbstractDataResource<T,C> extends AbstractResource<T> {
+@JsonInclude(value= JsonInclude.Include. NON_EMPTY, content= JsonInclude.Include. NON_NULL)
+public abstract class AbstractDataResource<T> extends AbstractResource<T> {
+    @JsonIgnore
     T data;
 
     AbstractDataResource(String name, T data) {
@@ -33,8 +37,8 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T> {
     /**
      * @return the data
      */
-    @JsonIgnore
     @Override
+    @JsonProperty(JSON_KEY_DATA)
     public Object getRawData() throws IOException {
         return data;
     }
@@ -47,6 +51,7 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T> {
     }
 
     @Override
+    @JsonIgnore
     List<Table> readData () throws Exception{
         List<Table> tables = new ArrayList<>();
         if (data != null){
@@ -94,5 +99,6 @@ public abstract class AbstractDataResource<T,C> extends AbstractResource<T> {
         writeTableAsCsv(tables.get(0), lDialect, p);
     }
 
+    @JsonIgnore
     abstract String getResourceFormat();
 }

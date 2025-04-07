@@ -324,7 +324,7 @@ public class JsonDataResourceTest {
             "}" +
         "]";
 
-        JSONDataResource<String[]> resource = new JSONDataResource<>("population", jsonData);
+        JSONDataResource resource = new JSONDataResource("population", jsonData);
 
         //set a schema to guarantee the ordering of properties
         Schema schema = Schema.fromJson(new File(getBasePath(), "/schema/population_schema.json"), true);
@@ -375,7 +375,7 @@ public class JsonDataResourceTest {
                 "}" +
                 "]";
 
-        JSONDataResource<String[]> resource = new JSONDataResource<>("population", jsonData);
+        JSONDataResource resource = new JSONDataResource("population", jsonData);
 
         //set a schema to guarantee the ordering of properties
         Schema schema = Schema.fromJson(new File(getBasePath(), "/schema/population_schema_alternate.json"), true);

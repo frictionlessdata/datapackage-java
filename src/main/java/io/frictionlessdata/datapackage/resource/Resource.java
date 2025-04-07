@@ -1,13 +1,15 @@
 package io.frictionlessdata.datapackage.resource;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import io.frictionlessdata.datapackage.*;
+import io.frictionlessdata.datapackage.BaseInterface;
+import io.frictionlessdata.datapackage.Dialect;
+import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
@@ -30,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static io.frictionlessdata.datapackage.JSONBase.JSON_KEY_DATA;
 import static io.frictionlessdata.datapackage.Validator.isValidUrl;
 
 
@@ -39,6 +42,7 @@ import static io.frictionlessdata.datapackage.Validator.isValidUrl;
  *
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
+@JsonInclude(value= JsonInclude.Include. NON_EMPTY, content= JsonInclude.Include. NON_NULL)
 public interface Resource<T> extends BaseInterface {
 
     String FORMAT_CSV = "csv";
@@ -49,9 +53,8 @@ public interface Resource<T> extends BaseInterface {
      * @return Table(s)
      * @throws Exception if reading the tables fails.
      */
+    @JsonIgnore
     List<Table> getTables() throws Exception ;
-
-    String getJson();
 
     /**
      * Read all data from a Resource, unmapped and not transformed. This is useful for non-tabular resources
@@ -60,6 +63,7 @@ public interface Resource<T> extends BaseInterface {
      * @throws IOException if reading the data fails
      *
      */
+    @JsonProperty(JSON_KEY_DATA)
     public Object getRawData() throws IOException;
 
     /**
@@ -141,6 +145,42 @@ public interface Resource<T> extends BaseInterface {
      * @param beanClass the Bean class this BeanIterator expects
      */
     <C> List<C> getData(Class<C> beanClass) throws Exception;
+
+    /**
+     * Read all data from all Tables and return it as JSON.
+     *
+     * It ignores relations to other data sources.
+     *
+     * @return A JSON representation of the data as a String.
+     */
+    @JsonIgnore
+    String getDataAsJson();
+
+    /**
+     * Read all data from all Tables and return it as a String in the format of the Resource's Dialect.
+     * Column order will be deducted from the table data source.
+     *
+     * @return A CSV representation of the data as a String.
+     */
+    String getDataAsCsv();
+
+    /**
+     * Return the data of all Tables as a CSV string,
+     *
+     * - the `dialect` parameter decides on the CSV options. If it is null, then the file will
+     *    be written as RFC 4180 compliant CSV
+     * - the `schema` parameter decides on the order of the headers in the CSV file. If it is null,
+     *    the Schema of the Resource will be used, or if none, the order of the columns will be
+     *    the same as in the Tables.
+     *
+     * It ignores relations to other data sources.
+     *
+     * @param dialect the CSV dialect to use
+     * @param schema a Schema defining header row names in the order in which data should be exported
+     *
+     * @return A CSV representation of the data as a String.
+     */
+    String getDataAsCsv(Dialect dialect, Schema schema);
 
     /**
      * Write all the data in this resource into one or more
@@ -277,9 +317,10 @@ public interface Resource<T> extends BaseInterface {
 
     public Schema inferSchema() throws TypeInferringException;
 
+    @JsonIgnore
     boolean shouldSerializeToFile();
 
-
+    @JsonIgnore
     void setShouldSerializeToFile(boolean serializeToFile);
 
     /**
@@ -311,7 +352,7 @@ public interface Resource<T> extends BaseInterface {
             boolean isArchivePackage) throws IOException, DataPackageException, Exception {
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
         Object path = resourceJson.get(JSONBase.JSON_KEY_PATH);
-        Object data = resourceJson.get(JSONBase.JSON_KEY_DATA);
+        Object data = resourceJson.get(JSON_KEY_DATA);
         String format = textValueOrNull(resourceJson, JSONBase.JSON_KEY_FORMAT);
         Dialect dialect = JSONBase.buildDialect (resourceJson, basePath, isArchivePackage);
         Schema schema = JSONBase.buildSchema(resourceJson, basePath, isArchivePackage);
@@ -353,7 +394,8 @@ public interface Resource<T> extends BaseInterface {
                     "Invalid Resource. The path property or the data and format properties cannot be null.");
         }
         resource.setDialect(dialect);
-        JSONBase.setFromJson(resourceJson, resource, schema);
+        JSONBase.setFromJson(resourceJson, resource);
+        resource.setSchema(schema);
         return resource;
     }
 
