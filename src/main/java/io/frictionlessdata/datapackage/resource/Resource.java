@@ -162,6 +162,7 @@ public interface Resource<T> extends BaseInterface {
      *
      * @return A CSV representation of the data as a String.
      */
+    @JsonIgnore
     String getDataAsCsv();
 
     /**

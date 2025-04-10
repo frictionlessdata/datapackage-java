@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
@@ -64,6 +65,11 @@ public class Package extends JSONBase{
             JSON_KEY_KEYWORDS, JSONBase.JSON_KEY_SCHEMA, JSONBase.JSON_KEY_NAME, JSONBase.JSON_KEY_DATA,
             JSONBase.JSON_KEY_DIALECT, JSONBase.JSON_KEY_LICENSES, JSONBase.JSON_KEY_SOURCES, JSONBase.JSON_KEY_PROFILE);
 
+    /**
+     * The charset (encoding) for writing
+     */
+    @JsonIgnore
+    private final Charset charset = StandardCharsets.UTF_8;
 
     // Filesystem path pointing to the Package; either ZIP file or directory
     private Object basePath = null;
@@ -544,6 +550,19 @@ public class Package extends JSONBase{
         write (outputDir, null, zipCompressed);
     }
 
+    private File findOrCreateOutputDir(File outputDir, boolean zipCompressed) {
+        if (!zipCompressed) {
+            String fName = outputDir.getName().toLowerCase();
+            if ((fName.endsWith(".zip") || (fName.endsWith(".json")))) {
+                outputDir = outputDir.getParentFile();
+            }
+            if (!outputDir.exists()) {
+                outputDir.mkdirs();
+            }
+        }
+        return outputDir;
+    }
+
     /**
      * Write this datapackage to an output directory or ZIP file. Creates at least a
      * datapackage.json file and if this Package object holds file-based
@@ -558,10 +577,11 @@ public class Package extends JSONBase{
      */
     public void write (File outputDir, Consumer<Path> callback, boolean zipCompressed) throws Exception {
         this.isArchivePackage = zipCompressed;
-        FileSystem outFs = getTargetFileSystem(outputDir, zipCompressed);
+        File outDir = findOrCreateOutputDir(outputDir, zipCompressed);
+        FileSystem outFs = getTargetFileSystem(outDir, zipCompressed);
         String parentDirName = "";
         if (!zipCompressed) {
-            parentDirName = outputDir.getPath();
+            parentDirName = outDir.getPath();
         }
 
         // only file-based Resources need to be written to the DataPackage, URLs stay as
@@ -641,7 +661,7 @@ public class Package extends JSONBase{
      * @throws IOException if writing fails
      */
     public void writeJson (OutputStream output) throws IOException{
-        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
+        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output, charset))) {
             file.write(this.getJsonNode().toPrettyString());
         }
     }

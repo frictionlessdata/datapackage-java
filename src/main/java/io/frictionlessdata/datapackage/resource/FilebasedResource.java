@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -24,6 +25,12 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
 
     @JsonIgnore
     private boolean isInArchive;
+
+    @JsonIgnore
+    /**
+     * The charset (encoding) for writing
+     */
+    private final Charset charset = StandardCharsets.UTF_8;
 
     public FilebasedResource(String name, Collection<File> paths, File basePath, Charset encoding) {
         super(name, paths);
@@ -85,7 +92,7 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
     byte[] getRawData(File input)  throws IOException {
         if (this.isInArchive) {
             String fileName = input.getPath().replaceAll("\\\\", "/");
-            return getZipFileContentAsString (basePath.toPath(), fileName).getBytes();
+            return getZipFileContentAsString (basePath.toPath(), fileName).getBytes(charset);
         } else {
             File file = new File(this.basePath, input.getPath());
             try (InputStream inputStream = Files.newInputStream(file.toPath())) {

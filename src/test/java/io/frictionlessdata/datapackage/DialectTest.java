@@ -60,7 +60,7 @@ class DialectTest {
 
     @Test
     @DisplayName("clone Dialect")
-    void testCloneDialect() {
+    void testCloneDialect() throws CloneNotSupportedException {
         String json = "{ "+
                 " \"delimiter\":\"\t\", "+
                 " \"header\":\"false\", "+

@@ -41,12 +41,12 @@ import java.util.stream.Collectors;
 	"skipInitialSpace"
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Dialect {
+public class Dialect implements Cloneable {
 
     private FileReference<?> reference;
 
     // we construct one instance that will always keep the default values
-    public static Dialect DEFAULT = new Dialect(){
+    public static final Dialect DEFAULT = new Dialect(){
         private JsonNode JsonNode;
 
         public String getJson() {
@@ -141,7 +141,9 @@ public class Dialect {
         reference = ref;
     }
 
-    public Dialect clone() {
+    @Override
+    public Dialect clone() throws CloneNotSupportedException {
+        super.clone();
         Dialect retVal = new Dialect();
         retVal.delimiter = this.delimiter;
         retVal.escapeChar = this.escapeChar;
@@ -239,7 +241,7 @@ public class Dialect {
     }
 
     public void writeJson (OutputStream output) throws IOException{
-        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output))) {
+        try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
             file.write(this.getJson());
         }
     }
