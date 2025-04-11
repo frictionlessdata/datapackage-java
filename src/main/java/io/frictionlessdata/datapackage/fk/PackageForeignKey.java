@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * PackageForeignKey is a wrapper around the ForeignKey class to validate foreign keys
+ * PackageForeignKey is a wrapper around the {@link io.frictionlessdata.tableschema.fk.ForeignKey} class to validate foreign keys
  * in the context of a data package. It checks if the referenced resource and fields exist
  * in the data package and validates the foreign key constraints.
  *
@@ -36,9 +36,18 @@ public class PackageForeignKey {
         this.fk = fk;
     }
 
+    /**
+     * Formal validation of the foreign key. This method checks if the referenced resource and fields exist.
+     * It does not check the actual data in the tables.
+     *
+     * Verification of table data against the foreign key constraints is done in
+     * {@link io.frictionlessdata.datapackage.resource.AbstractResource#checkRelations}.
+     *
+     * @throws Exception if the foreign key relation is invalid.
+     */
     public void validate() throws Exception {
         Reference reference = fk.getReference();
-        // self-reference, this can be validated by the Tableschema {@link ForeignKey} class
+        // self-reference, this can be validated by the Tableschema {@link io.frictionlessdata.tableschema.fk.ForeignKey} class
         if (reference.getResource().equals("")) {
            for (Table table : resource.getTables()) {
                 fk.validate(table);

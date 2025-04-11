@@ -154,7 +154,7 @@ public class PackageTest {
 
         // We're not asserting the String value since the order of the JsonNode elements is not guaranteed.
         // Just compare the length of the String, should be enough.
-        JsonNode obj = createNode(dp.getJson());
+        JsonNode obj = createNode(dp.asJson());
         // a default 'profile' is being set, so the two packages will differ, unless a profile is added to the fixture data
         Assertions.assertEquals(obj.get("resources").size(), createNode(jsonString).get("resources").size());
         Assertions.assertEquals(obj.get("name"), createNode(jsonString).get("name"));
@@ -171,7 +171,7 @@ public class PackageTest {
         
         // Build DataPackage instance based on source file path.
         Package dp = new Package(new File(basePath.toFile(), sourceFileName).toPath(), true);
-        Assertions.assertNotNull(dp.getJson());
+        Assertions.assertNotNull(dp.asJson());
         
         // Check if base path was set properly;
         Assertions.assertEquals(basePath, dp.getBasePath());
@@ -194,7 +194,7 @@ public class PackageTest {
         // But could not resolve AbstractMethodError: https://stackoverflow.com/a/32696152/4030804
 
         Package dp = new Package(validUrl, true);
-        Assertions.assertNotNull(dp.getJson());
+        Assertions.assertNotNull(dp.asJson());
     }
     
     @Test
@@ -215,7 +215,7 @@ public class PackageTest {
                 "/master/src/test/resources/fixtures/simple_invalid_datapackage.json");
         
         Package dp = new Package(url, false);
-        Assertions.assertNotNull(dp.getJson());
+        Assertions.assertNotNull(dp.asJson());
     }
     
     @Test
@@ -381,7 +381,7 @@ public class PackageTest {
         Package dp = new Package(resourcePath, true);
 
         Resource<?> resource = dp.getResource("logo-svg");
-        Assertions.assertTrue(resource instanceof FilebasedResource);
+        Assertions.assertInstanceOf(FilebasedResource.class, resource);
         byte[] rawData = (byte[])resource.getRawData();
         String s = new String (rawData).replaceAll("[\n\r]+", "\n");
 
@@ -505,7 +505,7 @@ public class PackageTest {
     public void testCreateInvalidJSONResource() throws Exception {
         Package dp = this.getDataPackageFromFilePath(true);
         DataPackageException dpe = assertThrows(DataPackageException.class,
-                () -> {Resource res = new JSONDataResource(null, testResources.toString());
+                () -> {Resource res = new JSONDataResource(null, testResources);
                     dp.addResource(res);});
         Assertions.assertEquals("Invalid Resource, it does not have a name property.", dpe.getMessage());
     }
@@ -558,8 +558,8 @@ public class PackageTest {
         savedPackage.write(tempDirPath.toFile(), false);
 
         Package readPackage = new Package(tempDirPath.resolve(Package.DATAPACKAGE_FILENAME),false);
-        JsonNode readPackageJson = createNode(readPackage.getJson()) ;
-        JsonNode savedPackageJson = createNode(savedPackage.getJson()) ;
+        JsonNode readPackageJson = createNode(readPackage.asJson()) ;
+        JsonNode savedPackageJson = createNode(savedPackage.asJson()) ;
         Assertions.assertEquals(readPackageJson, savedPackageJson);
     }
     
@@ -576,8 +576,8 @@ public class PackageTest {
         Package readPackage = new Package(createdFile.toPath(), false);
         
         // Check if two data packages are have the same key/value pairs.
-        String expected = readPackage.getJson();
-        String actual = originalPackage.getJson();
+        String expected = readPackage.asJson();
+        String actual = originalPackage.asJson();
         Assertions.assertEquals(expected, actual);
     }
 

@@ -39,7 +39,14 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
             throw new DataPackageValidationException("Invalid Resource. " +
                     "The path property cannot be null for file-based Resources.");
         }
-        this.setSerializationFormat(sniffFormat(paths));
+        String format = sniffFormat(paths);
+        if (format.equals(TableDataSource.Format.FORMAT_JSON.getLabel())
+            || format.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
+            this.setSerializationFormat(format);
+        } else {
+            super.setFormat(format);
+        }
+
         this.basePath = basePath;
         for (File path : paths) {
             /* from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)
@@ -59,15 +66,30 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
         this(name, paths, basePath, Charset.defaultCharset());
     }
 
+
+    @JsonIgnore
+    public String getSerializationFormat() {
+        if (null != serializationFormat)
+            return serializationFormat;
+        if (null == format) {
+            return format;
+        }
+        return sniffFormat(paths);
+    }
+
     private static String sniffFormat(Collection<File> paths) {
         Set<String> foundFormats = new HashSet<>();
-        paths.forEach((p) -> {
+        for (File p : paths) {
             if (p.getName().toLowerCase().endsWith(TableDataSource.Format.FORMAT_CSV.getLabel())) {
                 foundFormats.add(TableDataSource.Format.FORMAT_CSV.getLabel());
             } else if (p.getName().toLowerCase().endsWith(TableDataSource.Format.FORMAT_JSON.getLabel())) {
                 foundFormats.add(TableDataSource.Format.FORMAT_JSON.getLabel());
+            } else {
+                // something else -> not a tabular resource
+                int pos = p.getName().lastIndexOf('.');
+                return p.getName().substring(pos + 1).toLowerCase();
             }
-        });
+        }
         if (foundFormats.size() > 1) {
             throw new DataPackageException("Resources cannot be mixed JSON/CSV");
         }

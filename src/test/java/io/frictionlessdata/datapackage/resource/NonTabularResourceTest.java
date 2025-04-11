@@ -2,7 +2,6 @@ package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.*;
@@ -23,8 +22,25 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.frictionlessdata.datapackage.Profile.PROFILE_DATA_PACKAGE_DEFAULT;
+import static io.frictionlessdata.datapackage.Profile.PROFILE_DATA_RESOURCE_DEFAULT;
 
 public class NonTabularResourceTest {
+
+    private static final String REFERENCE1 = "{\n" +
+            "  \"name\" : \"employees\",\n" +
+            "  \"profile\" : \"data-package\",\n" +
+            "  \"resources\" : [ {\n" +
+            "    \"name\" : \"employee-data\",\n" +
+            "    \"profile\" : \"tabular-data-resource\",\n" +
+            "    \"schema\" : \"schema.json\",\n" +
+            "    \"path\" : \"data/employees.csv\"\n" +
+            "  }, {\n" +
+            "    \"name\" : \"non-tabular-resource\",\n" +
+            "    \"profile\" : \"data-resource\",\n" +
+            "    \"format\" : \"pdf\",\n" +
+            "    \"path\" : \"data/sample.pdf\"\n" +
+            "  } ]\n" +
+            "}";
 
     private static final String REFERENCE2 = "{\n" +
             "  \"name\" : \"employees\",\n" +
@@ -36,23 +52,78 @@ public class NonTabularResourceTest {
             "    \"path\" : \"data/employees.csv\"\n" +
             "  }, {\n" +
             "    \"name\" : \"non-tabular-resource\",\n" +
-            "    \"format\" : \"pdf\",\n" +
-            "    \"path\" : \"data/sample.pdf\"\n" +
+            "    \"profile\" : \"data-resource\",\n" +
+            "    \"format\" : \"json\",\n" +
+            "    \"data\" : {\n" +
+            "      \"name\" : \"John Doe\",\n" +
+            "      \"age\" : 30\n" +
+            "    }\n" +
             "  } ]\n" +
             "}";
 
     @Test
     @DisplayName("Test adding a non-tabular resource, and saving package")
-    public void testSetProfile() throws Exception {
+    public void testNonTabularResource1() throws Exception {
         Path tempDirPath = Files.createTempDirectory("datapackage-");
         String fName = "/fixtures/datapackages/employees/datapackage.json";
         Path resourcePath = TestUtil.getResourcePath(fName);
         io.frictionlessdata.datapackage.Package dp = new Package(resourcePath, true);
         dp.setProfile(PROFILE_DATA_PACKAGE_DEFAULT);
 
-        byte[] testData = TestUtil.getResourceContent("/fixtures/files/sample.pdf");
-        Resource<?> testResource = new myNonTabularResource(testData, Path.of("data/sample.pdf"));
+        byte[] referenceData = TestUtil.getResourceContent("/fixtures/files/sample.pdf");
+        Resource<?> testResource = new myNonTabularResource(referenceData, Path.of("data/sample.pdf"));
         testResource.setShouldSerializeToFile(true);
+        dp.addResource(testResource);
+
+        // write the package with the new resource to the file system
+        File outFile = new File (tempDirPath.toFile(), "datapackage.json");
+        dp.write(outFile, false);
+
+        // read back the datapackage.json and compare to the expected output
+        String content = String.join("\n", Files.readAllLines(outFile.toPath()));
+        Assertions.assertEquals(REFERENCE1.replaceAll("[\n\r]+", "\n"), content.replaceAll("[\n\r]+", "\n"));
+
+        // read the package back in and check number of resourcces
+        Package round2Package = new Package(outFile.toPath(), true);
+        Assertions.assertEquals(2, round2Package.getResources().size());
+
+        // compare the non-tabular resource with expected values
+        Resource<?> round2Resource = round2Package.getResource("non-tabular-resource");
+        Assertions.assertEquals("data-resource", round2Resource.getProfile());
+        Assertions.assertArrayEquals(referenceData, (byte[]) round2Resource.getRawData());
+
+        // write the package out again
+        Path tempDirPathRound3 = Files.createTempDirectory("datapackage-");
+        File outFileRound3 = new File (tempDirPathRound3.toFile(), "datapackage.json");
+        round2Package.write(outFileRound3, false);
+
+        // read back the datapackage.json and compare to the expected output
+        String contentRound3 = String.join("\n", Files.readAllLines(outFileRound3.toPath()));
+        Assertions.assertEquals(REFERENCE1.replaceAll("[\n\r]+", "\n"), contentRound3.replaceAll("[\n\r]+", "\n"));
+
+        // read the package back in and check number of resourcces
+        Package round3Package = new Package(outFileRound3.toPath(), true);
+        Assertions.assertEquals(2, round3Package.getResources().size());
+
+        // compare the non-tabular resource with expected values
+        Resource<?> round3Resource = round3Package.getResource("non-tabular-resource");
+        Assertions.assertEquals("data-resource", round3Resource.getProfile());
+        Object rawData = round3Resource.getRawData();
+        Assertions.assertArrayEquals(referenceData, (byte[]) rawData);
+    }
+
+
+    @Test
+    @DisplayName("Test adding a non-tabular JSON resource, and saving package")
+    public void testNonTabularResource2() throws Exception {
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        String fName = "/fixtures/datapackages/employees/datapackage.json";
+        Path resourcePath = TestUtil.getResourcePath(fName);
+        io.frictionlessdata.datapackage.Package dp = new Package(resourcePath, true);
+        dp.setProfile(PROFILE_DATA_PACKAGE_DEFAULT);
+
+        ObjectNode referenceData = (ObjectNode) JsonUtil.getInstance().createNode("{\"name\": \"John Doe\", \"age\": 30}");
+        Resource<?> testResource = new JSONObjectResource("non-tabular-resource", referenceData);
         dp.addResource(testResource);
 
         File outFile = new File (tempDirPath.toFile(), "datapackage.json");
@@ -60,6 +131,33 @@ public class NonTabularResourceTest {
 
         String content = String.join("\n", Files.readAllLines(outFile.toPath()));
         Assertions.assertEquals(REFERENCE2.replaceAll("[\n\r]+", "\n"), content.replaceAll("[\n\r]+", "\n"));
+
+        Package round2Package = new Package(outFile.toPath(), true);
+        Assertions.assertEquals(2, round2Package.getResources().size());
+        Assertions.assertEquals("non-tabular-resource", round2Package.getResources().get(1).getName());
+        Assertions.assertEquals("data-resource", round2Package.getResources().get(1).getProfile());
+        Assertions.assertEquals("json", round2Package.getResources().get(1).getFormat());
+        Assertions.assertEquals(referenceData, round2Package.getResources().get(1).getRawData());
+
+        // write the package out again
+        Path tempDirPathRound3 = Files.createTempDirectory("datapackage-");
+        File outFileRound3 = new File (tempDirPathRound3.toFile(), "datapackage.json");
+        round2Package.write(outFileRound3, false);
+
+        // read back the datapackage.json and compare to the expected output
+        String contentRound3 = String.join("\n", Files.readAllLines(outFileRound3.toPath()));
+        Assertions.assertEquals(REFERENCE2.replaceAll("[\n\r]+", "\n"), contentRound3.replaceAll("[\n\r]+", "\n"));
+
+        // read the package back in and check number of resourcces
+        Package round3Package = new Package(outFileRound3.toPath(), true);
+        Assertions.assertEquals(2, round3Package.getResources().size());
+
+        // compare the non-tabular resource with expected values
+        Resource<?> round3Resource = round3Package.getResource("non-tabular-resource");
+        Assertions.assertEquals("data-resource", round3Resource.getProfile());
+        Object rawData = round3Resource.getRawData();
+        Assertions.assertEquals(referenceData, rawData);
+
     }
 
 
@@ -222,7 +320,7 @@ public class NonTabularResourceTest {
 
         @Override
         public String getProfile() {
-            return super.getProfile();
+            return PROFILE_DATA_RESOURCE_DEFAULT;
         }
 
         @Override

@@ -7,10 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import io.frictionlessdata.datapackage.BaseInterface;
-import io.frictionlessdata.datapackage.Dialect;
-import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Package;
+import io.frictionlessdata.datapackage.*;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
@@ -355,6 +353,7 @@ public interface Resource<T> extends BaseInterface {
         Object path = resourceJson.get(JSONBase.JSON_KEY_PATH);
         Object data = resourceJson.get(JSON_KEY_DATA);
         String format = textValueOrNull(resourceJson, JSONBase.JSON_KEY_FORMAT);
+        String profile = textValueOrNull(resourceJson, JSONBase.JSON_KEY_PROFILE);
         Dialect dialect = JSONBase.buildDialect (resourceJson, basePath, isArchivePackage);
         Schema schema = JSONBase.buildSchema(resourceJson, basePath, isArchivePackage);
         String encoding = textValueOrNull(resourceJson, JSONBase.JSON_KEY_ENCODING);
@@ -375,16 +374,9 @@ public interface Resource<T> extends BaseInterface {
             // inlined data
         } else if (data != null){
             if (null == format) {
-                if (!(data instanceof ArrayNode)) {
-                    // from the spec: " a JSON string - in this case the format or
-                    // mediatype properties MUST be provided
-                    // https://specs.frictionlessdata.io/data-resource/#data-inline-data
-                    throw new DataPackageValidationException(
-                            "Invalid Resource. The format property cannot be null for inlined CSV data.");
-                }
-                resource = new JSONDataResource(name, data.toString());
+                resource = buildJsonResource(data, name, null, profile);
             } else if (format.equals(Resource.FORMAT_JSON))
-                resource = new JSONDataResource(name, data.toString());
+                resource = buildJsonResource(data, name, format, profile);
             else if (format.equals(Resource.FORMAT_CSV)) {
                 // data is in inline CSV format like "data": "A,B,C\n1,2,3\n4,5,6"
                 String dataString = ((TextNode)data).textValue().replaceAll("\\\\n", "\n");
@@ -397,6 +389,27 @@ public interface Resource<T> extends BaseInterface {
         resource.setDialect(dialect);
         JSONBase.setFromJson(resourceJson, resource);
         resource.setSchema(schema);
+        return resource;
+    }
+
+    private static AbstractResource buildJsonResource(Object data, String name, String format, String profile) {
+        AbstractResource resource = null;
+        if ((data instanceof ArrayNode)) {
+            resource = new JSONDataResource(name, (ArrayNode)data);
+        } else {
+            if (profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE) && (StringUtils.isEmpty(format))) {
+                // from the spec: " a JSON string - in this case the format or
+                // mediatype properties MUST be provided
+                // https://specs.frictionlessdata.io/data-resource/#data-inline-data
+                throw new DataPackageValidationException(
+                        "Invalid Resource. The format property cannot be null for inlined CSV data.");
+            } else if ((data instanceof ObjectNode)) {
+                resource = new JSONObjectResource(name, (ObjectNode)data);
+            } else {
+                throw new DataPackageValidationException(
+                        "Invalid Resource. No implementation for inline data of type " + data.getClass().getSimpleName());
+            }
+        }
         return resource;
     }
 

@@ -93,6 +93,6 @@ class DialectTest {
         String defaultJson = "{\"caseSensitiveHeader\":false,\"quoteChar\":\"\\\"\",\"doubleQuote\":true," +
                 "\"delimiter\":\",\",\"lineTerminator\":\"\\r\\n\",\"nullSequence\":\"\"," +
                 "\"header\":true,\"csvddfVersion\":1.2,\"skipInitialSpace\":true}";
-        Assertions.assertEquals(defaultJson, Dialect.DEFAULT.getJson());
+        Assertions.assertEquals(defaultJson, Dialect.DEFAULT.asJson());
     }
 }

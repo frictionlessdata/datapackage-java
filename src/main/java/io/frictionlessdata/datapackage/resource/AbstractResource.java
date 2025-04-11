@@ -34,6 +34,7 @@ import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URI;
@@ -67,7 +68,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     boolean serializeToFile = true;
 
     @JsonIgnore
-    private String serializationFormat;
+    String serializationFormat;
 
     @JsonIgnore
     final List<DataPackageValidationException> errors = new ArrayList<>();
@@ -398,7 +399,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                     for (String key : row.keySet()) {
                         for (PackageForeignKey fk : map.keySet()) {
                             if (fk.getForeignKey().getFieldNames().contains(key)) {
-                                List<Object>refData = (List<Object>) map.get(fk);
+                                List<Object>refData = map.get(fk);
                                 Map<String, String> fieldMapping = fk.getForeignKey().getFieldMapping();
                                 String refFieldName = fieldMapping.get(key);
                                 Object fkVal = row.get(key);
@@ -413,7 +414,11 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                                     }
                                 }
                                 if (!found) {
-                                    throw new ForeignKeyException("Foreign key validation failed: " + fk.getForeignKey().getFieldNames() + " -> " + fk.getForeignKey().getReference().getFieldNames() + ": '" + fkVal + "' not found in resource '"+fk.getForeignKey().getReference().getResource()+"'.");
+                                    throw new ForeignKeyException("Foreign key validation failed: "
+                                            + fk.getForeignKey().getFieldNames() + " -> "
+                                            + fk.getForeignKey().getReference().getFieldNames() + ": '"
+                                            + fkVal + "' not found in resource '"
+                                            + fk.getForeignKey().getReference().getResource()+"'.");
                                 }
                             }
                         }
@@ -442,67 +447,6 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
             }
         }
     }
-
-    /**
-     * Get JSON representation of the object.
-     * @return a JSONObject representing the properties of this object
-     */
-    @JsonIgnore
-    public String getJson(){
-        ObjectNode json = (ObjectNode) JsonUtil.getInstance().createNode(this);
-
-        if (this instanceof URLbasedResource) {
-            json.set(JSON_KEY_PATH, ((URLbasedResource) this).getPathJson());
-        } else if (this instanceof FilebasedResource) {
-            if (this.shouldSerializeToFile()) {
-                json.set(JSON_KEY_PATH, ((FilebasedResource) this).getPathJson());
-            } else {
-                try {
-                    ArrayNode data = JsonUtil.getInstance().createArrayNode();
-                    List<Table> tables = readData();
-                    for (Table t : tables) {
-                        ArrayNode arr = JsonUtil.getInstance().createArrayNode(t.asJson());
-                        arr.elements().forEachRemaining(o->data.add(o));
-                    }
-                    json.set(JSON_KEY_DATA, data);
-                } catch (Exception ex) {
-                    throw new DataPackageException(ex);
-                }
-            }
-        } else if ((this instanceof AbstractDataResource)) {
-            if (this.shouldSerializeToFile()) {
-                //TODO implement storing only the path - and where to get it
-            } else {
-                try {
-                    json.set(JSON_KEY_DATA, JsonUtil.getInstance().createNode(this.getRawData()));
-                } catch (IOException e) {
-                    throw new DataPackageException(e);
-                }
-            }
-        }
-
-        String schemaObj = originalReferences.get(JSONBase.JSON_KEY_SCHEMA);
-        if ((null == schemaObj) && (null != schema)) {
-            if (null != schema.getReference()) {
-                schemaObj = JSON_KEY_SCHEMA + "/" + schema.getReference().getFileName();
-            }
-        }
-        if(Objects.nonNull(schemaObj)) {
-        	json.put(JSON_KEY_SCHEMA, schemaObj);
-        }
-
-        String dialectObj = originalReferences.get(JSONBase.JSON_KEY_DIALECT);
-        if ((null == dialectObj) && (null != dialect)) {
-            if (null != dialect.getReference()) {
-                dialectObj = JSON_KEY_DIALECT + "/" + dialect.getReference().getFileName();
-            }
-        }
-        if(Objects.nonNull(dialectObj)) {
-        	json.put(JSON_KEY_DIALECT, dialectObj);
-        }
-        return json.toString();
-    }
-
 
     public void writeSchema(Path parentFilePath) throws IOException {
         String relPath = getPathForWritingSchema();
@@ -547,7 +491,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         }
         Files.deleteIfExists(parentFilePath);
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(dialect.getJson());
+            wr.write(dialect.asJson());
         }
     }
 
@@ -778,11 +722,21 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                 Files.createDirectories(p);
             }
             Files.deleteIfExists(p);
-            try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
-                if (serializationFormat.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
-                    t.writeCsv(wr, lDialect.toCsvFormat());
-                } else if (serializationFormat.equals(TableDataSource.Format.FORMAT_JSON.getLabel())) {
-                    wr.write(t.asJson());
+
+            // if the serializationFormat is set, serialize the data to JSON/CSV file
+            if (null != serializationFormat) {
+                try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
+                    if (serializationFormat.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
+                        t.writeCsv(wr, lDialect.toCsvFormat());
+                    } else if (serializationFormat.equals(TableDataSource.Format.FORMAT_JSON.getLabel())) {
+                        wr.write(t.asJson());
+                    }
+                }
+            } else {
+                // if serializationFormat is not set (probably non-tabular data), serialize the data to a binary file
+                byte [] data = (byte[])this.getRawData();
+                try (FileOutputStream fos = new FileOutputStream(p.toFile())){
+                     fos.write(data);
                 }
             }
         }

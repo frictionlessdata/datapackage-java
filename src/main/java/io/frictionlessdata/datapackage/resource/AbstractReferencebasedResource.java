@@ -75,7 +75,7 @@ public abstract class AbstractReferencebasedResource<T> extends AbstractResource
     @Override
     @JsonIgnore
     public Set<String> getDatafileNamesForWriting() {
-        List<String> paths = new ArrayList<>(((FilebasedResource)this).getReferencesAsStrings());
+        List<String> paths = new ArrayList<>(this.getReferencesAsStrings());
         return paths.stream().map((p) -> {
             if (p.toLowerCase().endsWith("."+ TableDataSource.Format.FORMAT_CSV.getLabel())){
                 int i = p.toLowerCase().indexOf("."+TableDataSource.Format.FORMAT_CSV.getLabel());
@@ -83,8 +83,10 @@ public abstract class AbstractReferencebasedResource<T> extends AbstractResource
             } else if (p.toLowerCase().endsWith("."+TableDataSource.Format.FORMAT_JSON.getLabel())){
                 int i = p.toLowerCase().indexOf("."+TableDataSource.Format.FORMAT_JSON.getLabel());
                 return p.substring(0, i);
+            } else {
+                int i = p.lastIndexOf(".");
+                return p.substring(0, i);
             }
-            return p;
         }).collect(Collectors.toSet());
     }
 

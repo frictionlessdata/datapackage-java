@@ -49,7 +49,7 @@ public class Dialect implements Cloneable {
     public static final Dialect DEFAULT = new Dialect(){
         private JsonNode JsonNode;
 
-        public String getJson() {
+        public String asJson() {
             lazyCreate();
             return JsonNode.toString();
         }
@@ -225,7 +225,7 @@ public class Dialect implements Cloneable {
      * @return a String representing the properties of this object encoded as JSON
      */
     @JsonIgnore
-    public String getJson() {
+    public String asJson() {
         return getJsonNode(true).toString();
     }
 
@@ -242,7 +242,7 @@ public class Dialect implements Cloneable {
 
     public void writeJson (OutputStream output) throws IOException{
         try (BufferedWriter file = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
-            file.write(this.getJson());
+            file.write(this.asJson());
         }
     }
 
@@ -253,7 +253,7 @@ public class Dialect implements Cloneable {
         }
         Files.deleteIfExists(parentFilePath);
         try (Writer wr = Files.newBufferedWriter(parentFilePath, StandardCharsets.UTF_8)) {
-            wr.write(getJson());
+            wr.write(asJson());
         }
     }
 

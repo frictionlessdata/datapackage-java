@@ -18,7 +18,6 @@ import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.io.LocalFileReference;
-import io.frictionlessdata.tableschema.schema.Schema;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.collections.set.UnmodifiableSet;
@@ -384,6 +383,18 @@ public class Package extends JSONBase{
      * @return JSON-String representation of the Package
      */
     @JsonIgnore
+    public String asJson(){
+        return getJsonNode().toPrettyString();
+    }
+
+    /**
+     * Convert both the descriptor and all linked Resources to JSON and return them.
+     * @return JSON-String representation of the Package
+     *
+     * Deprecated, use {@link #asJson()} instead.
+     */
+    @Deprecated
+    @JsonIgnore
     public String getJson(){
         return getJsonNode().toPrettyString();
     }
@@ -711,7 +722,7 @@ public class Package extends JSONBase{
     }
 
     @JsonIgnore
-    protected ObjectNode getJsonNode(){
+    private ObjectNode getJsonNode(){
     	ObjectNode objectNode = (ObjectNode) JsonUtil.getInstance().createNode(this);
     	// update any manually set properties
     	this.jsonObject.fields().forEachRemaining(f->{

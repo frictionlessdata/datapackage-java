@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Abstract base class for all Resources that are based on directly set data, that is not on
+ * Abstract base class for all Resources that are based on directly set tabular data, that is not on
  * data specified as files or URLs.
  *
  * @param <T> the data format, either CSV or JSON array
@@ -77,26 +77,6 @@ public abstract class AbstractDataResource<T> extends AbstractResource<T> {
         Set<String> names = new HashSet<>();
         names.add(JSON_KEY_DATA+"/"+name);
         return names;
-    }
-
-    /**
-     * write out any resource to a CSV file. It creates a file with a file name taken from
-     * the Resource name. Subclasses might override this to write data differently (eg. to the
-     * same files it was read from.
-     * @param outputDir the directory to write to.
-     * @param dialect the CSV dialect to use for writing
-     * @throws Exception thrown if writing fails.
-     */
-
-    public void writeDataAsCsv(Path outputDir, Dialect dialect) throws Exception {
-        Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
-        String fileName = super.getName()
-                .toLowerCase()
-                .replaceAll("\\W", "_")
-                +".csv";
-        List<Table> tables = getTables();
-        Path p = outputDir.resolve(fileName);
-        writeTableAsCsv(tables.get(0), lDialect, p);
     }
 
     @JsonIgnore
