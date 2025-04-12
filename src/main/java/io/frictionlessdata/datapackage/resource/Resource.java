@@ -397,7 +397,7 @@ public interface Resource<T> extends BaseInterface {
         if ((data instanceof ArrayNode)) {
             resource = new JSONDataResource(name, (ArrayNode)data);
         } else {
-            if (profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE) && (StringUtils.isEmpty(format))) {
+            if ((null != profile) && profile.equalsIgnoreCase(Profile.PROFILE_TABULAR_DATA_RESOURCE) && (StringUtils.isEmpty(format))) {
                 // from the spec: " a JSON string - in this case the format or
                 // mediatype properties MUST be provided
                 // https://specs.frictionlessdata.io/data-resource/#data-inline-data
