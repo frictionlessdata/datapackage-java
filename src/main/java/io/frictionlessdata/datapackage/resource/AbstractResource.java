@@ -91,6 +91,17 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         return null;
     }
 
+    @JsonProperty(JSON_KEY_DIALECT)
+    public Object getDialectForJson() {
+        if (originalReferences.containsKey(JSON_KEY_DIALECT)) {
+            return originalReferences.get(JSON_KEY_DIALECT);
+        }
+        if (null != dialect) {
+            return dialect;
+        }
+        return null;
+    }
+
     @Override
     public Iterator<Object[]> objectArrayIterator() throws Exception{
         return this.objectArrayIterator(false, false);
@@ -484,6 +495,33 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         }
     }
 
+    public void writeDialect(Path parentFilePath) throws IOException {
+        if (null == dialect)
+            return;
+        String relPath = getPathForWritingDialect();
+        if (null == originalReferences.get(JSONBase.JSON_KEY_DIALECT) && Objects.nonNull(relPath)) {
+            originalReferences.put(JSONBase.JSON_KEY_DIALECT, relPath);
+        }
+
+        if (null != relPath) {
+            boolean isRemote;
+            try {
+                // don't try to write schema files that came from remote, let's just add the URL to the descriptor
+                URI uri = new URI(relPath);
+                isRemote = (null != uri.getScheme()) &&
+                        (uri.getScheme().equals("http") || uri.getScheme().equals("https"));
+                if (isRemote)
+                    return;
+            } catch (URISyntaxException ignored) {}
+            Path p;
+            if (parentFilePath.toString().isEmpty()) {
+                p = parentFilePath.getFileSystem().getPath(relPath);
+            } else {
+                p = parentFilePath.resolve(relPath);
+            }
+            writeDialect(p, dialect);
+        }
+    }
 
     private static void writeDialect(Path parentFilePath, Dialect dialect) throws IOException {
         if (!Files.exists(parentFilePath)) {
@@ -583,6 +621,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
      * @return the dialect
      */
     @Override
+    @JsonIgnore
     public Dialect getDialect() {
         return dialect;
     }

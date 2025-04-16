@@ -18,30 +18,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.frictionlessdata.datapackage.Profile.PROFILE_TABULAR_DATA_RESOURCE;
+
 /**
  * Ensure datapackages are written in a valid format and can be read back. Compare data to see it matches
  */
 public class RoundtripTest {
     private static final CSVFormat csvFormat = TableDataSource
             .getDefaultCsvFormat().builder().setDelimiter('\t').get();
-
-    private static final String resourceContent = "[\n" +
-            "    {\n" +
-            "\t  \"city\": \"london\",\n" +
-            "\t  \"year\": 2017,\n" +
-            "\t  \"population\": 8780000\n" +
-            "\t},\n" +
-            "\t{\n" +
-            "\t  \"city\": \"paris\",\n" +
-            "\t  \"year\": 2017,\n" +
-            "\t  \"population\": 2240000\n" +
-            "\t},\n" +
-            "\t{\n" +
-            "\t  \"city\": \"rome\",\n" +
-            "\t  \"year\": 2017,\n" +
-            "\t  \"population\": 2860000\n" +
-            "\t}\n" +
-            "  ]";
 
     @Test
     @DisplayName("Roundtrip test - write datapackage, read again and compare data")
@@ -87,16 +71,73 @@ public class RoundtripTest {
     void validateResourceRoundtrip() throws Exception {
         Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/roundtrip/datapackage.json");
         Package dp = new Package(resourcePath, true);
-        StringBuffer buf = new StringBuffer();
-        Resource v4Resource = dp.getResource("test2");
-        List<Object[]> testData = v4Resource.getData(false, false, true, false);
-        String data = createCSV(v4Resource.getHeaders(), testData);
-        Resource v5Resource = new CSVDataResource(v4Resource.getName(),data);
-        v5Resource.setDescription(v4Resource.getDescription());
-        v5Resource.setSchema(v4Resource.getSchema());
-        v5Resource.setSerializationFormat(Resource.FORMAT_CSV);
-        List data1 = v5Resource.getData(false, false, true, false);
-        Assertions.assertArrayEquals(testData.toArray(), data1.toArray());
+        Resource referenceResource = dp.getResource("test2");
+        List<Object[]> referenceData = referenceResource.getData(false, false, true, false);
+        String data = createCSV(referenceResource.getHeaders(), referenceData);
+        Resource newResource = new CSVDataResource(referenceResource.getName(),data);
+        newResource.setDescription(referenceResource.getDescription());
+        newResource.setSchema(referenceResource.getSchema());
+        newResource.setSerializationFormat(Resource.FORMAT_CSV);
+        List testData = newResource.getData(false, false, true, false);
+        Assertions.assertArrayEquals(referenceData.toArray(), testData.toArray());
+    }
+
+    @Test
+    @DisplayName("Create data resource, compare descriptor")
+    void validateCreateResourceDescriptorRoundtrip() throws Exception {
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/roundtrip/datapackage.json");
+        Package pkg = new Package(resourcePath, true);
+        JSONDataResource resource = new JSONDataResource("test3", resourceContent);
+        resource.setSchema(Schema.fromJson(
+                new File(TestUtil.getBasePath().toFile(), "/schema/population_schema.json"), true));
+
+        resource.setShouldSerializeToFile(false);
+        resource.setSerializationFormat(Resource.FORMAT_CSV);
+        resource.setDialect(Dialect.fromCsvFormat(csvFormat));
+        resource.setProfile(PROFILE_TABULAR_DATA_RESOURCE);
+        resource.setEncoding("utf-8");
+        pkg.addResource(resource);
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        File createdFile = new File(tempDirPath.toFile(), "test_save_datapackage.zip");
+        pkg.write(createdFile, true);
+        System.out.println(tempDirPath);
+
+        // create new Package from the serialized form and check they are equal
+        Package testPkg = new Package(createdFile.toPath(), true);
+        String json = testPkg.asJson();
+        Assertions.assertEquals(
+                descriptorContentInlined.replaceAll("[\n\r]+", "\n"),
+                json.replaceAll("[\n\r]+", "\n")
+        );
+    }
+
+
+    @Test
+    @DisplayName("Create data resource and make it write to file, compare descriptor")
+    void validateCreateResourceDescriptorRoundtrip2() throws Exception {
+        Path resourcePath = TestUtil.getResourcePath("/fixtures/datapackages/roundtrip/datapackage.json");
+        Package pkg = new Package(resourcePath, true);
+        JSONDataResource resource = new JSONDataResource("test3", resourceContent);
+        resource.setSchema(Schema.fromJson(
+                new File(TestUtil.getBasePath().toFile(), "/schema/population_schema.json"), true));
+
+        resource.setShouldSerializeToFile(true);
+        resource.setSerializationFormat(Resource.FORMAT_CSV);
+        resource.setDialect(Dialect.fromCsvFormat(csvFormat));
+        resource.setProfile(PROFILE_TABULAR_DATA_RESOURCE);
+        resource.setEncoding("utf-8");
+        pkg.addResource(resource);
+        Path tempDirPath = Files.createTempDirectory("datapackage-");
+        File createdFile = new File(tempDirPath.toFile(), "test_save_datapackage.zip");
+        pkg.write(createdFile, true);
+
+        // create new Package from the serialized form and check they are equal
+        Package testPkg = new Package(createdFile.toPath(), true);
+        String json = testPkg.asJson();
+        Assertions.assertEquals(
+                descriptorContent.replaceAll("[\n\r]+", "\n"),
+                json.replaceAll("[\n\r]+", "\n")
+        );
     }
 
     private static String createCSV(String[] headers, List<Object[]> data) {
@@ -111,4 +152,103 @@ public class RoundtripTest {
         }
         return sb.toString();
     }
+
+
+    private static final String resourceContent = "[\n" +
+            "    {\n" +
+            "\t  \"city\": \"london\",\n" +
+            "\t  \"year\": 2017,\n" +
+            "\t  \"population\": 8780000\n" +
+            "\t},\n" +
+            "\t{\n" +
+            "\t  \"city\": \"paris\",\n" +
+            "\t  \"year\": 2017,\n" +
+            "\t  \"population\": 2240000\n" +
+            "\t},\n" +
+            "\t{\n" +
+            "\t  \"city\": \"rome\",\n" +
+            "\t  \"year\": 2017,\n" +
+            "\t  \"population\": 2860000\n" +
+            "\t}\n" +
+            "  ]";
+
+    private static final String descriptorContent = "{\n" +
+            "  \"name\" : \"foreign-keys\",\n" +
+            "  \"profile\" : \"data-package\",\n" +
+            "  \"resources\" : [ {\n" +
+            "    \"name\" : \"test2\",\n" +
+            "    \"profile\" : \"data-resource\",\n" +
+            "    \"schema\" : \"schema/test2.json\",\n" +
+            "    \"path\" : \"data/test2.csv\"\n" +
+            "  }, {\n" +
+            "    \"name\" : \"test3\",\n" +
+            "    \"profile\" : \"tabular-data-resource\",\n" +
+            "    \"encoding\" : \"utf-8\",\n" +
+            "    \"dialect\" : \"dialect/test3.json\",\n" +
+            "    \"schema\" : \"schema/population_schema.json\",\n" +
+            "    \"path\" : \"data/test3.csv\"\n" +
+            "  } ]\n" +
+            "}";
+
+
+    private static String descriptorContentInlined ="{\n" +
+            "  \"name\" : \"foreign-keys\",\n" +
+            "  \"profile\" : \"data-package\",\n" +
+            "  \"resources\" : [ {\n" +
+            "    \"name\" : \"test2\",\n" +
+            "    \"profile\" : \"data-resource\",\n" +
+            "    \"schema\" : \"schema/test2.json\",\n" +
+            "    \"path\" : \"data/test2.csv\"\n" +
+            "  }, {\n" +
+            "    \"name\" : \"test3\",\n" +
+            "    \"profile\" : \"tabular-data-resource\",\n" +
+            "    \"encoding\" : \"utf-8\",\n" +
+            "    \"format\" : \"json\",\n" +
+            "    \"dialect\" : {\n" +
+            "      \"caseSensitiveHeader\" : false,\n" +
+            "      \"quoteChar\" : \"\\\"\",\n" +
+            "      \"doubleQuote\" : true,\n" +
+            "      \"delimiter\" : \"\\t\",\n" +
+            "      \"lineTerminator\" : \"\\r\\n\",\n" +
+            "      \"nullSequence\" : \"\",\n" +
+            "      \"header\" : true,\n" +
+            "      \"csvddfVersion\" : 1.2,\n" +
+            "      \"skipInitialSpace\" : true\n" +
+            "    },\n" +
+            "    \"schema\" : {\n" +
+            "      \"fields\" : [ {\n" +
+            "        \"name\" : \"city\",\n" +
+            "        \"title\" : \"city\",\n" +
+            "        \"type\" : \"string\",\n" +
+            "        \"format\" : \"default\",\n" +
+            "        \"description\" : \"The city.\"\n" +
+            "      }, {\n" +
+            "        \"name\" : \"year\",\n" +
+            "        \"title\" : \"year\",\n" +
+            "        \"type\" : \"year\",\n" +
+            "        \"format\" : \"default\",\n" +
+            "        \"description\" : \"The year.\"\n" +
+            "      }, {\n" +
+            "        \"name\" : \"population\",\n" +
+            "        \"title\" : \"population\",\n" +
+            "        \"type\" : \"integer\",\n" +
+            "        \"format\" : \"default\",\n" +
+            "        \"description\" : \"The population.\"\n" +
+            "      } ]\n" +
+            "    },\n" +
+            "    \"data\" : [ {\n" +
+            "      \"city\" : \"london\",\n" +
+            "      \"year\" : 2017,\n" +
+            "      \"population\" : 8780000\n" +
+            "    }, {\n" +
+            "      \"city\" : \"paris\",\n" +
+            "      \"year\" : 2017,\n" +
+            "      \"population\" : 2240000\n" +
+            "    }, {\n" +
+            "      \"city\" : \"rome\",\n" +
+            "      \"year\" : 2017,\n" +
+            "      \"population\" : 2860000\n" +
+            "    } ]\n" +
+            "  } ]\n" +
+            "}";
 }

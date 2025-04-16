@@ -255,6 +255,10 @@ public class NonTabularResourceTest {
         }
 
         @Override
+        public void writeDialect(Path parentFilePath) throws IOException {
+        }
+
+        @Override
         public Iterator<Object[]> objectArrayIterator() {
             throw new UnsupportedOperationException("Not supported on non-tabular Resources");
         }

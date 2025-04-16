@@ -606,17 +606,17 @@ public class Package extends JSONBase{
         for (Resource r : resourceList) {
             r.writeData(outFs.getPath(parentDirName ));
             r.writeSchema(outFs.getPath(parentDirName));
+            r.writeDialect(outFs.getPath(parentDirName));
 
             // write out dialect file only if not null or URL
-            String dialectP = r.getPathForWritingDialect();
-            if (null != dialectP) {
-                Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
-                r.getDialect().writeDialect(dialectPath);
-            }
-            Dialect dia = r.getDialect();
+
+            /*Dialect dia = r.getDialect();
             if (null != dia) {
+                String dialectP = r.getPathForWritingDialect();
+                Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
+                dia.writeDialect(dialectPath);
                 dia.setReference(new LocalFileReference(new File(dialectP)));
-            }
+            }*/
         }
         writeDescriptor(outFs, parentDirName);
 
@@ -750,6 +750,8 @@ public class Package extends JSONBase{
                 } else {
                     obj.set(JSON_KEY_PATH, JsonUtil.getInstance().createArrayNode(outPaths));
                 }
+                // If a data resource should be saved to file, it should not be inlined as well
+                obj.remove(JSON_KEY_DATA);
                 obj.put(JSON_KEY_FORMAT, resource.getSerializationFormat());
             }
             obj.remove("originalReferences");

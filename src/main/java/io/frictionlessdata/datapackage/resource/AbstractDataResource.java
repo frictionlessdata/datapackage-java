@@ -34,9 +34,7 @@ public abstract class AbstractDataResource<T> extends AbstractResource<T> {
             throw new DataPackageException("Invalid Resource. The data property cannot be null for a Data-based Resource.");
     }
 
-    /**
-     * @return the data
-     */
+
     @Override
     @JsonProperty(JSON_KEY_DATA)
     public Object getRawData() throws IOException {

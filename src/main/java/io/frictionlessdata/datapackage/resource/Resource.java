@@ -210,6 +210,15 @@ public interface Resource<T> extends BaseInterface {
     void writeSchema(Path parentFilePath) throws IOException;
 
     /**
+     * Write the Resource {@link Dialect} to `outputDir`.
+     *
+     * @param parentFilePath the directory to write to. Code must create
+     *                  files as needed.
+     * @throws IOException if something fails while writing
+     */
+    void writeDialect(Path parentFilePath) throws IOException;
+
+    /**
      * Returns an Iterator that returns rows as object-arrays. Values in each column
      * are parsed and converted ("cast") to Java objects based on the Field definitions of the Schema.
      * @return Iterator returning table rows as Object Arrays
