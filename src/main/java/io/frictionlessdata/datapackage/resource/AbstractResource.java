@@ -32,12 +32,11 @@ import org.apache.commons.collections4.iterators.IteratorChain;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -774,8 +773,9 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
             String fileName = fName+"."+getSerializationFormat();
             Table t  = tables.get(cnt++);
             Path p;
+            FileSystem fileSystem = outputDir.getFileSystem();
             if (outputDir.toString().isEmpty()) {
-                p = outputDir.getFileSystem().getPath(fileName);
+                p = fileSystem.getPath(fileName);
             } else {
                 p = outputDir.resolve(fileName);
             }
@@ -796,9 +796,15 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
             } else {
                 // if serializationFormat is not set (probably non-tabular data), serialize the data to a binary file
                 byte [] data = (byte[])this.getRawData();
-                try (FileOutputStream fos = new FileOutputStream(p.toFile())){
-                     fos.write(data);
+                try (OutputStream out = Files.newOutputStream(p)) {
+                    out.write(data);
                 }
+                /*} else {
+                    try (FileOutputStream fos = new FileOutputStream(p.toFile())){
+                        fos.write(data);
+                    }
+                }*/
+
             }
         }
     }

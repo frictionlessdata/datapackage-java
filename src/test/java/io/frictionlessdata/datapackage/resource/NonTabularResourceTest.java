@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 
 import static io.frictionlessdata.datapackage.Profile.PROFILE_DATA_PACKAGE_DEFAULT;
 import static io.frictionlessdata.datapackage.Profile.PROFILE_DATA_RESOURCE_DEFAULT;
@@ -234,6 +235,122 @@ public class NonTabularResourceTest {
         Assertions.assertEquals(new String((byte[])referenceData), new String((byte[])rawData));
 
     }
+
+
+    @Test
+    @DisplayName("Test creating ZIP-compressed datapackage with PDF as FilebasedResource")
+    public void testZipCompressedDatapackageWithPdfResource() throws Exception {
+        // Create temporary directories
+        Path tempDirPath = Files.createTempDirectory("datapackage-source-");
+        Path tempOutputPath = Files.createTempDirectory("datapackage-output-");
+
+        // Copy PDF to temporary directory
+        byte[] pdfContent = TestUtil.getResourceContent("/fixtures/files/sample.pdf");
+        File pdfFile = new File(tempDirPath.toFile(), "sample.pdf");
+        Files.write(pdfFile.toPath(), pdfContent);
+
+        // Create FilebasedResource directly for the PDF
+        FilebasedResource pdfResource = new FilebasedResource(
+                "pdf-document",
+                List.of(new File("sample.pdf")),
+                tempDirPath.toFile()
+        );
+
+        // Create a package with the resource
+        List<Resource> resources = new ArrayList<>();
+        resources.add(pdfResource);
+        io.frictionlessdata.datapackage.Package pkg = new io.frictionlessdata.datapackage.Package(resources);
+        pkg.setName("pdf-package");
+        pkg.setProfile(Profile.PROFILE_DATA_PACKAGE_DEFAULT);
+
+        // Set default resource profile and format
+        pdfResource.setProfile(Profile.PROFILE_DATA_RESOURCE_DEFAULT);
+        pdfResource.setFormat("pdf");
+        pdfResource.setTitle("Sample PDF Document");
+        pdfResource.setDescription("A test PDF file");
+        pdfResource.setMediaType("application/pdf");
+        pdfResource.setEncoding("UTF-8");
+
+        // Write as ZIP-compressed package
+        File zipFile = new File(tempOutputPath.toFile(), "datapackage.zip");
+        pkg.write(zipFile, true); // true for compression
+
+        // Verify ZIP file was created
+        Assertions.assertTrue(zipFile.exists());
+        Assertions.assertTrue(zipFile.length() > 0);
+
+        // Read the package back from ZIP
+        io.frictionlessdata.datapackage.Package readPackage = new io.frictionlessdata.datapackage.Package(zipFile.toPath(), true);
+
+        // Verify package properties
+        Assertions.assertEquals("pdf-package", readPackage.getName());
+        Assertions.assertEquals(1, readPackage.getResources().size());
+
+        // Verify PDF resource
+        Resource<?> readResource = readPackage.getResource("pdf-document");
+        Assertions.assertNotNull(readResource);
+        Assertions.assertEquals(Profile.PROFILE_DATA_RESOURCE_DEFAULT, readResource.getProfile());
+        Assertions.assertEquals("pdf", readResource.getFormat());
+        Assertions.assertEquals("Sample PDF Document", readResource.getTitle());
+        Assertions.assertEquals("application/pdf", readResource.getMediaType());
+    }
+
+    @Test
+    @DisplayName("Test creating uncompressed datapackage with PDF as FilebasedResource")
+    public void testUnCompressedDatapackageWithPdfResource() throws Exception {
+        // Create temporary directories
+        Path tempDirPath = Files.createTempDirectory("datapackage-source-");
+        Path tempOutputPath = Files.createTempDirectory("datapackage-output-");
+
+        // Copy PDF to temporary directory
+        byte[] pdfContent = TestUtil.getResourceContent("/fixtures/files/sample.pdf");
+        File pdfFile = new File(tempDirPath.toFile(), "sample.pdf");
+        Files.write(pdfFile.toPath(), pdfContent);
+
+        // Create FilebasedResource directly for the PDF
+        FilebasedResource pdfResource = new FilebasedResource(
+                "pdf-document",
+                List.of(new File("sample.pdf")),
+                tempDirPath.toFile()
+        );
+
+        // Create a package with the resource
+        List<Resource> resources = new ArrayList<>();
+        resources.add(pdfResource);
+        io.frictionlessdata.datapackage.Package pkg = new io.frictionlessdata.datapackage.Package(resources);
+        pkg.setName("pdf-package");
+        pkg.setProfile(Profile.PROFILE_DATA_PACKAGE_DEFAULT);
+
+        // Set default resource profile and format
+        pdfResource.setProfile(Profile.PROFILE_DATA_RESOURCE_DEFAULT);
+        pdfResource.setFormat("pdf");
+        pdfResource.setTitle("Sample PDF Document");
+        pdfResource.setDescription("A test PDF file");
+        pdfResource.setMediaType("application/pdf");
+        pdfResource.setEncoding("UTF-8");
+
+        // Write as ZIP-compressed package
+        File packageFile = new File(tempOutputPath.toFile(), "datapackage");
+        pkg.write(packageFile, false); // false for compression
+
+        Assertions.assertTrue(packageFile.exists());;
+
+        // Read the package back from ZIP
+        io.frictionlessdata.datapackage.Package readPackage = new io.frictionlessdata.datapackage.Package(packageFile.toPath(), true);
+
+        // Verify package properties
+        Assertions.assertEquals("pdf-package", readPackage.getName());
+        Assertions.assertEquals(1, readPackage.getResources().size());
+
+        // Verify PDF resource
+        Resource<?> readResource = readPackage.getResource("pdf-document");
+        Assertions.assertNotNull(readResource);
+        Assertions.assertEquals(Profile.PROFILE_DATA_RESOURCE_DEFAULT, readResource.getProfile());
+        Assertions.assertEquals("pdf", readResource.getFormat());
+        Assertions.assertEquals("Sample PDF Document", readResource.getTitle());
+        Assertions.assertEquals("application/pdf", readResource.getMediaType());
+    }
+
 
     /**
      * A non-tabular resource
