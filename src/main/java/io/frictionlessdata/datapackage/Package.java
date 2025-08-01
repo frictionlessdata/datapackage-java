@@ -17,7 +17,6 @@ import io.frictionlessdata.datapackage.resource.AbstractReferencebasedResource;
 import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
-import io.frictionlessdata.tableschema.io.LocalFileReference;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.collections.list.UnmodifiableList;
 import org.apache.commons.collections.set.UnmodifiableSet;
@@ -607,16 +606,6 @@ public class Package extends JSONBase{
             r.writeData(outFs.getPath(parentDirName ));
             r.writeSchema(outFs.getPath(parentDirName));
             r.writeDialect(outFs.getPath(parentDirName));
-
-            // write out dialect file only if not null or URL
-
-            /*Dialect dia = r.getDialect();
-            if (null != dia) {
-                String dialectP = r.getPathForWritingDialect();
-                Path dialectPath = outFs.getPath(parentDirName + File.separator + dialectP);
-                dia.writeDialect(dialectPath);
-                dia.setReference(new LocalFileReference(new File(dialectP)));
-            }*/
         }
         writeDescriptor(outFs, parentDirName);
 
@@ -785,7 +774,7 @@ public class Package extends JSONBase{
                 ObjectNode resourceJson = (ObjectNode) resourcesJsonArray.get(i);
                 Resource resource = null;
                 try {
-                    resource = Resource.build(resourceJson, basePath, isArchivePackage);
+                    resource = Resource.fromJSON(resourceJson, basePath, isArchivePackage);
                 } catch (DataPackageException dpe) {
                     if(this.strictValidation){
                         this.jsonObject = null;

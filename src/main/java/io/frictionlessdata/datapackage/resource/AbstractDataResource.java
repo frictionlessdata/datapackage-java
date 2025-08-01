@@ -3,12 +3,12 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.frictionlessdata.datapackage.Dialect;
+import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -76,6 +76,28 @@ public abstract class AbstractDataResource<T> extends AbstractResource<T> {
         names.add(JSON_KEY_DATA+"/"+name);
         return names;
     }
+
+    @Override
+    public void validate(Package pkg) throws DataPackageValidationException {
+        super.validate(pkg);
+        try {
+            if (getRawData() == null) {
+                throw new DataPackageValidationException("Data resource must have data");
+            }
+
+            if (getFormat() == null) {
+                throw new DataPackageValidationException("Data resource must specify a format");
+            }
+        } catch (Exception ex) {
+            if (ex instanceof DataPackageValidationException) {
+                errors.add((DataPackageValidationException) ex);
+            }
+            else {
+                errors.add(new DataPackageValidationException(ex));
+            }
+        }
+    }
+
 
     @JsonIgnore
     abstract String getResourceFormat();

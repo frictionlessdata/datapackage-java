@@ -6,8 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Package;
@@ -443,9 +441,33 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     }
 
     public void validate(Package pkg)  {
-        if (null == tables)
-            return;
+
         try {
+            // Validate required fields
+            if (getName() == null || getName().trim().isEmpty()) {
+                throw new DataPackageValidationException("Resource must have a name");
+            }
+
+            // Validate name format (alphanumeric, dash, underscore only)
+            if (!getName().matches("^[a-zA-Z0-9_-]+$")) {
+                throw new DataPackageValidationException("Resource name must contain only alphanumeric characters, dashes, and underscores");
+            }
+
+            // Validate profile
+            String profile = getProfile();
+            if (profile != null && !isValidProfile(profile)) {
+                throw new DataPackageValidationException("Invalid resource profile: " + profile);
+            }
+
+            if (null != schema) {
+                try {
+                    schema.validate();
+                } catch (DataPackageValidationException e) {
+                    throw new DataPackageValidationException("Schema validation failed for resource " + getName() + ": " + e.getMessage(), e);
+                }
+            }
+            if (null == tables)
+                return;
             // will validate schema against data
             tables.forEach(Table::validate);
             checkRelations(pkg);
@@ -698,7 +720,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
 
     @Override
     public void setSerializationFormat(String format) {
-        if ((format.equals(TableDataSource.Format.FORMAT_JSON.getLabel()))
+        if ((null == format) || (format.equals(TableDataSource.Format.FORMAT_JSON.getLabel()))
             || format.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
             this.serializationFormat = format;
         } else
@@ -721,7 +743,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
 
     public abstract Set<String> getDatafileNamesForWriting();
 
-    private List<Table> ensureDataLoaded () throws Exception {
+    List<Table> ensureDataLoaded () throws Exception {
         if (null == tables) {
             tables = readData();
         }
@@ -780,6 +802,15 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
             }
         }
     }
+
+
+    private static boolean isValidProfile(String profile) {
+        return profile.equals(Profile.PROFILE_DATA_RESOURCE_DEFAULT) ||
+                profile.equals(Profile.PROFILE_TABULAR_DATA_RESOURCE) ||
+                profile.startsWith("http://") ||
+                profile.startsWith("https://");
+    }
+
 
     /**
      * Write the Table as CSV into a file inside `outputDir`.

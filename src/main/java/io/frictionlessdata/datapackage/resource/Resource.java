@@ -7,8 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.*;
+import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
@@ -38,6 +38,19 @@ import static io.frictionlessdata.datapackage.Validator.isValidUrl;
  * Interface for a Resource. The essence of a Data Resource is a locator for the data it describes.
  * A range of other properties can be declared to provide a richer set of metadata.
  *
+ * The various subclasses of Resource allow you to implement several resource types:
+ *
+ * 1. Child classes of `AbstractDataResource` - for inline data (CSV strings or JSON arrays). Will be serialized to JSON objects
+ *    in the datapackage.json
+ *    - `CSVDataResource` - for CSV string data
+ *    - `JSONDataResource` - for JSON array data
+ *
+ * 2. Child classes of `AbstractReferencebasedResource` - for external data references
+ *    - `FilebasedResource` - for local files
+ *    - `URLbasedResource` - for remote URLs
+ *
+ * 3. Non-tabular resources can be implemented by `JSONObjectResource` and custom implementations
+ *
  * Based on specs: http://frictionlessdata.io/specs/data-resource/
  */
 @JsonInclude(value= JsonInclude.Include. NON_EMPTY, content= JsonInclude.Include. NON_NULL)
@@ -45,6 +58,16 @@ public interface Resource<T> extends BaseInterface {
 
     String FORMAT_CSV = "csv";
     String FORMAT_JSON = "json";
+
+    /**
+     * Create a new ResourceBuilder that allows for building Resources
+     * @param resourceName the name of the resource
+     * @return a new ResourceBuilder instance
+     */
+    static ResourceBuilder builder(String resourceName) {
+        return ResourceBuilder.create(resourceName);
+    }
+
 
     /**
      * Return the {@link Table} objects underlying the Resource.
@@ -354,7 +377,7 @@ public interface Resource<T> extends BaseInterface {
      * @throws Exception if other operation fails.
      */
 
-    static AbstractResource build(
+    static AbstractResource fromJSON(
             ObjectNode resourceJson,
             Object basePath,
             boolean isArchivePackage) throws IOException, DataPackageException, Exception {
@@ -573,5 +596,5 @@ public interface Resource<T> extends BaseInterface {
     	return source.has(fieldName) ? source.get(fieldName).asText() : null;
     }
 
-    void validate(Package pkg);
+    void validate(Package pkg) throws DataPackageValidationException;
 }

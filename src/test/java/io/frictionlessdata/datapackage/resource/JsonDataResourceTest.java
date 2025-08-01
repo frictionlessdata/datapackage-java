@@ -253,7 +253,7 @@ public class JsonDataResourceTest {
     @Test
     public void testBuildAndIterateDataFromCsvFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_csv_resource.json");
-        Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
+        Resource resource = Resource.fromJSON((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
@@ -280,7 +280,7 @@ public class JsonDataResourceTest {
     @Test
     public void testBuildAndIterateDataFromTabseparatedCsvFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_csv_resource_tabseparated.json");
-        Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
+        Resource resource = Resource.fromJSON((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();
@@ -410,7 +410,7 @@ public class JsonDataResourceTest {
     @Test
     public void testBuildAndIterateDataFromJSONFormat() throws Exception{
         String dataString = getFileContents("/fixtures/resource/valid_json_array_resource.json");
-        Resource resource = Resource.build((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
+        Resource resource = Resource.fromJSON((ObjectNode) JsonUtil.getInstance().createNode(dataString), getBasePath(), false);
 
         // Expected data.
         List<String[]> expectedData = this.getExpectedPopulationData();

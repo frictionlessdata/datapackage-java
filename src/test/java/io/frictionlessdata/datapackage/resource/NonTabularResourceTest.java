@@ -2,6 +2,7 @@ package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.*;
@@ -58,6 +59,23 @@ public class NonTabularResourceTest {
             "      \"name\" : \"John Doe\",\n" +
             "      \"age\" : 30\n" +
             "    }\n" +
+            "  } ]\n" +
+            "}";
+
+    private static final String REFERENCE3 = "{\n" +
+            "  \"name\" : \"employees\",\n" +
+            "  \"profile\" : \"data-package\",\n" +
+            "  \"resources\" : [ {\n" +
+            "    \"name\" : \"employee-data\",\n" +
+            "    \"profile\" : \"tabular-data-resource\",\n" +
+            "    \"schema\" : \"schema.json\",\n" +
+            "    \"path\" : \"data/employees.csv\"\n" +
+            "  }, {\n" +
+            "    \"name\" : \"non-tabular-resource\",\n" +
+            "    \"profile\" : \"data-resource\",\n" +
+            "    \"encoding\" : \"UTF-8\",\n" +
+            "    \"format\" : \"pdf\",\n" +
+            "    \"path\" : \"sample.pdf\"\n" +
             "  } ]\n" +
             "}";
 
@@ -160,7 +178,62 @@ public class NonTabularResourceTest {
 
     }
 
+    @Test
+    @DisplayName("Test adding a non-tabular file resource, and saving package")
+    public void testNonTabularResource3() throws Exception {
+        File tempDirPathData = Files.createTempDirectory("datapackage-").toFile();
+        String fName = "/fixtures/datapackages/employees/datapackage.json";
+        Path resourcePath = TestUtil.getResourcePath(fName);
+        io.frictionlessdata.datapackage.Package dp = new Package(resourcePath, true);
+        dp.setProfile(PROFILE_DATA_PACKAGE_DEFAULT);
 
+        byte[] referenceData = TestUtil.getResourceContent("/fixtures/files/sample.pdf");
+        String fileName = "sample.pdf";
+        File f = new File(tempDirPathData, fileName);
+        try (OutputStream os = Files.newOutputStream(f.toPath())) {
+            os.write(referenceData);
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing DOE setup to file: " + e.getMessage(), e);
+        }
+        FilebasedResource testResource = new FilebasedResource("non-tabular-resource", List.of(new File(fileName)), tempDirPathData);
+        testResource.setProfile(Profile.PROFILE_DATA_RESOURCE_DEFAULT);
+        testResource.setSerializationFormat(null);
+        dp.addResource(testResource);
+
+        File tempDirPath = Files.createTempDirectory("datapackage-").toFile();
+        File outFile = new File (tempDirPath, "datapackage.json");
+        dp.write(outFile, false);
+
+        String content = String.join("\n", Files.readAllLines(outFile.toPath()));
+        Assertions.assertEquals(REFERENCE3.replaceAll("[\n\r]+", "\n"), content.replaceAll("[\n\r]+", "\n"));
+
+        Package round2Package = new Package(outFile.toPath(), true);
+        Assertions.assertEquals(2, round2Package.getResources().size());
+        Assertions.assertEquals("non-tabular-resource", round2Package.getResources().get(1).getName());
+        Assertions.assertEquals("data-resource", round2Package.getResources().get(1).getProfile());
+        Assertions.assertEquals("pdf", round2Package.getResources().get(1).getFormat());
+        Assertions.assertEquals(new String((byte[])referenceData), new String((byte[])round2Package.getResources().get(1).getRawData()));
+
+        // write the package out again
+        Path tempDirPathRound3 = Files.createTempDirectory("datapackage-");
+        File outFileRound3 = new File (tempDirPathRound3.toFile(), "datapackage.json");
+        round2Package.write(outFileRound3, false);
+
+        // read back the datapackage.json and compare to the expected output
+        String contentRound3 = String.join("\n", Files.readAllLines(outFileRound3.toPath()));
+        Assertions.assertEquals(REFERENCE3.replaceAll("[\n\r]+", "\n"), contentRound3.replaceAll("[\n\r]+", "\n"));
+
+        // read the package back in and check number of resourcces
+        Package round3Package = new Package(outFileRound3.toPath(), true);
+        Assertions.assertEquals(2, round3Package.getResources().size());
+
+        // compare the non-tabular resource with expected values
+        Resource<?> round3Resource = round3Package.getResource("non-tabular-resource");
+        Assertions.assertEquals("data-resource", round3Resource.getProfile());
+        Object rawData = round3Resource.getRawData();
+        Assertions.assertEquals(new String((byte[])referenceData), new String((byte[])rawData));
+
+    }
 
     /**
      * A non-tabular resource

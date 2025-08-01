@@ -3,7 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import io.frictionlessdata.datapackage.exceptions.DataPackageException;
+import io.frictionlessdata.datapackage.Profile;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.tableschema.Table;
 import io.frictionlessdata.tableschema.tabledatasource.TableDataSource;
@@ -15,7 +15,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 
 @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_EMPTY )
@@ -26,10 +28,11 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
     @JsonIgnore
     private boolean isInArchive;
 
-    @JsonIgnore
+
     /**
      * The charset (encoding) for writing
      */
+    @JsonIgnore
     private final Charset charset = StandardCharsets.UTF_8;
 
     public FilebasedResource(String name, Collection<File> paths, File basePath, Charset encoding) {
@@ -77,27 +80,6 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
         return sniffFormat(paths);
     }
 
-    private static String sniffFormat(Collection<File> paths) {
-        Set<String> foundFormats = new HashSet<>();
-        for (File p : paths) {
-            if (p.getName().toLowerCase().endsWith(TableDataSource.Format.FORMAT_CSV.getLabel())) {
-                foundFormats.add(TableDataSource.Format.FORMAT_CSV.getLabel());
-            } else if (p.getName().toLowerCase().endsWith(TableDataSource.Format.FORMAT_JSON.getLabel())) {
-                foundFormats.add(TableDataSource.Format.FORMAT_JSON.getLabel());
-            } else {
-                // something else -> not a tabular resource
-                int pos = p.getName().lastIndexOf('.');
-                return p.getName().substring(pos + 1).toLowerCase();
-            }
-        }
-        if (foundFormats.size() > 1) {
-            throw new DataPackageException("Resources cannot be mixed JSON/CSV");
-        }
-        if (foundFormats.isEmpty())
-            return TableDataSource.Format.FORMAT_CSV.getLabel();
-        return foundFormats.iterator().next();
-    }
-
     public static FilebasedResource fromSource(String name, Collection<File> paths, File basePath, Charset encoding) {
         FilebasedResource r = new FilebasedResource(name, paths, basePath);
         r.encoding = encoding.name();
@@ -134,6 +116,16 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
         if (File.separator.equals("\\"))
             return reference.getPath().replaceAll("\\\\", "/");
         return reference.getPath();
+    }
+
+    @Override
+    @JsonIgnore
+    public String[] getHeaders() throws Exception{
+        if ((null != profile) && (profile.equals(Profile.PROFILE_DATA_PACKAGE_DEFAULT))) {
+            return null;
+        }
+        ensureDataLoaded();
+        return tables.get(0).getHeaders();
     }
 
     @Override
