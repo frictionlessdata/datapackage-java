@@ -74,7 +74,7 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
     public String getSerializationFormat() {
         if (null != serializationFormat)
             return serializationFormat;
-        if (null == format) {
+        if (null != format) {
             return format;
         }
         return sniffFormat(paths);

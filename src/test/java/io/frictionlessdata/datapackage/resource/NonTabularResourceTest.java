@@ -351,6 +351,70 @@ public class NonTabularResourceTest {
         Assertions.assertEquals("application/pdf", readResource.getMediaType());
     }
 
+    @Test
+    @DisplayName("Test creating ZIP-compressed datapackage with JSON ObjectNode as FilebasedResource")
+    public void testCreateAndReadZippedPackageWithJsonObject() throws Exception {
+        // Create temporary directories for source and output
+        Path tempDirPath = Files.createTempDirectory("datapackage-source-");
+        Path locPath = tempDirPath.resolve("data");
+        Files.createDirectories(locPath);
+        //Path tempOutputPath = Files.createTempDirectory("datapackage-output-");
+        Path tempOutputPath = tempDirPath;
+
+                // Create an ObjectNode and write it to a temporary file
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode jsonData = mapper.createObjectNode();
+        jsonData.put("key", "value");
+        jsonData.put("number", 123);
+        byte[] jsonBytes = mapper.writeValueAsBytes(jsonData);
+
+        File jsonFile = new File(locPath.toFile(), "data.json");
+        Files.write(jsonFile.toPath(), jsonBytes);
+
+        // Create a FilebasedResource for the JSON file
+        FilebasedResource jsonResource = new FilebasedResource(
+                "json-data",
+                List.of(new File("data/data.json")),
+                tempDirPath.toFile()
+        );
+
+        // Set resource properties
+        jsonResource.setProfile(Profile.PROFILE_DATA_RESOURCE_DEFAULT);
+        jsonResource.setFormat("json");
+        jsonResource.setMediaType("application/json");
+        jsonResource.setEncoding("UTF-8");
+
+        // Create a package with the resource
+        List<Resource> resources = new ArrayList<>();
+        resources.add(jsonResource);
+        Package pkg = new Package(resources);
+        pkg.setName("json-package");
+
+        // Write the package to a compressed ZIP file
+        File zipFile = new File(tempOutputPath.toFile(), "datapackage.zip");
+        pkg.write(zipFile, true);
+
+        // Verify the ZIP file was created
+        Assertions.assertTrue(zipFile.exists());
+        Assertions.assertTrue(zipFile.length() > 0);
+
+        // Read the package back from the ZIP file
+        Package readPackage = new Package(zipFile.toPath(), true);
+
+        // Verify package properties
+        Assertions.assertEquals("json-package", readPackage.getName());
+        Assertions.assertEquals(1, readPackage.getResources().size());
+
+        // Verify the JSON resource
+        Resource<?> readResource = readPackage.getResource("json-data");
+        Assertions.assertNotNull(readResource);
+        Assertions.assertEquals("application/json", readResource.getMediaType());
+
+        // Verify the content of the resource
+        byte[] readData = (byte[]) readResource.getRawData();
+        Assertions.assertArrayEquals(jsonBytes, readData);
+    }
+
 
     /**
      * A non-tabular resource

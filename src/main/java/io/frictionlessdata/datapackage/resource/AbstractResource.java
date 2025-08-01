@@ -765,13 +765,15 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
     @Override
     public void writeData(Path outputDir) throws Exception {
         Dialect lDialect = (null != dialect) ? dialect : Dialect.DEFAULT;
-        List<Table> tables = getTables();
+        boolean isNonTabular = ((profile != null) && (profile.equals(Profile.PROFILE_DATA_RESOURCE_DEFAULT)));
+        isNonTabular = (isNonTabular | (null == serializationFormat));
+        List<Table> tables = isNonTabular ? null : getTables();
+
         Set<String> paths = getDatafileNamesForWriting();
 
         int cnt = 0;
         for (String fName : paths) {
             String fileName = fName+"."+getSerializationFormat();
-            Table t  = tables.get(cnt++);
             Path p;
             FileSystem fileSystem = outputDir.getFileSystem();
             if (outputDir.toString().isEmpty()) {
@@ -784,8 +786,14 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
             }
             Files.deleteIfExists(p);
 
-            // if the serializationFormat is set, serialize the data to JSON/CSV file
-            if (null != serializationFormat) {
+
+            if (isNonTabular) {
+                byte [] data = (byte[])this.getRawData();
+                try (OutputStream out = Files.newOutputStream(p)) {
+                    out.write(data);
+                }
+            } else {
+                Table t  = tables.get(cnt++);
                 try (Writer wr = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {
                     if (serializationFormat.equals(TableDataSource.Format.FORMAT_CSV.getLabel())) {
                         t.writeCsv(wr, lDialect.toCsvFormat());
@@ -793,18 +801,6 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                         wr.write(t.asJson());
                     }
                 }
-            } else {
-                // if serializationFormat is not set (probably non-tabular data), serialize the data to a binary file
-                byte [] data = (byte[])this.getRawData();
-                try (OutputStream out = Files.newOutputStream(p)) {
-                    out.write(data);
-                }
-                /*} else {
-                    try (FileOutputStream fos = new FileOutputStream(p.toFile())){
-                        fos.write(data);
-                    }
-                }*/
-
             }
         }
     }
