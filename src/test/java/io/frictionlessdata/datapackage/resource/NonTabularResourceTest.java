@@ -413,6 +413,7 @@ public class NonTabularResourceTest {
         // Verify the content of the resource
         byte[] readData = (byte[]) readResource.getRawData();
         Assertions.assertArrayEquals(jsonBytes, readData);
+        Assertions.assertEquals("json", readResource.getFormat());
     }
 
 

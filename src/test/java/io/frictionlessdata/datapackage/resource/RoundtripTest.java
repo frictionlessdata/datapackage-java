@@ -183,6 +183,7 @@ public class RoundtripTest {
             "    \"name\" : \"test3\",\n" +
             "    \"profile\" : \"tabular-data-resource\",\n" +
             "    \"encoding\" : \"utf-8\",\n" +
+            "    \"format\" : \"csv\",\n"+
             "    \"dialect\" : \"dialect/test3.json\",\n" +
             "    \"schema\" : \"schema/population_schema.json\",\n" +
             "    \"path\" : \"data/test3.csv\"\n" +

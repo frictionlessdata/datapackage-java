@@ -400,6 +400,7 @@ public interface Resource<T> extends BaseInterface {
         if (path != null){
             Collection paths = fromJSON(path, basePath);
             resource = build(name, paths, basePath, charset);
+            resource.setFormat(format);
             if (resource instanceof FilebasedResource) {
                 ((FilebasedResource)resource).setIsInArchive(isArchivePackage);
             }
