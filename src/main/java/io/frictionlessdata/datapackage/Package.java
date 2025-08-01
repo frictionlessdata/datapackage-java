@@ -1002,6 +1002,9 @@ public class Package extends JSONBase{
 
     // https://stackoverflow.com/a/47595502/2535335
     private static boolean isArchive(File f) throws IOException {
+        if ((null == f) || (!f.exists()) || (!f.isFile())) {
+            return false;
+        }
         int fileSignature;
         RandomAccessFile raf = new RandomAccessFile(f, "r");
         fileSignature = raf.readInt();
