@@ -480,7 +480,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                 ExternalSort.mergeSortedFiles(tempChunks, sortedFile);
 
                 // Scan sorted file line-by-line for duplicates
-                try (BufferedReader reader = new BufferedReader(new FileReader(sortedFile))) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(sortedFile, StandardCharsets.UTF_8))) {
                     String prev = null;
                     String line;
                     while ((line = reader.readLine()) != null) {
