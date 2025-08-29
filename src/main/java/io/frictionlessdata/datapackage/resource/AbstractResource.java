@@ -411,6 +411,9 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                                 Map<String, String> fieldMapping = fk.getForeignKey().getFieldMapping();
                                 String refFieldName = fieldMapping.get(key);
                                 Object fkVal = row.get(key);
+                                if (fkVal == null) {
+                                    continue;
+                                }
                                 boolean found = false;
 
                                 for (Object refRow : refData) {
