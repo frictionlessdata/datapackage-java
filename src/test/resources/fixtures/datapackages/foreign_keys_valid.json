@@ -23,6 +23,11 @@
           "3",
           "Bayern",
           "Munich"
+        ],
+        [
+          "4",
+          "MadeUpFC",
+          null
         ]
       ],
       "schema": {
