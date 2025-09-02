@@ -364,6 +364,8 @@ public interface Resource<T> extends BaseInterface {
 
     void checkRelations(Package pkg) throws Exception;
 
+    void checkPrimaryKeys() throws Exception;
+
     /**
      * Recreate a Resource object from a JSON descriptor, a base path to resolve relative file paths against
      * and a flag that tells us whether we are reading from inside a ZIP archive.

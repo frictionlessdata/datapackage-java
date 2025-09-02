@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.code.externalsorting.ExternalSort;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Package;
@@ -14,10 +15,7 @@ import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
 import io.frictionlessdata.datapackage.fk.PackageForeignKey;
 import io.frictionlessdata.tableschema.Table;
-import io.frictionlessdata.tableschema.exception.ForeignKeyException;
-import io.frictionlessdata.tableschema.exception.JsonSerializingException;
-import io.frictionlessdata.tableschema.exception.TableIOException;
-import io.frictionlessdata.tableschema.exception.TypeInferringException;
+import io.frictionlessdata.tableschema.exception.*;
 import io.frictionlessdata.tableschema.field.Field;
 import io.frictionlessdata.tableschema.fk.ForeignKey;
 import io.frictionlessdata.tableschema.io.FileReference;
@@ -40,6 +38,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base implementation of a Resource.
@@ -368,6 +367,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         return tables;
     }
 
+    @Override
     public void checkRelations(Package pkg) {
         if (null != schema) {
             List<PackageForeignKey> fks = new ArrayList<>();
@@ -438,6 +438,71 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
                 }
             } catch (Exception e) {
                 throw new DataPackageValidationException("Error reading data with relations: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    public void checkPrimaryKeys() {
+        if (null != schema) {
+            Object pkObj = schema.getPrimaryKey();
+            if (pkObj == null) {
+                return; // no primary key defined
+            }
+
+            // Normalize PK fields
+            String[] pkFields;
+            if (pkObj instanceof String) {
+                pkFields = new String[]{(String) pkObj};
+            } else if (pkObj instanceof String[]) {
+                pkFields = (String[]) pkObj;
+            } else {
+                throw new PrimaryKeyException("Unsupported primary key type: " + pkObj.getClass());
+            }
+
+            try {
+                // Dump all keys to a temporary file
+                Path tempFile = Files.createTempFile("pk-check", ".txt");
+                try (BufferedWriter writer = Files.newBufferedWriter(tempFile)) {
+                    List<Object> data = this.getData(true, false, true, false);
+                    for (Object d : data) {
+                        Map<String, Object> row = (Map<String, Object>) d;
+                        String key = Arrays.stream(pkFields)
+                                .map(f -> String.valueOf(row.get(f)))
+                                .collect(Collectors.joining("\t"));
+                        writer.write(key);
+                        writer.newLine();
+                    }
+                }
+
+                // Use ExternalSort to sort the file
+                File inputFile = tempFile.toFile();
+                File sortedFile = Files.createTempFile("pk-check-sorted", ".txt").toFile();
+
+                List<File> tempChunks = ExternalSort.sortInBatch(inputFile);
+                ExternalSort.mergeSortedFiles(tempChunks, sortedFile);
+
+                // Scan sorted file line-by-line for duplicates
+                try (BufferedReader reader = new BufferedReader(new FileReader(sortedFile, StandardCharsets.UTF_8))) {
+                    String prev = null;
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.equals(prev)) {
+                            throw new PrimaryKeyException(
+                                    "Primary key violation in resource '" + this.getName() +
+                                            "': duplicate key " + line
+                            );
+                        }
+                        prev = line;
+                    }
+                }
+
+                // Cleanup
+                Files.deleteIfExists(tempFile);
+                Files.deleteIfExists(sortedFile.toPath());
+
+            } catch (Exception e) {
+                throw new PrimaryKeyException("Error validating primary keys: " + e.getMessage());
             }
         }
     }

@@ -1,0 +1,33 @@
+{
+  "name": "foreign-keys",
+  "resources": [
+    {
+      "name": "teams",
+      "profile": "tabular-data-resource",
+      "encoding": "UTF-8",
+      "format": "csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "integer",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "id"
+      },
+      "path": "teams.csv"
+    }
+  ]
+}
