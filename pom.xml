@@ -27,6 +27,7 @@
         <junit.version>5.13.4</junit.version>
         <slf4j-simple.version>2.0.17</slf4j-simple.version>
         <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
+        <externalsortinginjava.version>0.6.2</externalsortinginjava.version>
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.8.1</maven-dependency-plugin.version>
         <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
@@ -229,6 +230,13 @@
             <groupId>com.github.frictionlessdata</groupId>
             <artifactId>tableschema-java</artifactId>
             <version>${tableschema-java-version}</version>
+        </dependency>
+
+        <!-- Sorting -->
+        <dependency>
+            <groupId>com.google.code.externalsortinginjava</groupId>
+            <artifactId>externalsortinginjava</artifactId>
+            <version>${externalsortinginjava.version}</version>
         </dependency>
 
         <!-- Unit Testing -->
