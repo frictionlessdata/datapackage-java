@@ -96,7 +96,7 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
     byte[] getRawData(File input)  throws IOException {
         if (this.isInArchive) {
             String fileName = input.getPath().replaceAll("\\\\", "/");
-            return getZipFileContentAsString (basePath.toPath(), fileName).getBytes(charset);
+            return getZipFileContentAsString (basePath.toPath(), fileName, true).getBytes(charset);
         } else {
             File file = new File(this.basePath, input.getPath());
             try (InputStream inputStream = Files.newInputStream(file.toPath())) {
@@ -133,24 +133,24 @@ public class FilebasedResource extends AbstractReferencebasedResource<File> {
     List<Table> readData () throws Exception{
         List<Table> tables;
         if (this.isInArchive) {
-            tables = readfromZipFile();
+            tables = readFromZipFile();
         } else {
-            tables = readfromOrdinaryFile();
+            tables = readFromOrdinaryFile();
         }
         return tables;
     }
 
-    private List<Table> readfromZipFile() throws IOException {
+    private List<Table> readFromZipFile() throws IOException {
         List<Table> tables = new ArrayList<>();
         for (File file : paths) {
             String fileName = file.getPath().replaceAll("\\\\", "/");
-            String content = getZipFileContentAsString (basePath.toPath(), fileName);
+            String content = getZipFileContentAsString (basePath.toPath(), fileName, true);
             Table table = Table.fromSource(content, schema, getCsvFormat());
             tables.add(table);
         }
         return tables;
     }
-    private List<Table> readfromOrdinaryFile() throws IOException {
+    private List<Table> readFromOrdinaryFile() throws IOException {
         List<Table> tables = new ArrayList<>();
         for (File file : paths) {
                 /* from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)

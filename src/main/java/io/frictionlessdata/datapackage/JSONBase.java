@@ -336,18 +336,20 @@ public abstract class JSONBase implements BaseInterface {
         return null;
     }
 
-    protected static String getZipFileContentAsString(Path inFilePath, String fileName) throws IOException {
+    protected static String getZipFileContentAsString(Path inFilePath, String fileName, boolean strict) throws IOException {
         // Read in memory the file inside the zip.
         ZipFile zipFile = new ZipFile(inFilePath.toFile());
         ZipEntry entry = findZipEntry(zipFile, fileName);
 
-        // Throw exception if expected datapackage.json file not found.
-        if(entry == null){
-            throw new DataPackageException("The zip file does not contain the expected file: " + fileName);
+        if (entry == null) {
+            if (strict) {
+                throw new DataPackageException("The zip file does not contain the expected file: " + fileName);
+            } else {
+                return null;
+            }
         }
 
         String content;
-        // Read the datapackage.json file inside the zip
         try (InputStream stream = zipFile.getInputStream(entry)) {
             content = getFileContentAsString(stream);
         }
@@ -355,14 +357,17 @@ public abstract class JSONBase implements BaseInterface {
         return content;
     }
 
-    protected static byte[] getZipFileContentAsByteArray(Path inFilePath, String fileName) throws IOException {
+    protected static byte[] getZipFileContentAsByteArray(Path inFilePath, String fileName, boolean strict) throws IOException {
         // Read in memory the file inside the zip.
         ZipFile zipFile = new ZipFile(inFilePath.toFile());
         ZipEntry entry = findZipEntry(zipFile, fileName);
 
-        // Throw exception if expected datapackage.json file not found.
-        if(entry == null){
-            throw new DataPackageException("The zip file does not contain the expected file: " + fileName);
+        if (entry == null) {
+            if (strict) {
+                throw new DataPackageException("The zip file does not contain the expected file: " + fileName);
+            } else {
+                return null;
+            }
         }
         try (InputStream inputStream = zipFile.getInputStream(entry);
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -380,7 +385,7 @@ public abstract class JSONBase implements BaseInterface {
             if (File.separator.equals("\\")) {
                 filePath = filePath.replaceAll("\\\\", "/");
             }
-            jsonContentString = getZipFileContentAsString(basePath, filePath);
+            jsonContentString = getZipFileContentAsString(basePath, filePath, true);
         } else {
             /* If reference is file path.
                from the spec: "SECURITY: / (absolute path) and ../ (relative parent path)

@@ -213,7 +213,7 @@ public class Package extends JSONBase{
             if (isArchive(descriptorFile.toFile())) {
                 isArchivePackage = true;
                 basePath = descriptorFile;
-                sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME));
+                sourceJsonNode = createNode(JSONBase.getZipFileContentAsString(descriptorFile, DATAPACKAGE_FILENAME, true));
             } else {
                 basePath = descriptorFile.getParent();
                 String sourceJsonString = getFileContentAsString(descriptorFile);
@@ -299,7 +299,9 @@ public class Package extends JSONBase{
 
     /**
      * Returns the image data if the image is stored inside the data package, null if {@link #getImagePath()}
-     * would return a URL
+     * would return a URL.
+     *
+     * If the referenced file does not exist in the package, return null
      *
      * @return binary image data
      */
@@ -309,7 +311,7 @@ public class Package extends JSONBase{
             return imageData;
         if (!StringUtils.isEmpty(image)) {
             if (isArchivePackage) {
-                return getZipFileContentAsByteArray((Path)basePath, image);
+                return getZipFileContentAsByteArray((Path)basePath, image, false);
             } else {
                 File imgFile = new File (((Path)basePath).toFile(), image);
                 try (InputStream inputStream = new FileInputStream(imgFile);
