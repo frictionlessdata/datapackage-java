@@ -39,7 +39,7 @@
         <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
         <dependency-check-maven.version>12.1.6</dependency-check-maven.version>
-        <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <spotbugs-maven-plugin.version>4.9.4.1</spotbugs-maven-plugin.version>
     </properties>
 
