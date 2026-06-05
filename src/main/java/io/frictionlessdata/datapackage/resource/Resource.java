@@ -3,10 +3,10 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 import io.frictionlessdata.datapackage.*;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
@@ -412,7 +412,7 @@ public interface Resource<T> extends BaseInterface {
                 resource = buildJsonResource(data, name, format, profile);
             else if (format.equals(Resource.FORMAT_CSV)) {
                 // data is in inline CSV format like "data": "A,B,C\n1,2,3\n4,5,6"
-                String dataString = ((TextNode)data).textValue().replaceAll("\\\\n", "\n");
+                String dataString = ((StringNode)data).stringValue().replaceAll("\\\\n", "\n");
                 resource = new CSVDataResource(name, dataString);
             }
         } else {
@@ -459,7 +459,7 @@ public interface Resource<T> extends BaseInterface {
                     files.add(((Path)o).toFile());
                 } else if (o instanceof URL) {
                     urls.add((URL)o);
-                } else if (o instanceof TextNode) {
+                } else if (o instanceof StringNode) {
                     strings.add(o.toString());
                 } else {
                     throw new IllegalArgumentException("Cannot build a resource out of "+o.getClass());
@@ -524,8 +524,8 @@ public interface Resource<T> extends BaseInterface {
             return null;
         if (path instanceof ArrayNode) {
             return fromJSON((ArrayNode) path, basePath);
-        } else if (path instanceof TextNode) {
-        	return fromJSON(JsonUtil.getInstance().createArrayNode().add((TextNode)path), basePath);
+        } else if (path instanceof StringNode) {
+        	return fromJSON(JsonUtil.getInstance().createArrayNode().add((StringNode)path), basePath);
         } else {
             return Collections.singleton(path);
         }
@@ -537,9 +537,9 @@ public interface Resource<T> extends BaseInterface {
         Collection dereferencedObj = new ArrayList();
 
         for (JsonNode obj : arr) {
-            if (!(obj.isTextual()))
+            if (!(obj.isString()))
                 throw new IllegalArgumentException("Cannot dereference a "+obj.getClass());
-            String location = obj.asText();
+            String location = obj.asString();
             if (isValidUrl(location)) {
                 /*
                     This is a fully qualified URL "https://somesite.com/data/cities.csv".
@@ -594,7 +594,7 @@ public interface Resource<T> extends BaseInterface {
     }
 
     static String textValueOrNull(JsonNode source, String fieldName) {
-    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
+    	return source.has(fieldName) ? source.get(fieldName).asString() : null;
     }
 
     void validate(Package pkg) throws DataPackageValidationException;

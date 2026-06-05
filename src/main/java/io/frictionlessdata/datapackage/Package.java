@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
@@ -18,8 +18,8 @@ import io.frictionlessdata.datapackage.resource.Resource;
 import io.frictionlessdata.tableschema.exception.JsonParsingException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.util.JsonUtil;
-import org.apache.commons.collections.list.UnmodifiableList;
-import org.apache.commons.collections.set.UnmodifiableSet;
+import org.apache.commons.collections4.list.UnmodifiableList;
+import org.apache.commons.collections4.set.UnmodifiableSet;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -273,7 +273,7 @@ public class Package extends JSONBase{
     public Set<String> getKeywords() {
         if (null == keywords)
             return null;
-        return UnmodifiableSet.decorate(keywords);
+        return UnmodifiableSet.unmodifiableSet(keywords);
     }
 
     @JsonProperty("version")
@@ -334,7 +334,7 @@ public class Package extends JSONBase{
     public List<Contributor> getContributors() {
         if (null == contributors)
             return null;
-        return UnmodifiableList.decorate(contributors);
+        return UnmodifiableList.unmodifiableList(contributors);
     }
 
     /**
@@ -348,7 +348,7 @@ public class Package extends JSONBase{
         JsonNode jNode = jsonObject.get(key);
         if (jNode.isArray()) {
             return getProperty(key, new TypeReference<ArrayList<?>>() {});
-        } else if (jNode.isTextual()) {
+        } else if (jNode.isString()) {
             return getProperty(key, new TypeReference<String>() {});
         } else if (jNode.isBoolean()) {
             return getProperty(key, new TypeReference<Boolean>() {});
@@ -716,7 +716,7 @@ public class Package extends JSONBase{
     private ObjectNode getJsonNode(){
     	ObjectNode objectNode = (ObjectNode) JsonUtil.getInstance().createNode(this);
     	// update any manually set properties
-    	this.jsonObject.fields().forEachRemaining(f->{
+    	this.jsonObject.properties().iterator().forEachRemaining(f->{
             // but do not overwrite properties set via the API
             if (!wellKnownKeys.contains(f.getKey())) {
                 objectNode.set(f.getKey(), f.getValue());
@@ -813,8 +813,8 @@ public class Package extends JSONBase{
         this.setVersion(textValueOrNull(jsonNodeSource, Package.JSON_KEY_VERSION));
 
         if (jsonNodeSource.has(Package.JSON_KEY_HOMEPAGE) &&
-                StringUtils.isNotEmpty(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText())) {
-            this.setHomepage( new URL(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asText()));
+                StringUtils.isNotEmpty(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asString())) {
+            this.setHomepage( new URL(jsonNodeSource.get(Package.JSON_KEY_HOMEPAGE).asString()));
         }
 
         this.setImagePath(textValueOrNull(jsonNodeSource, Package.JSON_KEY_IMAGE));
@@ -826,13 +826,13 @@ public class Package extends JSONBase{
         if (jsonNodeSource.has(Package.JSON_KEY_KEYWORDS)) {
             ArrayNode arr = (ArrayNode) jsonObject.get(Package.JSON_KEY_KEYWORDS);
             for (int i = 0; i < arr.size(); i++) {
-                this.addKeyword(arr.get(i).asText());
+                this.addKeyword(arr.get(i).asString());
             }
         }
         List<String> wellKnownKeys = Arrays.asList(JSON_KEY_NAME, JSON_KEY_RESOURCES, JSON_KEY_ID, JSON_KEY_VERSION,
                 JSON_KEY_HOMEPAGE, JSON_KEY_IMAGE, JSON_KEY_CREATED, JSON_KEY_CONTRIBUTORS,
                 JSON_KEY_KEYWORDS);
-        jsonNodeSource.fieldNames().forEachRemaining((k) -> {
+        jsonNodeSource.propertyNames().iterator().forEachRemaining((k) -> {
             if (!wellKnownKeys.contains(k)) {
                 JsonNode obj = jsonNodeSource.get(k);
                 this.setProperty(k, obj);
@@ -1016,6 +1016,6 @@ public class Package extends JSONBase{
 
 
     private static String textValueOrNull(JsonNode source, String fieldName) {
-    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
+    	return source.has(fieldName) ? source.get(fieldName).asString() : null;
     }
 }

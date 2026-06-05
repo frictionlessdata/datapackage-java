@@ -3,10 +3,10 @@ package io.frictionlessdata.datapackage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
@@ -222,10 +222,10 @@ public abstract class JSONBase implements BaseInterface {
     }
 
     public static void setFromJson(JsonNode resourceJson, JSONBase retVal) {
-        if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA) && resourceJson.get(JSONBase.JSON_KEY_SCHEMA).isTextual())
-            retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA).asText());
-        if (resourceJson.has(JSONBase.JSON_KEY_DIALECT) && resourceJson.get(JSONBase.JSON_KEY_DIALECT).isTextual())
-            retVal.originalReferences.put(JSONBase.JSON_KEY_DIALECT, resourceJson.get(JSONBase.JSON_KEY_DIALECT).asText());
+        if (resourceJson.has(JSONBase.JSON_KEY_SCHEMA) && resourceJson.get(JSONBase.JSON_KEY_SCHEMA).isString())
+            retVal.originalReferences.put(JSONBase.JSON_KEY_SCHEMA, resourceJson.get(JSONBase.JSON_KEY_SCHEMA).asString());
+        if (resourceJson.has(JSONBase.JSON_KEY_DIALECT) && resourceJson.get(JSONBase.JSON_KEY_DIALECT).isString())
+            retVal.originalReferences.put(JSONBase.JSON_KEY_DIALECT, resourceJson.get(JSONBase.JSON_KEY_DIALECT).asString());
 
         // TODO: A mapper library might be useful, but not required
         String name = textValueOrNull(resourceJson, JSONBase.JSON_KEY_NAME);
@@ -259,7 +259,7 @@ public abstract class JSONBase implements BaseInterface {
     }
 
     private static String textValueOrNull(JsonNode source, String fieldName) {
-    	return source.has(fieldName) ? source.get(fieldName).asText() : null;
+    	return source.has(fieldName) ? source.get(fieldName).asString() : null;
     }
 
 
@@ -441,8 +441,8 @@ public abstract class JSONBase implements BaseInterface {
         else if(obj instanceof ObjectNode){
             // Don't need to do anything, just cast and return.
             return (ObjectNode)obj;
-        } else if (obj instanceof TextNode) {
-        	return dereference(((TextNode) obj).asText(), basePath, isArchivePackage);
+        } else if (obj instanceof StringNode) {
+        	return dereference(((StringNode) obj).asString(), basePath, isArchivePackage);
         } else if(obj instanceof String){
             String reference = (String)obj;
             if (isValidUrl(reference))

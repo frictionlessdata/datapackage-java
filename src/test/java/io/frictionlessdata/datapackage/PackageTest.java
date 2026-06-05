@@ -1,7 +1,7 @@
 package io.frictionlessdata.datapackage;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 import io.frictionlessdata.datapackage.beans.EmployeeBean;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageFileOrUrlNotFoundException;
@@ -443,7 +443,7 @@ public class PackageTest {
         dp.writeJson(outFile);
         String content = String.join("\n", Files.readAllLines(outFile.toPath()));
         JsonNode jsonNode = JsonUtil.getInstance().readValue(content);
-        String profile = jsonNode.get("profile").asText();
+        String profile = jsonNode.get("profile").asString();
         Assertions.assertEquals(Profile.PROFILE_DATA_PACKAGE_DEFAULT, profile);
         Assertions.assertEquals(Profile.PROFILE_DATA_PACKAGE_DEFAULT, dp.getProfile());
     }

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import io.frictionlessdata.datapackage.Dialect;
 import io.frictionlessdata.datapackage.JSONBase;
 import io.frictionlessdata.datapackage.Package;
@@ -285,7 +285,7 @@ public abstract class AbstractResource<T> extends JSONBase implements Resource<T
         ObjectMapper mapper = JsonUtil.getInstance().getMapper();
         try {
             retVal = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(rows);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new JsonSerializingException(ex);
         }
         return retVal;

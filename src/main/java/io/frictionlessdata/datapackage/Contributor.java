@@ -1,10 +1,10 @@
 package io.frictionlessdata.datapackage;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.node.ArrayNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.util.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -58,8 +58,8 @@ public class Contributor {
 			return JsonUtil.getInstance().deserialize(json, new TypeReference<>() {});
 		} catch (Exception ex) {
 			Throwable cause = ex.getCause();
-			if (Objects.nonNull(cause) && cause.getClass().isAssignableFrom(InvalidFormatException.class)) {
-				if (Objects.nonNull(cause.getCause()) && cause.getCause().getClass().isAssignableFrom(MalformedURLException.class)) {
+			if (ex.getClass().isAssignableFrom(InvalidFormatException.class)) {
+				if (Objects.nonNull(cause) && cause.getClass().isAssignableFrom(MalformedURLException.class)) {
 					throw new DataPackageException(invalidUrlMsg);
 				}
 			}

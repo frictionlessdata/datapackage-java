@@ -1,7 +1,6 @@
 package io.frictionlessdata.datapackage;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.networknt.schema.ValidationMessage;
+import tools.jackson.databind.JsonNode;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.tableschema.exception.ValidationException;
 import io.frictionlessdata.tableschema.schema.FormalSchemaValidator;
@@ -12,7 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Validates a package schema against the frictionlessdata table-schema.json (from the TableSchema project).
@@ -29,10 +28,10 @@ public class Validator {
      */
     public static void validate(JsonNode jsonObjectToValidate) throws IOException, DataPackageException, ValidationException {
         // If a profile value is provided.
-        Set<ValidationMessage> errors;
+        List<String> errors;
         String profileId = Profile.PROFILE_DATA_PACKAGE_DEFAULT;
         if (jsonObjectToValidate.has(Package.JSON_KEY_PROFILE)) {
-            profileId = jsonObjectToValidate.get(Package.JSON_KEY_PROFILE).asText();
+            profileId = jsonObjectToValidate.get(Package.JSON_KEY_PROFILE).asString();
 
             String[] schemes = {"http", "https"};
             UrlValidator urlValidator = new UrlValidator(schemes);
@@ -60,11 +59,11 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException
      */
-    private static Set<ValidationMessage> validate(JsonNode jsonObjectToValidate, String profileId) throws DataPackageException {
+    private static List<String> validate(JsonNode jsonObjectToValidate, String profileId) throws DataPackageException {
         InputStream inputStream = Validator.class.getResourceAsStream("/schemas/" + profileId + ".json");
         if (inputStream != null) {
             FormalSchemaValidator schema = FormalSchemaValidator.fromJson(inputStream);
-            Set<ValidationMessage> errors = schema.validate(jsonObjectToValidate);// throws a ValidationException if this object is invalid
+            List<String> errors = schema.validate(jsonObjectToValidate);// throws a ValidationException if this object is invalid
             return errors;
         } else {
             throw new DataPackageException("Invalid profile id: " + profileId);
@@ -78,11 +77,11 @@ public class Validator {
      * @throws DataPackageException
      * @throws ValidationException
      */
-    private static Set<ValidationMessage> validate(JsonNode jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException {
+    private static List<String> validate(JsonNode jsonObjectToValidate, URL schemaUrl) throws IOException, DataPackageException {
         try {
             InputStream inputStream = schemaUrl.openStream();
             FormalSchemaValidator schema = FormalSchemaValidator.fromJson(inputStream);
-            Set<ValidationMessage> errors = schema.validate(jsonObjectToValidate);// throws a ValidationException if this object is invalid
+            List<String> errors = schema.validate(jsonObjectToValidate);// throws a ValidationException if this object is invalid
             return errors;
         } catch (FileNotFoundException e) {
             throw new DataPackageException("Invalid profile schema URL: " + schemaUrl);

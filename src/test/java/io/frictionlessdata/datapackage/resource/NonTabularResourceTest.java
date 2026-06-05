@@ -2,8 +2,8 @@ package io.frictionlessdata.datapackage.resource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.*;
 import io.frictionlessdata.tableschema.Table;

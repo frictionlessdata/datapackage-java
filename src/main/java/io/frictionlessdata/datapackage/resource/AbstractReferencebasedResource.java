@@ -3,7 +3,7 @@ package io.frictionlessdata.datapackage.resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import io.frictionlessdata.datapackage.Package;
 import io.frictionlessdata.datapackage.exceptions.DataPackageException;
 import io.frictionlessdata.datapackage.exceptions.DataPackageValidationException;
@@ -66,7 +66,7 @@ public abstract class AbstractReferencebasedResource<T> extends AbstractResource
     JsonNode getPathJson() {
         List<String> path = new ArrayList<>(getReferencesAsStrings());
         if (path.size() == 1) {
-            return JsonUtil.getInstance().createTextNode(path.get(0));
+            return JsonUtil.getInstance().createStringNode(path.get(0));
         } else {
             return JsonUtil.getInstance().createArrayNode(path);
         }
