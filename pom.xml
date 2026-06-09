@@ -41,6 +41,7 @@
         <dependency-check-maven.version>12.1.8</dependency-check-maven.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <spotbugs-maven-plugin.version>4.9.8.1</spotbugs-maven-plugin.version>
+        <findsecbugs-plugin.version>1.13.0</findsecbugs-plugin.version>
     </properties>
 
     <repositories>
@@ -153,10 +154,9 @@
                 <version>${dependency-check-maven.version}</version>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
-                            <!--
                             <goal>check</goal>
-                            -->
                         </goals>
                     </execution>
                 </executions>
@@ -184,6 +184,13 @@
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
                 <version>${spotbugs-maven-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.h3xstream.findsecbugs</groupId>
+                        <artifactId>findsecbugs-plugin</artifactId>
+                        <version>${findsecbugs-plugin.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <effort>Max</effort>
                     <threshold>High</threshold>
@@ -191,6 +198,7 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
